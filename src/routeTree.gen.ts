@@ -13,6 +13,7 @@ import { Route as PersonalizedRouteImport } from './routes/personalized'
 import { Route as ForumRouteImport } from './routes/forum'
 import { Route as CertifiedRouteImport } from './routes/certified'
 import { Route as BuildCourseRouteImport } from './routes/build-course'
+import { Route as BattlesRouteImport } from './routes/battles'
 import { Route as AdaptiveTestsRouteImport } from './routes/adaptive-tests'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -36,6 +37,11 @@ const BuildCourseRoute = BuildCourseRouteImport.update({
   path: '/build-course',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BattlesRoute = BattlesRouteImport.update({
+  id: '/battles',
+  path: '/battles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdaptiveTestsRoute = AdaptiveTestsRouteImport.update({
   id: '/adaptive-tests',
   path: '/adaptive-tests',
@@ -50,6 +56,7 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adaptive-tests': typeof AdaptiveTestsRoute
+  '/battles': typeof BattlesRoute
   '/build-course': typeof BuildCourseRoute
   '/certified': typeof CertifiedRoute
   '/forum': typeof ForumRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adaptive-tests': typeof AdaptiveTestsRoute
+  '/battles': typeof BattlesRoute
   '/build-course': typeof BuildCourseRoute
   '/certified': typeof CertifiedRoute
   '/forum': typeof ForumRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/adaptive-tests': typeof AdaptiveTestsRoute
+  '/battles': typeof BattlesRoute
   '/build-course': typeof BuildCourseRoute
   '/certified': typeof CertifiedRoute
   '/forum': typeof ForumRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/adaptive-tests'
+    | '/battles'
     | '/build-course'
     | '/certified'
     | '/forum'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/adaptive-tests'
+    | '/battles'
     | '/build-course'
     | '/certified'
     | '/forum'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/adaptive-tests'
+    | '/battles'
     | '/build-course'
     | '/certified'
     | '/forum'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdaptiveTestsRoute: typeof AdaptiveTestsRoute
+  BattlesRoute: typeof BattlesRoute
   BuildCourseRoute: typeof BuildCourseRoute
   CertifiedRoute: typeof CertifiedRoute
   ForumRoute: typeof ForumRoute
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BuildCourseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/battles': {
+      id: '/battles'
+      path: '/battles'
+      fullPath: '/battles'
+      preLoaderRoute: typeof BattlesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/adaptive-tests': {
       id: '/adaptive-tests'
       path: '/adaptive-tests'
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdaptiveTestsRoute: AdaptiveTestsRoute,
+  BattlesRoute: BattlesRoute,
   BuildCourseRoute: BuildCourseRoute,
   CertifiedRoute: CertifiedRoute,
   ForumRoute: ForumRoute,
