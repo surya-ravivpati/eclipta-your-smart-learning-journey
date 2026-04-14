@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PersonalizedRouteImport } from './routes/personalized'
 import { Route as CertifiedRouteImport } from './routes/certified'
 import { Route as BuildCourseRouteImport } from './routes/build-course'
 import { Route as AdaptiveTestsRouteImport } from './routes/adaptive-tests'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PersonalizedRoute = PersonalizedRouteImport.update({
+  id: '/personalized',
+  path: '/personalized',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CertifiedRoute = CertifiedRouteImport.update({
   id: '/certified',
   path: '/certified',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/adaptive-tests': typeof AdaptiveTestsRoute
   '/build-course': typeof BuildCourseRoute
   '/certified': typeof CertifiedRoute
+  '/personalized': typeof PersonalizedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/adaptive-tests': typeof AdaptiveTestsRoute
   '/build-course': typeof BuildCourseRoute
   '/certified': typeof CertifiedRoute
+  '/personalized': typeof PersonalizedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,25 @@ export interface FileRoutesById {
   '/adaptive-tests': typeof AdaptiveTestsRoute
   '/build-course': typeof BuildCourseRoute
   '/certified': typeof CertifiedRoute
+  '/personalized': typeof PersonalizedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/adaptive-tests' | '/build-course' | '/certified'
+  fullPaths:
+    | '/'
+    | '/adaptive-tests'
+    | '/build-course'
+    | '/certified'
+    | '/personalized'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/adaptive-tests' | '/build-course' | '/certified'
-  id: '__root__' | '/' | '/adaptive-tests' | '/build-course' | '/certified'
+  to: '/' | '/adaptive-tests' | '/build-course' | '/certified' | '/personalized'
+  id:
+    | '__root__'
+    | '/'
+    | '/adaptive-tests'
+    | '/build-course'
+    | '/certified'
+    | '/personalized'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +87,18 @@ export interface RootRouteChildren {
   AdaptiveTestsRoute: typeof AdaptiveTestsRoute
   BuildCourseRoute: typeof BuildCourseRoute
   CertifiedRoute: typeof CertifiedRoute
+  PersonalizedRoute: typeof PersonalizedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/personalized': {
+      id: '/personalized'
+      path: '/personalized'
+      fullPath: '/personalized'
+      preLoaderRoute: typeof PersonalizedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/certified': {
       id: '/certified'
       path: '/certified'
@@ -107,6 +135,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdaptiveTestsRoute: AdaptiveTestsRoute,
   BuildCourseRoute: BuildCourseRoute,
   CertifiedRoute: CertifiedRoute,
+  PersonalizedRoute: PersonalizedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
