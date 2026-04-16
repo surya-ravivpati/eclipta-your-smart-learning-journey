@@ -409,7 +409,7 @@ function BattleArena() {
 
   // ── Class Select ──
   if (phase === "classSelect") {
-    return <ClassSelectDialog onSelect={(id) => startBattle(id)} />;
+    return <ClassSelectDialog onSelect={(sel) => startBattle(sel)} />;
   }
 
   // ── Searching ──
