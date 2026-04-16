@@ -6,6 +6,7 @@ import { getLunaContext, detectFatigue, getSessionDuration, getAccuracy, escalat
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
+import { checkMilestones, fireMilestoneToasts, markExistingMilestones } from "@/lib/milestones";
 
 export type LunaMessage = {
   role: "assistant" | "user";
@@ -36,8 +37,9 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
   const abortRef = useRef<AbortController | null>(null);
   const profileRef = useRef<Record<string, unknown> | null>(null);
   const historyRef = useRef<Record<string, unknown>[] | null>(null);
+  const lastXpRef = useRef<number>(0);
 
-  // Load user profile and recent history when panel opens
+  // Load user profile, recent history, and initialize milestones
   useEffect(() => {
     if (!open) return;
     (async () => {
@@ -47,10 +49,44 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
         supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("learning_history").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(15),
       ]);
-      if (profileRes.data) profileRef.current = profileRes.data;
+      if (profileRes.data) {
+        profileRef.current = profileRes.data;
+        const xp = (profileRes.data as any).xp ?? 0;
+        markExistingMilestones(xp);
+        lastXpRef.current = xp;
+      }
       if (historyRes.data) historyRef.current = historyRes.data;
     })();
   }, [open]);
+
+  // Poll for XP changes to detect milestones
+  useEffect(() => {
+    if (!open) return;
+    const interval = setInterval(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("user_profiles").select("xp").eq("user_id", user.id).maybeSingle();
+      if (!data) return;
+      const newXp = (data as any).xp ?? 0;
+      const prevXp = lastXpRef.current;
+      if (newXp > prevXp) {
+        lastXpRef.current = newXp;
+        const { toasts, lunaMessages } = checkMilestones(prevXp, newXp);
+        fireMilestoneToasts(toasts);
+        if (lunaMessages.length > 0) {
+          setMessages(prev => [
+            ...prev,
+            ...lunaMessages.map(msg => ({
+              role: "assistant" as const,
+              content: msg,
+              tag: "nudge" as const,
+            })),
+          ]);
+        }
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [open, setMessages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
