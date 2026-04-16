@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Lightbulb, AlertTriangle, Eye, Sparkles, Coffee, BookOpen, ArrowRight } from "lucide-react";
 import { streamLunaChat, parseLunaTag } from "@/lib/luna-api";
-import { getLunaContext, detectFatigue, getSessionDuration, escalateHint, resetHintLevel } from "@/lib/luna-context";
+import { getLunaContext, detectFatigue, getSessionDuration, getAccuracy, escalateHint, resetHintLevel } from "@/lib/luna-context";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 
@@ -111,6 +111,11 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
         streak: ctx.streak,
         incorrectCount: ctx.incorrectCount,
         avgResponseTime: ctx.avgResponseTime,
+        hintLevel: ctx.hintLevel,
+        consecutiveErrors: ctx.consecutiveErrors,
+        rapidGuessCount: ctx.rapidGuessCount,
+        accuracy: getAccuracy(),
+        sessionMinutes: Math.round(getSessionDuration()),
       },
       onDelta: upsertAssistant,
       onDone: () => setIsStreaming(false),
