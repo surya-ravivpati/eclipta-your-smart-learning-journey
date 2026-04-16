@@ -7,6 +7,7 @@ import {
 
 import type { Phase, Action, ArchetypeId, Fighter, MathQuestion, QuestionRecord, BattleStats, ActionConfig } from "./battles/types";
 import { generateQuestion, TIMER_DURATIONS } from "./battles/questions";
+import { statToHp, statToTimeMult, statToDmgMult, statToStreakMult, statToDifficulty, statToSelfDmgMult } from "./battles/stat-mechanics";
 import { ARCHETYPES } from "./battles/archetypes";
 import { ClassSelectDialog } from "./battles/ClassSelectDialog";
 import { BattleReport } from "./battles/BattleReport";
@@ -227,8 +228,10 @@ function BattleArena() {
     if (correct && timeSpent < fastestAnswer) setFastestAnswer(timeSpent);
 
     const action = ACTIONS[currentAction];
-    const isCombo = momentum > 0 && momentum % comboThreshold === 0;
-    let comboMult = isCombo ? 1.5 : 1;
+    const arch = ARCHETYPES[archetype];
+    const streakMult = statToStreakMult(arch.stats.multiplier);
+    // Multiplier grows with streak length
+    const currentStreakMult = momentum > 0 ? 1 + (momentum * (streakMult - 1)) : 1;
 
     setPhase("animate");
 
@@ -251,37 +254,35 @@ function BattleArena() {
         effects[Math.floor(Math.random() * effects.length)]();
       } else {
         let baseDmg = action.dmg;
-        // Archetype modifiers
-        if (archetype === "chud") baseDmg = Math.floor(baseDmg * 1.5);
-        if (archetype === "tank") baseDmg = Math.floor(baseDmg * 0.7);
-        if (archetype === "speedster") {
-          const speedBonus = 1 + (timeLeft / maxTime) * 0.6;
-          baseDmg = Math.floor(baseDmg * speedBonus);
-        }
+        // Apply damage stat multiplier
+        const dmgMult = archetype === "gambler"
+          ? 0.5 + Math.random() * 1.5
+          : statToDmgMult(arch.stats.damage);
+        baseDmg = Math.floor(baseDmg * dmgMult);
+        // Accelerator scaling bonus
         if (archetype === "accelerator") {
-          const turnBonus = 1 + records.length * 0.1;
-          baseDmg = Math.floor(baseDmg * turnBonus);
+          baseDmg = Math.floor(baseDmg * (1 + records.length * 0.1));
         }
-        if (archetype === "gambler") {
-          baseDmg = Math.floor(baseDmg * (0.5 + Math.random() * 1.5));
-        }
-        const dmg = Math.floor(baseDmg * comboMult);
+        // Apply streak multiplier
+        const dmg = Math.floor(baseDmg * currentStreakMult);
         setOpponent(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
         setShowOpponentHit(true);
-        addLog(`✅ ${ACTION_EMOJIS[currentAction]} ${action.label}: ${dmg} DMG!${comboMult > 1 ? " 🔥 COMBO!" : ""}${archetype === "speedster" && timeLeft > maxTime * 0.5 ? " ⚡ SPEED BONUS!" : ""}`);
+        addLog(`✅ ${ACTION_EMOJIS[currentAction]} ${action.label}: ${dmg} DMG!${currentStreakMult > 1.1 ? ` 🔥 ${currentStreakMult.toFixed(1)}x STREAK!` : ""}`);
       }
-      setTotalScore(prev => prev + (currentAction === "charge" ? 150 : currentAction === "attack" ? 100 : 75) * comboMult);
+      setTotalScore(prev => prev + (currentAction === "charge" ? 150 : currentAction === "attack" ? 100 : 75) * currentStreakMult);
     } else {
       setMomentum(0);
       let counterDmg = Math.floor(Math.random() * 10) + 8;
-      if (archetype === "tank") counterDmg = Math.floor(counterDmg * 0.5);
+      // Apply self-damage reduction based on health stat
+      counterDmg = Math.floor(counterDmg * statToSelfDmgMult(arch.stats.health));
+      // Healer passive: recover some HP on getting hit
       if (archetype === "healer") {
         const healAmt = Math.floor(counterDmg * 0.3);
         setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + healAmt) }));
       }
       setPlayer(prev => ({ ...prev, hp: Math.max(0, prev.hp - counterDmg) }));
       setShowPlayerHit(true);
-      addLog(`❌ ${timeSpent >= maxTime ? "Time's up!" : "Wrong!"} -${counterDmg} HP. Streak reset.${archetype === "tank" ? " 🛡️ Reduced!" : ""}`);
+      addLog(`❌ ${timeSpent >= maxTime ? "Time's up!" : "Wrong!"} -${counterDmg} HP. Streak reset.${arch.stats.health >= 3 ? " 🛡️ Reduced!" : ""}`);
     }
 
     setTimeout(() => {
@@ -302,7 +303,7 @@ function BattleArena() {
         return prev;
       });
     }, 800);
-  }, [currentAction, momentum, player, totalScore, timeLeft, maxTime, question, archetype, comboThreshold, longestStreak, fastestAnswer]);
+  }, [currentAction, momentum, player, totalScore, timeLeft, maxTime, question, archetype, longestStreak, fastestAnswer]);
 
   const finishBattle = useCallback((won: boolean) => {
     const xp = won ? Math.floor(totalScore * 0.8) + 200 : Math.floor(totalScore * 0.2);
@@ -341,25 +342,36 @@ function BattleArena() {
     setCurrentAction(action);
     if (action === "wild") setPlayer(prev => ({ ...prev, focus: prev.focus - 10 }));
 
-    const diff = action === "wild" ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)] : ACTIONS[action].difficulty;
-    const q = generateQuestion(diff);
+    const arch = ARCHETYPES[archetype];
+    const baseDiff = action === "wild" ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)] : ACTIONS[action].difficulty;
+    // Gambler randomizes difficulty
+    const effectiveDiff = archetype === "gambler"
+      ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)]
+      : statToDifficulty(baseDiff, arch.stats.difficulty);
+    const q = generateQuestion(effectiveDiff);
     setQuestion(q);
-    let t = TIMER_DURATIONS[diff];
-    if (archetype === "chud") t = Math.ceil(t * 0.75);
+    let t = TIMER_DURATIONS[effectiveDiff];
+    // Apply time stat multiplier
+    t = Math.max(4, Math.round(t * statToTimeMult(arch.stats.time)));
+    // Gambler randomizes time too
+    if (archetype === "gambler") t = Math.max(4, Math.round(t * (0.5 + Math.random())));
     setMaxTime(t);
     setTimeLeft(t);
     setPhase("question");
   };
 
   const startBattle = (selectedClass?: ArchetypeId) => {
+    const cls = selectedClass || archetype;
     if (selectedClass) setArchetype(selectedClass);
     setPhase("searching");
     setTimeout(() => {
-      setPlayer({ name: "You", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, avatar: "🧑‍💻" });
+      const arch = ARCHETYPES[cls];
+      const playerHp = statToHp(arch.stats.health);
+      setPlayer({ name: "You", hp: playerHp, maxHp: playerHp, focus: 50, maxFocus: 50, avatar: "🧑‍💻" });
       setOpponent({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, avatar: "🤖" });
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
-      addLog(`⚔️ Battle started as ${ARCHETYPES[selectedClass || archetype].emoji} ${ARCHETYPES[selectedClass || archetype].name}!`);
+      addLog(`⚔️ Battle started as ${arch.emoji} ${arch.name}! (${playerHp} HP)`);
     }, 2200);
   };
 

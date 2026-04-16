@@ -5,7 +5,13 @@ import type { ArchetypeId } from "./types";
 import { getUnlockedArchetypes, ROAD_NODES } from "@/lib/trophy-road-data";
 import { cn } from "@/lib/utils";
 
-const STAT_LABELS = ["ATK", "DEF", "SPD", "CMB"] as const;
+const STAT_LABELS: { key: "health" | "time" | "damage" | "multiplier" | "difficulty"; label: string }[] = [
+  { key: "health", label: "HP" },
+  { key: "time", label: "TIME" },
+  { key: "damage", label: "DMG" },
+  { key: "multiplier", label: "MULT" },
+  { key: "difficulty", label: "DIFF" },
+];
 
 export function ClassSelectDialog({ onSelect }: { onSelect: (id: ArchetypeId) => void }) {
   const unlocked = getUnlockedArchetypes();
@@ -43,7 +49,6 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (id: ArchetypeId) =>
               whileHover={isUnlocked ? { scale: 1.02, y: -2 } : {}}
               whileTap={isUnlocked ? { scale: 0.98 } : {}}
             >
-              {/* Locked overlay */}
               {!isUnlocked && (
                 <div className="absolute inset-0 bg-background/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-1">
                   <Lock className="w-5 h-5 text-muted-foreground" />
@@ -64,16 +69,16 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (id: ArchetypeId) =>
 
               {/* Stat bars */}
               <div className="space-y-1.5">
-                {(["attack", "defense", "speed", "combo"] as const).map((stat, i) => (
-                  <div key={stat} className="flex items-center gap-2">
-                    <span className="text-[9px] font-bold tracking-widest text-muted-foreground w-7">{STAT_LABELS[i]}</span>
+                {STAT_LABELS.map(({ key, label }) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <span className="text-[9px] font-bold tracking-widest text-muted-foreground w-8">{label}</span>
                     <div className="flex gap-0.5 flex-1">
                       {[1, 2, 3, 4].map(lvl => (
                         <div
                           key={lvl}
                           className={cn(
                             "h-1.5 flex-1 transition-colors",
-                            lvl <= arch.stats[stat]
+                            lvl <= arch.stats[key]
                               ? isUnlocked ? "bg-neon-purple" : "bg-muted-foreground/30"
                               : "bg-secondary/30"
                           )}

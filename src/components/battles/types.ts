@@ -38,7 +38,7 @@ export interface Archetype {
   borderColor: string;
   description: string;
   passive: string;
-  stats: { attack: number; defense: number; speed: number; combo: number };
+  stats: { health: number; time: number; damage: number; multiplier: number; difficulty: number };
 }
 
 export interface ActionConfig {
