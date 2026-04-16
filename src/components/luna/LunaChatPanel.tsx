@@ -34,6 +34,23 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const profileRef = useRef<Record<string, unknown> | null>(null);
+  const historyRef = useRef<Record<string, unknown>[] | null>(null);
+
+  // Load user profile and recent history when panel opens
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const [profileRes, historyRes] = await Promise.all([
+        supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("learning_history").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(15),
+      ]);
+      if (profileRes.data) profileRef.current = profileRes.data;
+      if (historyRes.data) historyRef.current = historyRes.data;
+    })();
+  }, [open]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
