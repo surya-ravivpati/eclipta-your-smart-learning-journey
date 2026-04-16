@@ -11,6 +11,11 @@ interface LunaContext {
   streak?: number;
   incorrectCount?: number;
   avgResponseTime?: number;
+  hintLevel?: number;
+  consecutiveErrors?: number;
+  rapidGuessCount?: number;
+  accuracy?: number;
+  sessionMinutes?: number;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/luna-chat`;

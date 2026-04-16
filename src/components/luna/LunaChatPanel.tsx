@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Lightbulb, AlertTriangle, Eye, Sparkles, Coffee, BookOpen, ArrowRight } from "lucide-react";
 import { streamLunaChat, parseLunaTag } from "@/lib/luna-api";
-import { getLunaContext, detectFatigue, getSessionDuration, escalateHint, resetHintLevel } from "@/lib/luna-context";
+import { getLunaContext, detectFatigue, getSessionDuration, getAccuracy, escalateHint, resetHintLevel } from "@/lib/luna-context";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 
