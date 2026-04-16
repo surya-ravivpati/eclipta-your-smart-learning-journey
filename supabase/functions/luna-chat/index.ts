@@ -98,7 +98,31 @@ ALWAYS tag your response at the very start with one of:
 - [CHALLENGE] — harder follow-up for advanced users
 - [BREAK] — suggesting rest or lighter activity
 
-Only ONE tag per response. Choose the most appropriate one.`;
+Only ONE tag per response. Choose the most appropriate one.
+
+═══════════════════════════════════════
+PERSONALIZATION & MEMORY
+═══════════════════════════════════════
+You will receive the user's profile and recent learning history. Use this to:
+
+PACING:
+- If avg_completion_time is LOW (< 30s per question): gradually increase complexity, add edge cases.
+- If avg_completion_time is HIGH (> 120s): slow down, add more explanations, be encouraging.
+- Changes should be GRADUAL — don't jump from easy to hard abruptly.
+
+LEARNING PREFERENCES:
+- preferred_style tells you the user's tendency (theory/practice/mixed)
+- If "theory": lead with concepts and principles before examples
+- If "practice": lead with examples and exercises, explain theory when needed
+- If "mixed": alternate approaches
+- These are FLEXIBLE — adapt dynamically based on what's working
+
+MEMORY:
+- Reference past successes ONLY when relevant and recent (from recentHistory)
+- Draw connections: "This is similar to [past topic] — same pattern applies."
+- Avoid repeating the same examples or analogies from recent history
+- If the user struggled with a topic before and encounters it again, acknowledge progress
+- Never reference history older than what's provided — it may be outdated`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -110,8 +134,38 @@ serve(async (req) => {
 
     // Build context-aware system message
     let contextualPrompt = SYSTEM_PROMPT;
+
+    // Inject user profile for personalization
+    if (context?.profile) {
+      const p = context.profile;
+      contextualPrompt += `\n\n═══════════════════════════════════════\nUSER PROFILE\n═══════════════════════════════════════`;
+      contextualPrompt += `\nPreferred Pace: ${p.preferred_pace || 'normal'}`;
+      contextualPrompt += `\nPreferred Style: ${p.preferred_style || 'mixed'}`;
+      if (p.avg_completion_time) contextualPrompt += `\nAvg Completion Time: ${p.avg_completion_time}s`;
+      if (p.total_sessions) contextualPrompt += `\nTotal Sessions: ${p.total_sessions}`;
+      if (p.total_questions) contextualPrompt += `\nLifetime Questions: ${p.total_questions} (${p.total_correct || 0} correct — ${p.total_questions > 0 ? Math.round(((p.total_correct || 0) / p.total_questions) * 100) : 0}% accuracy)`;
+      if (p.weak_areas?.length) contextualPrompt += `\nKnown Weak Areas: ${p.weak_areas.join(', ')}`;
+      if (p.strong_areas?.length) contextualPrompt += `\nStrong Areas: ${p.strong_areas.join(', ')}`;
+      if (p.current_streak) contextualPrompt += `\nLifetime Streak: ${p.current_streak} (best: ${p.best_streak || 0})`;
+      if (p.xp !== undefined) contextualPrompt += `\nXP: ${p.xp}`;
+    }
+
+    // Inject recent learning history for memory
+    if (context?.recentHistory?.length) {
+      contextualPrompt += `\n\n═══════════════════════════════════════\nRECENT LEARNING HISTORY (last ${context.recentHistory.length} interactions)\n═══════════════════════════════════════`;
+      for (const h of context.recentHistory) {
+        let entry = `\n- [${h.session_type}]`;
+        if (h.topic) entry += ` Topic: ${h.topic}`;
+        if (h.was_correct !== null) entry += ` | ${h.was_correct ? '✓ Correct' : '✗ Incorrect'}`;
+        if (h.hint_level_used > 0) entry += ` | Hints used: ${h.hint_level_used}`;
+        if (h.luna_summary) entry += ` | Note: ${h.luna_summary}`;
+        contextualPrompt += entry;
+      }
+    }
+
+    // Inject session context
     if (context) {
-      contextualPrompt += `\n\n═══════════════════════════════════════\nCURRENT USER CONTEXT\n═══════════════════════════════════════`;
+      contextualPrompt += `\n\n═══════════════════════════════════════\nCURRENT SESSION CONTEXT\n═══════════════════════════════════════`;
       if (context.courseId) contextualPrompt += `\nCourse: ${context.courseId}`;
       if (context.lessonTitle) contextualPrompt += `\nLesson: ${context.lessonTitle}`;
       if (context.currentQuestion) contextualPrompt += `\nCurrent Question: ${context.currentQuestion}`;
