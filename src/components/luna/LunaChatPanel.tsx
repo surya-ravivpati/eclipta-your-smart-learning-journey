@@ -174,7 +174,25 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
         recentHistory: historyRef.current,
       },
       onDelta: upsertAssistant,
-      onDone: () => setIsStreaming(false),
+      onDone: () => {
+        setIsStreaming(false);
+        // Record this interaction to learning_history
+        (async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { tag } = parseLunaTag(assistantSoFar);
+            await supabase.from("learning_history").insert({
+              user_id: user.id,
+              session_type: "chat",
+              topic: ctx.lessonTitle || ctx.courseId || null,
+              question_text: text.slice(0, 500),
+              hint_level_used: ctx.hintLevel,
+              luna_summary: tag ? `[${tag.toUpperCase()}] ${assistantSoFar.slice(0, 200)}` : assistantSoFar.slice(0, 200),
+            });
+          } catch { /* non-critical — don't break chat */ }
+        })();
+      },
       onError: (err) => {
         setMessages(prev => [...prev, {
           role: "assistant",
