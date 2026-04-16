@@ -5,11 +5,22 @@ import {
   Dice5, Heart, Scale, TrendingUp, Sparkles, Trophy, Gift
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ROAD_NODES as RAW_NODES,
+  PLAYER_XP,
+  type TierId,
+  type MonsterArchetypeKey,
+  type RoadNode as BaseRoadNode,
+} from "@/lib/trophy-road-data";
 
 /* ── Types ─────────────────────────────────────────────────── */
 
-type TierId = "bronze" | "silver" | "gold" | "diamond" | "platinum" | "champion" | "unreal" | "god";
-type ArchetypeKey = "speedster" | "tank" | "chud" | "gambler" | "healer" | "fulcrum" | "accelerator" | "god";
+type ArchetypeKey = MonsterArchetypeKey;
+
+interface RoadNode extends BaseRoadNode {
+  unlocked: boolean;
+  current: boolean;
+}
 
 interface RankTier {
   id: TierId;
@@ -68,45 +79,13 @@ const ARCHETYPES: Record<ArchetypeKey, MonsterArchetype> = {
   god:          { id: "god",          name: "God",          emoji: "👑", icon: Crown,       stats: { health: "High", time: "High", damage: "High", multiplier: "High", difficulty: "High" }, colorClass: "text-tier-god" },
 };
 
-// Mock current progress
-const PLAYER_XP = 4200;
-
-const ROAD_NODES: RoadNode[] = [
-  // Bronze tier
-  { id: 1,  tier: "bronze",   type: "rank",    label: "Bronze I",        xp: 0,     unlocked: true,  current: false },
-  { id: 2,  tier: "bronze",   type: "monster", label: "Speedster",       xp: 200,   archetype: "speedster", unlocked: true, current: false },
-  { id: 3,  tier: "bronze",   type: "chest",   label: "Bronze Chest",    xp: 500,   unlocked: true,  current: false },
-  // Silver
-  { id: 4,  tier: "silver",   type: "rank",    label: "Silver I",        xp: 1000,  unlocked: true,  current: false },
-  { id: 5,  tier: "silver",   type: "monster", label: "Tank",            xp: 1500,  archetype: "tank", unlocked: true, current: false },
-  { id: 6,  tier: "silver",   type: "chest",   label: "Silver Chest",    xp: 2000,  unlocked: true,  current: false },
-  // Gold
-  { id: 7,  tier: "gold",     type: "rank",    label: "Gold I",          xp: 3000,  unlocked: true,  current: false },
-  { id: 8,  tier: "gold",     type: "monster", label: "Chud",            xp: 3500,  archetype: "chud", unlocked: true, current: false },
-  { id: 9,  tier: "gold",     type: "chest",   label: "Gold Chest",      xp: 4000,  unlocked: true,  current: true },
-  // Diamond
-  { id: 10, tier: "diamond",  type: "rank",    label: "Diamond I",       xp: 6000,  unlocked: false, current: false },
-  { id: 11, tier: "diamond",  type: "monster", label: "Gambler",         xp: 7000,  archetype: "gambler", unlocked: false, current: false },
-  { id: 12, tier: "diamond",  type: "chest",   label: "Diamond Chest",   xp: 8500,  unlocked: false, current: false },
-  // Platinum
-  { id: 13, tier: "platinum", type: "rank",    label: "Platinum I",      xp: 10000, unlocked: false, current: false },
-  { id: 14, tier: "platinum", type: "monster", label: "Healer",          xp: 12000, archetype: "healer", unlocked: false, current: false },
-  { id: 15, tier: "platinum", type: "chest",   label: "Platinum Chest",  xp: 14000, unlocked: false, current: false },
-  // Champion
-  { id: 16, tier: "champion", type: "rank",    label: "Champion",        xp: 16000, unlocked: false, current: false },
-  { id: 17, tier: "champion", type: "monster", label: "Fulcrum",         xp: 19000, archetype: "fulcrum", unlocked: false, current: false },
-  { id: 18, tier: "champion", type: "chest",   label: "Champion Chest",  xp: 22000, unlocked: false, current: false },
-  // Unreal
-  { id: 19, tier: "unreal",   type: "rank",    label: "Unreal",          xp: 25000, unlocked: false, current: false },
-  { id: 20, tier: "unreal",   type: "monster", label: "Accelerator",     xp: 30000, archetype: "accelerator", unlocked: false, current: false },
-  { id: 21, tier: "unreal",   type: "chest",   label: "Unreal Chest",    xp: 35000, unlocked: false, current: false },
-  // God
-  { id: 22, tier: "god",      type: "rank",    label: "God Tier",        xp: 40000, unlocked: false, current: false },
-  { id: 23, tier: "god",      type: "monster", label: "God Archetype",   xp: 45000, archetype: "god", unlocked: false, current: false },
-  // Finals
-  { id: 24, tier: "god",      type: "final",   label: "Newton",          xp: 48000, unlocked: false, current: false, finalMonster: "newton" },
-  { id: 25, tier: "god",      type: "final",   label: "ECLIPTADON",      xp: 50000, unlocked: false, current: false, finalMonster: "ecliptadon" },
-];
+// Derive enriched nodes from shared data
+const ROAD_NODES: RoadNode[] = RAW_NODES.map((node, i, arr) => {
+  const unlocked = node.xp <= PLAYER_XP;
+  const nextNode = arr[i + 1];
+  const current = unlocked && (!nextNode || nextNode.xp > PLAYER_XP);
+  return { ...node, unlocked, current };
+});
 
 /* ── Tier Background ───────────────────────────────────────── */
 
