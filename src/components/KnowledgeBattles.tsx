@@ -9,8 +9,9 @@ import type { Phase, Action, ArchetypeId, Fighter, MathQuestion, QuestionRecord,
 import { generateQuestion, TIMER_DURATIONS } from "./battles/questions";
 import { statToHp, statToTimeMult, statToDmgMult, statToStreakMult, statToDifficulty, statToSelfDmgMult } from "./battles/stat-mechanics";
 import { ARCHETYPES } from "./battles/archetypes";
-import { ClassSelectDialog } from "./battles/ClassSelectDialog";
+import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDialog";
 import { BattleReport } from "./battles/BattleReport";
+import type { Ecliptar } from "@/lib/ecliptars";
 
 // ─── Action Config ───────────────────────────────────────────────────
 const ACTIONS: Record<Action, ActionConfig> = {
