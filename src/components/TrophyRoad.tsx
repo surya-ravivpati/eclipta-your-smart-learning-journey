@@ -81,13 +81,15 @@ const ARCHETYPES: Record<ArchetypeKey, MonsterArchetype> = {
   god:          { id: "god",          name: "God",          emoji: "👑", icon: Crown,       stats: { health: "High", time: "High", damage: "High", multiplier: "High", difficulty: "High" }, colorClass: "text-tier-god" },
 };
 
-// Derive enriched nodes from shared data
-const ROAD_NODES: RoadNode[] = RAW_NODES.map((node, i, arr) => {
-  const unlocked = node.xp <= PLAYER_XP;
-  const nextNode = arr[i + 1];
-  const current = unlocked && (!nextNode || nextNode.xp > PLAYER_XP);
-  return { ...node, unlocked, current };
-});
+// Derive enriched nodes from shared data based on live player XP
+function deriveNodes(playerXp: number): RoadNode[] {
+  return RAW_NODES.map((node, i, arr) => {
+    const unlocked = node.xp <= playerXp;
+    const nextNode = arr[i + 1];
+    const current = unlocked && (!nextNode || nextNode.xp > playerXp);
+    return { ...node, unlocked, current };
+  });
+}
 
 /* ── Tier Background ───────────────────────────────────────── */
 
