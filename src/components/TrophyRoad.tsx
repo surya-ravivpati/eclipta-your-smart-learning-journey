@@ -5,11 +5,24 @@ import {
   Dice5, Heart, Scale, TrendingUp, Sparkles, Trophy, Gift
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ROAD_NODES as RAW_ROAD_NODES,
+  PLAYER_XP,
+  isNodeUnlocked,
+  isCurrentNode,
+  type TierId,
+  type MonsterArchetypeKey,
+  type RoadNode as BaseRoadNode,
+} from "@/lib/trophy-road-data";
 
 /* ── Types ─────────────────────────────────────────────────── */
 
-type TierId = "bronze" | "silver" | "gold" | "diamond" | "platinum" | "champion" | "unreal" | "god";
-type ArchetypeKey = "speedster" | "tank" | "chud" | "gambler" | "healer" | "fulcrum" | "accelerator" | "god";
+type ArchetypeKey = MonsterArchetypeKey;
+
+interface RoadNode extends BaseRoadNode {
+  unlocked: boolean;
+  current: boolean;
+}
 
 interface RankTier {
   id: TierId;
