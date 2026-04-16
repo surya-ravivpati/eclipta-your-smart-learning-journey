@@ -41,7 +41,7 @@ export function useOwnedEcliptars(pollMs = 5000) {
       .from("user_ecliptars" as any)
       .select("ecliptar_slug")
       .eq("user_id", user.id);
-    setSlugs(new Set(((data ?? []) as { ecliptar_slug: string }[]).map((r) => r.ecliptar_slug)));
+    setSlugs(new Set(((data ?? []) as unknown as { ecliptar_slug: string }[]).map((r) => r.ecliptar_slug)));
     setLoading(false);
   }, []);
 

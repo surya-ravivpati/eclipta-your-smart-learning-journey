@@ -46,7 +46,7 @@ export async function fetchOwnedEcliptarSlugs(): Promise<Set<string>> {
     .from("user_ecliptars" as any)
     .select("ecliptar_slug")
     .eq("user_id", user.id);
-  return new Set(((data ?? []) as { ecliptar_slug: string }[]).map((r) => r.ecliptar_slug));
+  return new Set(((data ?? []) as unknown as { ecliptar_slug: string }[]).map((r) => r.ecliptar_slug));
 }
 
 /**
