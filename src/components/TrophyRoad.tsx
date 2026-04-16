@@ -95,10 +95,37 @@ function deriveNodes(playerXp: number): RoadNode[] {
 
 /* ── Node Component ────────────────────────────────────────── */
 
-function RoadNodeItem({ node, index }: { node: RoadNode; index: number }) {
+function RoadNodeItem({ node, index, ownedSlugs, onClaimed }: {
+  node: RoadNode;
+  index: number;
+  ownedSlugs: Set<string>;
+  onClaimed: () => void;
+}) {
   const tier = TIERS[node.tier];
   const archetype = node.archetype ? ARCHETYPES[node.archetype] : null;
   const [hovered, setHovered] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+
+  // Determine if this monster node has unclaimed Ecliptars
+  const isClaimable = node.type === "monster" && node.archetype && node.unlocked;
+  const requiredSlugs = node.archetype ? getEcliptarsByArchetype(node.archetype).map(e => e.slug) : [];
+  const allOwned = requiredSlugs.length > 0 && requiredSlugs.every(s => ownedSlugs.has(s));
+  const showClaim = isClaimable && !allOwned;
+
+  const handleClaim = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!node.archetype || claiming) return;
+    setClaiming(true);
+    const granted = await claimArchetypeReward(node.archetype, node.id);
+    setClaiming(false);
+    if (granted.length > 0) {
+      toast(`🎉 ${ARCHETYPES[node.archetype].name} Ecliptars unlocked!`, {
+        description: `You now own ${granted.map(g => g.name).join(" & ")} for battle.`,
+        duration: 6000,
+      });
+      onClaimed();
+    }
+  };
 
   const isFinal = node.type === "final";
   const nodeSize = isFinal ? "w-20 h-20" : node.type === "rank" ? "w-14 h-14" : "w-12 h-12";
