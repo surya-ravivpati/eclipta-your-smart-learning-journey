@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Swords, Zap, Trophy, Shield, Flame, Timer, Sparkles,
-  Target, Heart, Skull, Dices,
+  Target, Heart, Skull, Dices, User, Bot,
 } from "lucide-react";
 
 import type { Phase, Action, ArchetypeId, Fighter, MathQuestion, QuestionRecord, BattleStats, ActionConfig } from "./battles/types";
@@ -20,7 +20,6 @@ const ACTIONS: Record<Action, ActionConfig> = {
   charge: { label: "Charge", icon: Zap, difficulty: "hard", dmg: 25, focusCost: 0, desc: "Deal 25 DMG" },
   wild:   { label: "Wild",   icon: Dices, difficulty: "medium", dmg: 0, focusCost: 10, desc: "Random effect" },
 };
-const ACTION_EMOJIS: Record<Action, string> = { attack: ">>", defend: "[#]", charge: "//", wild: "[?]" };
 
 const LEADERBOARD = [
   { rank: 1, name: "shadowKing", xp: 24800, wins: 312, tier: "Grandmaster" },
