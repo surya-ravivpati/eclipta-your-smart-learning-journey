@@ -117,7 +117,7 @@ export function BattleReport({ stats, onRematch, onBack }: {
         </motion.div>
         <h3 className="text-3xl font-bold font-display mb-1">{stats.won ? "VICTORY!" : "DEFEATED"}</h3>
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <span>{arch.emoji}</span>
+          <arch.icon className={`w-3.5 h-3.5 ${arch.color}`} />
           <span className={arch.color}>{arch.name}</span>
         </div>
       </div>

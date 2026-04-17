@@ -72,7 +72,7 @@ function CollectionPage() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl">{arch.emoji}</span>
+                      <arch.icon className={cn("w-8 h-8", arch.color)} />
                       <div>
                         <h2 className={cn("text-xl font-bold font-display", arch.color)}>{arch.name}</h2>
                         <p className="text-[10px] font-bold tracking-widest text-muted-foreground">
@@ -109,7 +109,7 @@ function CollectionPage() {
                               <Lock className="w-5 h-5 text-muted-foreground" />
                             </div>
                           )}
-                          <div className="text-4xl mb-2">{e.avatar}</div>
+                          <e.icon className={cn("w-10 h-10 mx-auto mb-2", isOwned ? arch.color : "text-muted-foreground")} />
                           <div className={cn("text-sm font-bold font-display", isOwned ? arch.color : "text-muted-foreground")}>
                             {e.name}
                           </div>
