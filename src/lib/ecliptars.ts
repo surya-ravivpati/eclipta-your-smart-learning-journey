@@ -3,6 +3,8 @@
  * Two placeholders per archetype, unlocked by claiming the matching trophy road monster node.
  */
 import { supabase } from "@/integrations/supabase/client";
+import type { LucideIcon } from "lucide-react";
+import { Zap, Shield, Skull, Dice5, Heart, Scale, FastForward, Crown } from "lucide-react";
 import type { MonsterArchetypeKey } from "./trophy-road-data";
 import { ROAD_NODES } from "./trophy-road-data";
 
@@ -10,24 +12,26 @@ export interface Ecliptar {
   slug: string;
   name: string;
   archetype: MonsterArchetypeKey;
-  avatar: string;
+  icon: LucideIcon;
 }
+
+const ARCH_ICON: Record<MonsterArchetypeKey, LucideIcon> = {
+  speedster: Zap,
+  tank: Shield,
+  chud: Skull,
+  gambler: Dice5,
+  healer: Heart,
+  fulcrum: Scale,
+  accelerator: FastForward,
+  god: Crown,
+};
 
 /** Two placeholder Ecliptars per archetype (A and B). */
 export const ECLIPTARS: Ecliptar[] = (
-  [
-    ["speedster", "//"],
-    ["tank", "[#]"],
-    ["chud", "x_x"],
-    ["gambler", "[?]"],
-    ["healer", "(+)"],
-    ["fulcrum", "<=>"],
-    ["accelerator", ">>"],
-    ["god", "[*]"],
-  ] as [MonsterArchetypeKey, string][]
-).flatMap(([arch, avatar]) => [
-  { slug: `${arch}-a`, name: `Ecliptar A`, archetype: arch, avatar },
-  { slug: `${arch}-b`, name: `Ecliptar B`, archetype: arch, avatar },
+  Object.keys(ARCH_ICON) as MonsterArchetypeKey[]
+).flatMap((arch) => [
+  { slug: `${arch}-a`, name: `Ecliptar A`, archetype: arch, icon: ARCH_ICON[arch] },
+  { slug: `${arch}-b`, name: `Ecliptar B`, archetype: arch, icon: ARCH_ICON[arch] },
 ]);
 
 export function getEcliptarsByArchetype(arch: MonsterArchetypeKey): Ecliptar[] {
