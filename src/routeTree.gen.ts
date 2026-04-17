@@ -13,12 +13,14 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated.progress'
 import { Route as AuthenticatedPersonalizedRouteImport } from './routes/_authenticated.personalized'
 import { Route as AuthenticatedLunaRouteImport } from './routes/_authenticated.luna'
 import { Route as AuthenticatedForumRouteImport } from './routes/_authenticated.forum'
+import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated.collection'
 import { Route as AuthenticatedCertifiedRouteImport } from './routes/_authenticated.certified'
 import { Route as AuthenticatedBuildCourseRouteImport } from './routes/_authenticated.build-course'
 import { Route as AuthenticatedBattlesRouteImport } from './routes/_authenticated.battles'
@@ -42,6 +44,11 @@ const LoginRoute = LoginRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -74,6 +81,11 @@ const AuthenticatedForumRoute = AuthenticatedForumRouteImport.update({
   path: '/forum',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCollectionRoute = AuthenticatedCollectionRouteImport.update({
+  id: '/collection',
+  path: '/collection',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCertifiedRoute = AuthenticatedCertifiedRouteImport.update({
   id: '/certified',
   path: '/certified',
@@ -99,6 +111,7 @@ const AuthenticatedAdaptiveTestsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -107,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/battles': typeof AuthenticatedBattlesRoute
   '/build-course': typeof AuthenticatedBuildCourseRoute
   '/certified': typeof AuthenticatedCertifiedRoute
+  '/collection': typeof AuthenticatedCollectionRoute
   '/forum': typeof AuthenticatedForumRoute
   '/luna': typeof AuthenticatedLunaRoute
   '/personalized': typeof AuthenticatedPersonalizedRoute
@@ -114,6 +128,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -122,6 +137,7 @@ export interface FileRoutesByTo {
   '/battles': typeof AuthenticatedBattlesRoute
   '/build-course': typeof AuthenticatedBuildCourseRoute
   '/certified': typeof AuthenticatedCertifiedRoute
+  '/collection': typeof AuthenticatedCollectionRoute
   '/forum': typeof AuthenticatedForumRoute
   '/luna': typeof AuthenticatedLunaRoute
   '/personalized': typeof AuthenticatedPersonalizedRoute
@@ -131,6 +147,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/about': typeof AboutRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -139,6 +156,7 @@ export interface FileRoutesById {
   '/_authenticated/battles': typeof AuthenticatedBattlesRoute
   '/_authenticated/build-course': typeof AuthenticatedBuildCourseRoute
   '/_authenticated/certified': typeof AuthenticatedCertifiedRoute
+  '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/forum': typeof AuthenticatedForumRoute
   '/_authenticated/luna': typeof AuthenticatedLunaRoute
   '/_authenticated/personalized': typeof AuthenticatedPersonalizedRoute
@@ -148,6 +166,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
@@ -156,6 +175,7 @@ export interface FileRouteTypes {
     | '/battles'
     | '/build-course'
     | '/certified'
+    | '/collection'
     | '/forum'
     | '/luna'
     | '/personalized'
@@ -163,6 +183,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
@@ -171,6 +192,7 @@ export interface FileRouteTypes {
     | '/battles'
     | '/build-course'
     | '/certified'
+    | '/collection'
     | '/forum'
     | '/luna'
     | '/personalized'
@@ -179,6 +201,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/forgot-password'
     | '/login'
     | '/reset-password'
@@ -187,6 +210,7 @@ export interface FileRouteTypes {
     | '/_authenticated/battles'
     | '/_authenticated/build-course'
     | '/_authenticated/certified'
+    | '/_authenticated/collection'
     | '/_authenticated/forum'
     | '/_authenticated/luna'
     | '/_authenticated/personalized'
@@ -196,6 +220,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AboutRoute: typeof AboutRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -230,6 +255,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -274,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedForumRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/collection': {
+      id: '/_authenticated/collection'
+      path: '/collection'
+      fullPath: '/collection'
+      preLoaderRoute: typeof AuthenticatedCollectionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/certified': {
       id: '/_authenticated/certified'
       path: '/certified'
@@ -310,6 +349,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBattlesRoute: typeof AuthenticatedBattlesRoute
   AuthenticatedBuildCourseRoute: typeof AuthenticatedBuildCourseRoute
   AuthenticatedCertifiedRoute: typeof AuthenticatedCertifiedRoute
+  AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
   AuthenticatedForumRoute: typeof AuthenticatedForumRoute
   AuthenticatedLunaRoute: typeof AuthenticatedLunaRoute
   AuthenticatedPersonalizedRoute: typeof AuthenticatedPersonalizedRoute
@@ -321,6 +361,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBattlesRoute: AuthenticatedBattlesRoute,
   AuthenticatedBuildCourseRoute: AuthenticatedBuildCourseRoute,
   AuthenticatedCertifiedRoute: AuthenticatedCertifiedRoute,
+  AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
   AuthenticatedForumRoute: AuthenticatedForumRoute,
   AuthenticatedLunaRoute: AuthenticatedLunaRoute,
   AuthenticatedPersonalizedRoute: AuthenticatedPersonalizedRoute,
@@ -334,6 +375,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AboutRoute: AboutRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,

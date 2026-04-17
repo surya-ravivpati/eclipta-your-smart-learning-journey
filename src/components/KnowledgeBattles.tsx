@@ -11,7 +11,7 @@ import { statToHp, statToTimeMult, statToDmgMult, statToStreakMult, statToDiffic
 import { ARCHETYPES } from "./battles/archetypes";
 import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDialog";
 import { BattleReport } from "./battles/BattleReport";
-import type { Ecliptar } from "@/lib/ecliptars";
+import { ECLIPTARS, type Ecliptar } from "@/lib/ecliptars";
 
 // ─── Action Config ───────────────────────────────────────────────────
 const ACTIONS: Record<Action, ActionConfig> = {
@@ -186,6 +186,7 @@ function BattleLog({ logs }: { logs: string[] }) {
 function BattleArena() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [archetype, setArchetype] = useState<ArchetypeId>("speedster");
+  const [opponentArchetype, setOpponentArchetype] = useState<ArchetypeId>("tank");
   const [player, setPlayer] = useState<Fighter>({ name: "You", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, avatar: "🧑‍💻" });
   const [opponent, setOpponent] = useState<Fighter>({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, avatar: "🤖" });
   const [momentum, setMomentum] = useState(0);
@@ -323,11 +324,13 @@ function BattleArena() {
   }, [totalScore, records, longestStreak, fastestAnswer, archetype]);
 
   const aiTurn = useCallback(() => {
-    const aiDmg = Math.floor(Math.random() * 8) + 5;
+    const oppArch = ARCHETYPES[opponentArchetype];
+    const dmgMult = statToDmgMult(oppArch.stats.damage);
+    const aiDmg = Math.floor((Math.floor(Math.random() * 8) + 5) * dmgMult);
     setTimeout(() => {
       setPlayer(prev => {
         const newHp = Math.max(0, prev.hp - aiDmg);
-        addLog(`🤖 AI strikes: -${aiDmg} HP.`);
+        addLog(`${opponent.avatar} ${opponent.name} strikes: -${aiDmg} HP.`);
         setShowPlayerHit(true);
         setTimeout(() => {
           setShowPlayerHit(false);
@@ -336,7 +339,7 @@ function BattleArena() {
         return { ...prev, hp: newHp };
       });
     }, 400);
-  }, [addLog, finishBattle]);
+  }, [addLog, finishBattle, opponentArchetype, opponent.avatar, opponent.name]);
 
   const selectAction = (action: Action) => {
     if (action === "wild" && player.focus < 10) { addLog("⚠️ Not enough Focus!"); return; }
@@ -368,17 +371,25 @@ function BattleArena() {
     const eclip = selection?.ecliptar ?? ecliptar;
     if (selection?.archetype) setArchetype(selection.archetype);
     if (selection?.ecliptar) setEcliptar(selection.ecliptar);
+
+    // Pick a random Ecliptar opponent (different archetype if possible)
+    const candidates = ECLIPTARS.filter(e => e.archetype !== cls);
+    const oppEclip = candidates[Math.floor(Math.random() * candidates.length)] ?? ECLIPTARS[0];
+    const oppArch = ARCHETYPES[oppEclip.archetype];
+    setOpponentArchetype(oppEclip.archetype);
+
     setPhase("searching");
     setTimeout(() => {
       const arch = ARCHETYPES[cls];
       const playerHp = statToHp(arch.stats.health);
       const playerName = eclip?.name ?? "You";
       const playerAvatar = eclip?.avatar ?? "🧑‍💻";
+      const oppHp = statToHp(oppArch.stats.health);
       setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: 50, maxFocus: 50, avatar: playerAvatar });
-      setOpponent({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, avatar: "🤖" });
+      setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, avatar: oppEclip.avatar });
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
-      addLog(`⚔️ ${playerName} (${arch.emoji} ${arch.name}) enters the arena! (${playerHp} HP)`);
+      addLog(`⚔️ ${playerName} (${arch.emoji} ${arch.name}) vs ${oppEclip.name} (${oppArch.emoji} ${oppArch.name})!`);
     }, 2200);
   };
 
