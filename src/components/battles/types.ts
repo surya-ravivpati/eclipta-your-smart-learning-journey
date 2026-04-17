@@ -27,13 +27,13 @@ export interface Fighter {
   maxHp: number;
   focus: number;
   maxFocus: number;
-  avatar: string;
+  icon: LucideIcon;
 }
 
 export interface Archetype {
   id: ArchetypeId;
   name: string;
-  emoji: string;
+  icon: LucideIcon;
   color: string;
   borderColor: string;
   description: string;
