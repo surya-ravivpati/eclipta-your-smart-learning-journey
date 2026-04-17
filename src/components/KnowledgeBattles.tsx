@@ -11,7 +11,7 @@ import { statToHp, statToTimeMult, statToDmgMult, statToStreakMult, statToDiffic
 import { ARCHETYPES } from "./battles/archetypes";
 import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDialog";
 import { BattleReport } from "./battles/BattleReport";
-import type { Ecliptar } from "@/lib/ecliptars";
+import { ECLIPTARS, type Ecliptar } from "@/lib/ecliptars";
 
 // ─── Action Config ───────────────────────────────────────────────────
 const ACTIONS: Record<Action, ActionConfig> = {
