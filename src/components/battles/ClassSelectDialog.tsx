@@ -49,7 +49,7 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <span className="text-4xl">{arch.emoji}</span>
+          <arch.icon className={cn("w-10 h-10", arch.color)} />
           <div>
             <h3 className="text-xl font-bold font-display">{arch.name}</h3>
             <p className={cn("text-xs font-bold tracking-widest", arch.color)}>CHOOSE YOUR ECLIPTAR</p>
@@ -93,7 +93,7 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection
                       <Lock className="w-5 h-5 text-muted-foreground" />
                     </div>
                   )}
-                  <div className="text-4xl mb-2">{e.avatar}</div>
+                  <e.icon className={cn("w-10 h-10 mb-2", isOwned ? arch.color : "text-muted-foreground")} />
                   <h4 className={cn("font-bold font-display text-base", isOwned ? arch.color : "text-muted-foreground")}>
                     {e.name}
                   </h4>
@@ -159,7 +159,7 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection
               )}
 
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-3xl">{arch.emoji}</span>
+                <arch.icon className={cn("w-8 h-8", isUnlocked ? arch.color : "text-muted-foreground")} />
                 <div>
                   <h4 className={cn("font-bold font-display text-sm", isUnlocked ? arch.color : "text-muted-foreground")}>{arch.name}</h4>
                   <p className="text-[10px] text-muted-foreground tracking-widest font-bold">{arch.passive}</p>
