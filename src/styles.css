@@ -74,8 +74,8 @@
   --color-tier-unreal: var(--tier-unreal);
   --color-tier-god: var(--tier-god);
 
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-display: 'Molgan', 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', Calibri, sans-serif;
 }
 
 :root {
