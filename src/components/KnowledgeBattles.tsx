@@ -85,13 +85,15 @@ function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal }: 
       </AnimatePresence>
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-12 h-12 border-2 flex items-center justify-center text-2xl ${side === "left" ? "border-neon-cyan/50 bg-neon-cyan/5" : "border-neon-pink/50 bg-neon-pink/5"}`}>
-            {fighter.avatar}
+          <div className={`w-12 h-12 border-2 flex items-center justify-center ${side === "left" ? "border-neon-cyan/50 bg-neon-cyan/5 text-neon-cyan" : "border-neon-pink/50 bg-neon-pink/5 text-neon-pink"}`}>
+            <fighter.icon className="w-6 h-6" />
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="font-bold font-display text-sm truncate">{fighter.name}</h4>
             {side === "left" && arch && (
-              <span className={`text-[9px] font-bold tracking-widest ${arch.color}`}>{arch.emoji} {arch.name.toUpperCase()}</span>
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-widest ${arch.color}`}>
+                <arch.icon className="w-3 h-3" /> {arch.name.toUpperCase()}
+              </span>
             )}
             {side === "left" && momentum > 0 && (
               <motion.div className="flex items-center gap-1 text-neon-pink" key={momentum} initial={{ scale: 1.3 }} animate={{ scale: 1 }}>
@@ -186,8 +188,8 @@ function BattleArena() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [archetype, setArchetype] = useState<ArchetypeId>("speedster");
   const [opponentArchetype, setOpponentArchetype] = useState<ArchetypeId>("tank");
-  const [player, setPlayer] = useState<Fighter>({ name: "You", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, avatar: "[P1]" });
-  const [opponent, setOpponent] = useState<Fighter>({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, avatar: "[AI]" });
+  const [player, setPlayer] = useState<Fighter>({ name: "You", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, icon: User });
+  const [opponent, setOpponent] = useState<Fighter>({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, icon: Bot });
   const [momentum, setMomentum] = useState(0);
   const [currentAction, setCurrentAction] = useState<Action | null>(null);
   const [question, setQuestion] = useState<MathQuestion | null>(null);
@@ -268,7 +270,7 @@ function BattleArena() {
         const dmg = Math.floor(baseDmg * currentStreakMult);
         setOpponent(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
         setShowOpponentHit(true);
-        addLog(`✅ ${ACTION_EMOJIS[currentAction]} ${action.label}: ${dmg} DMG!${currentStreakMult > 1.1 ? ` 🔥 ${currentStreakMult.toFixed(1)}x STREAK!` : ""}`);
+        addLog(`✅ ${action.label}: ${dmg} DMG!${currentStreakMult > 1.1 ? ` 🔥 ${currentStreakMult.toFixed(1)}x STREAK!` : ""}`);
       }
       setTotalScore(prev => prev + (currentAction === "charge" ? 150 : currentAction === "attack" ? 100 : 75) * currentStreakMult);
     } else {
@@ -329,7 +331,7 @@ function BattleArena() {
     setTimeout(() => {
       setPlayer(prev => {
         const newHp = Math.max(0, prev.hp - aiDmg);
-        addLog(`${opponent.avatar} ${opponent.name} strikes: -${aiDmg} HP.`);
+        addLog(`${opponent.name} strikes: -${aiDmg} HP.`);
         setShowPlayerHit(true);
         setTimeout(() => {
           setShowPlayerHit(false);
@@ -338,7 +340,7 @@ function BattleArena() {
         return { ...prev, hp: newHp };
       });
     }, 400);
-  }, [addLog, finishBattle, opponentArchetype, opponent.avatar, opponent.name]);
+  }, [addLog, finishBattle, opponentArchetype, opponent.name]);
 
   const selectAction = (action: Action) => {
     if (action === "wild" && player.focus < 10) { addLog("⚠️ Not enough Focus!"); return; }
@@ -382,13 +384,13 @@ function BattleArena() {
       const arch = ARCHETYPES[cls];
       const playerHp = statToHp(arch.stats.health);
       const playerName = eclip?.name ?? "You";
-      const playerAvatar = eclip?.avatar ?? "[P1]";
+      const playerIcon = eclip?.icon ?? User;
       const oppHp = statToHp(oppArch.stats.health);
-      setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: 50, maxFocus: 50, avatar: playerAvatar });
-      setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, avatar: oppEclip.avatar });
+      setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: 50, maxFocus: 50, icon: playerIcon });
+      setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, icon: oppEclip.icon });
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
-      addLog(`⚔️ ${playerName} (${arch.emoji} ${arch.name}) vs ${oppEclip.name} (${oppArch.emoji} ${oppArch.name})!`);
+      addLog(`⚔️ ${playerName} (${arch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
     }, 2200);
   };
 
@@ -434,7 +436,7 @@ function BattleArena() {
           <Target className="w-8 h-8 text-neon-pink" />
         </motion.div>
         <h3 className="text-xl font-bold font-display mb-1">Matching opponent...</h3>
-        <p className={`text-xs font-bold ${arch.color}`}>{arch.emoji} {arch.name}</p>
+        <p className={`inline-flex items-center gap-1 text-xs font-bold ${arch.color}`}><arch.icon className="w-3.5 h-3.5" /> {arch.name}</p>
         <motion.div className="flex justify-center gap-1 mt-4" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }}>
           {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-neon-pink rounded-full" />)}
         </motion.div>
@@ -489,8 +491,7 @@ function BattleArena() {
                 className={`glass-panel p-4 text-center transition-colors ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-neon-purple/5 hover:border-neon-purple/30"}`}
                 whileHover={!disabled ? { scale: 1.03, y: -2 } : {}} whileTap={!disabled ? { scale: 0.97 } : {}}
               >
-                <span className="text-xl mb-1 block">{ACTION_EMOJIS[key]}</span>
-                <Icon className={`w-5 h-5 mx-auto mb-1 ${key === "charge" ? "text-neon-pink" : key === "defend" ? "text-neon-cyan" : key === "wild" ? "text-neon-purple" : "text-foreground"}`} />
+                <Icon className={`w-6 h-6 mx-auto mb-1 ${key === "charge" ? "text-neon-pink" : key === "defend" ? "text-neon-cyan" : key === "wild" ? "text-neon-purple" : "text-foreground"}`} />
                 <div className="text-[10px] font-bold tracking-widest">{act.label.toUpperCase()}</div>
                 <div className="text-[9px] text-muted-foreground mt-0.5">{act.desc}</div>
               </motion.button>
@@ -537,7 +538,7 @@ export function KnowledgeBattles() {
               <div className="space-y-3">
                 {Object.values(ARCHETYPES).map(a => (
                   <div key={a.id} className="flex items-start gap-3">
-                    <span className="text-lg">{a.emoji}</span>
+                    <a.icon className={`w-4 h-4 mt-0.5 ${a.color}`} />
                     <div>
                       <span className={`text-xs font-bold ${a.color}`}>{a.name}</span>
                       <p className="text-[10px] text-muted-foreground">{a.passive}</p>
