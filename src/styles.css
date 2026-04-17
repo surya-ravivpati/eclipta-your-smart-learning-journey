@@ -3,10 +3,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @font-face {
-  font-family: 'Molgan';
-  src: url('/fonts/MolganRegular.otf') format('opentype');
+  font-family: 'RobotHeroes';
+  src: url('/fonts/RobotHeroes.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'RobotHeroes';
+  src: url('/fonts/RobotHeroesItalic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
   font-display: swap;
 }
 
@@ -74,7 +81,7 @@
   --color-tier-unreal: var(--tier-unreal);
   --color-tier-god: var(--tier-god);
 
-  --font-display: 'Molgan', 'Space Grotesk', sans-serif;
+  --font-display: 'RobotHeroes', 'Space Grotesk', sans-serif;
   --font-body: 'Inter', Calibri, sans-serif;
 }
 
