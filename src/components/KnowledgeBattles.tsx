@@ -383,7 +383,7 @@ function BattleArena() {
       const arch = ARCHETYPES[cls];
       const playerHp = statToHp(arch.stats.health);
       const playerName = eclip?.name ?? "You";
-      const playerAvatar = eclip?.avatar ?? "🧑‍💻";
+      const playerAvatar = eclip?.avatar ?? "[P1]";
       const oppHp = statToHp(oppArch.stats.health);
       setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: 50, maxFocus: 50, avatar: playerAvatar });
       setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, avatar: oppEclip.avatar });
