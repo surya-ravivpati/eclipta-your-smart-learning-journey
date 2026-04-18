@@ -661,18 +661,7 @@ export function KnowledgeBattles() {
 
             <LeaderboardCard />
 
-            <motion.div className="glass-panel p-5 border border-neon-purple/20" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-neon-purple/10 border border-neon-purple/30 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-neon-purple" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold tracking-widest">DAILY CHALLENGE</h4>
-                  <p className="text-[10px] text-muted-foreground">Win 3 battles today for 2x XP bonus</p>
-                </div>
-                <div className="ml-auto text-lg font-bold font-display text-neon-purple">0/3</div>
-              </div>
-            </motion.div>
+            <DailyChallengeCard />
           </div>
         </div>
       </div>
