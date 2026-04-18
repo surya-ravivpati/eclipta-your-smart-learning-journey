@@ -197,7 +197,13 @@ function LiveDemo() {
     setQIndex(i => i + 1);
     setSelected(null);
     setShowResult(false);
+    setQuestionStart(Date.now());
   };
+
+  // Reset timer on start and on question change
+  useEffect(() => {
+    if (started && !showResult) setQuestionStart(Date.now());
+  }, [started, qIndex, showResult]);
 
   const reset = () => {
     setStarted(false);
