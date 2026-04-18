@@ -31,25 +31,37 @@ export function StatsFooter() {
     return () => { cancelled = true; };
   }, []);
 
+  const allZero = learners === 0 && battles === 0 && ecliptars === 0;
+  const loaded = learners !== null;
+
   return (
     <footer className="border-t border-border">
       <div className="max-w-7xl mx-auto px-6">
         {/* Stats bar */}
         <div className="py-12 flex flex-col md:flex-row justify-between items-center gap-8 border-b border-border">
-          <div className="flex flex-wrap gap-8 md:gap-16">
+          {loaded && allZero ? (
             <div>
-              <p className="text-3xl font-bold tabular-nums font-display">{formatCount(learners)}</p>
-              <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Learners Joined</p>
+              <p className="text-2xl font-bold font-display tracking-tight">Just launched.</p>
+              <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase mt-1">
+                Be among the first to shape the arena.
+              </p>
             </div>
-            <div>
-              <p className="text-3xl font-bold tabular-nums font-display">{formatCount(battles)}</p>
-              <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Battles Fought</p>
+          ) : (
+            <div className="flex flex-wrap gap-8 md:gap-16">
+              <div>
+                <p className="text-3xl font-bold tabular-nums font-display">{formatCount(learners)}</p>
+                <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Learners Joined</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold tabular-nums font-display">{formatCount(battles)}</p>
+                <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Battles Fought</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold tabular-nums font-display">{formatCount(ecliptars)}</p>
+                <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Ecliptars Claimed</p>
+              </div>
             </div>
-            <div>
-              <p className="text-3xl font-bold tabular-nums font-display">{formatCount(ecliptars)}</p>
-              <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Ecliptars Claimed</p>
-            </div>
-          </div>
+          )}
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-neon-purple animate-pulse" />
             <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">Arena Status: Active</span>

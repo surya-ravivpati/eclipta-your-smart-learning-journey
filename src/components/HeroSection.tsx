@@ -49,7 +49,7 @@ export function HeroSection() {
           </div>
         </motion.div>
 
-        {/* Battle Preview Card */}
+        {/* Featured Duel Card */}
         <motion.div
           className="lg:col-span-5 relative"
           initial={{ opacity: 0, x: 40 }}
@@ -58,46 +58,37 @@ export function HeroSection() {
         >
           <div className="absolute -inset-1 bg-gradient-to-tr from-neon-purple/20 to-neon-pink/20 blur-2xl opacity-50" />
           <div className="relative glass-panel p-8">
-            <div className="flex justify-between items-end mb-12">
+            <div className="flex justify-between items-end mb-10">
               <div>
-                <p className="text-[10px] tracking-widest text-muted-foreground mb-1 uppercase font-bold">Active Battle</p>
-                <h3 className="text-2xl font-bold font-display">Quantum Mechanics</h3>
+                <p className="text-[10px] tracking-widest text-neon-pink mb-1 uppercase font-bold">Today's Featured Duel</p>
+                <h3 className="text-2xl font-bold font-display">Mental Math Arena</h3>
               </div>
               <div className="text-right">
-                <p className="text-2xl font-bold tabular-nums text-neon-purple">04:12</p>
-                <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Time Remaining</p>
+                <p className="text-2xl font-bold tabular-nums text-neon-purple">3 ★</p>
+                <p className="text-[10px] tracking-widest text-muted-foreground font-bold uppercase">Difficulty</p>
               </div>
             </div>
 
-            <div className="space-y-6 mb-8">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-neon-purple/20 border border-neon-purple flex items-center justify-center font-bold text-xs">1</div>
-                    <span className="text-sm font-semibold tracking-tight">Kaito_Zero</span>
-                  </div>
-                  <span className="text-sm font-mono text-neon-purple">2,840 XP</span>
-                </div>
-                <div className="h-1 bg-secondary w-full"><div className="h-full bg-neon-purple w-[85%]" /></div>
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center justify-between text-xs border-b border-border/50 pb-3">
+                <span className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]">Format</span>
+                <span className="font-bold">1v1 · Best of 5</span>
               </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-secondary border border-border flex items-center justify-center font-bold text-xs text-muted-foreground">2</div>
-                    <span className="text-sm font-semibold tracking-tight text-muted-foreground">Sarah_Vance</span>
-                  </div>
-                  <span className="text-sm font-mono text-muted-foreground">2,410 XP</span>
-                </div>
-                <div className="h-1 bg-secondary w-full"><div className="h-full bg-muted-foreground/30 w-[62%]" /></div>
+              <div className="flex items-center justify-between text-xs border-b border-border/50 pb-3">
+                <span className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]">Topics</span>
+                <span className="font-bold">Algebra · Fractions · Exponents</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground uppercase tracking-widest font-bold text-[10px]">Reward</span>
+                <span className="font-bold text-neon-cyan">+150 XP · Ecliptar Shard</span>
               </div>
             </div>
 
             <Link
               to="/battles"
-              className="block w-full py-4 text-center border border-border text-xs font-bold tracking-widest hover:bg-foreground hover:text-background transition-all"
+              className="block w-full py-4 text-center bg-neon-purple/10 border border-neon-purple text-neon-purple text-xs font-bold tracking-widest hover:bg-neon-purple hover:text-background transition-all"
             >
-              ENTER THE ARENA
+              START THIS BATTLE →
             </Link>
           </div>
         </motion.div>
