@@ -149,6 +149,7 @@ function CourseFormats() {
 /* ── interactive demo ── */
 
 function LiveDemo() {
+  const { user } = useAuth();
   const [started, setStarted] = useState(false);
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -157,6 +158,7 @@ function LiveDemo() {
   const [streak, setStreak] = useState(0);
   const [difficultyLevel, setDifficultyLevel] = useState(1);
   const [history, setHistory] = useState<{ correct: boolean; topic: string; difficulty: number }[]>([]);
+  const [questionStart, setQuestionStart] = useState<number>(Date.now());
 
   const currentQ = DEMO_QUESTIONS[Math.min(qIndex, DEMO_QUESTIONS.length - 1)];
   const finished = qIndex >= DEMO_QUESTIONS.length;
@@ -166,6 +168,7 @@ function LiveDemo() {
     setSelected(idx);
     setShowResult(true);
     const correct = idx === currentQ.correct;
+    const responseMs = Date.now() - questionStart;
     if (correct) {
       setScore(s => s + 1);
       setStreak(s => s + 1);
@@ -175,6 +178,19 @@ function LiveDemo() {
       setDifficultyLevel(d => Math.max(1, d - 1));
     }
     setHistory(h => [...h, { correct, topic: currentQ.topic, difficulty: currentQ.difficulty }]);
+
+    // Persist to learning_history if logged in (best-effort, non-blocking)
+    if (user) {
+      void supabase.from("learning_history").insert({
+        user_id: user.id,
+        session_type: "adaptive_test",
+        topic: currentQ.topic,
+        question_text: currentQ.question,
+        was_correct: correct,
+        response_time_ms: responseMs,
+        hint_level_used: 0,
+      });
+    }
   };
 
   const nextQuestion = () => {
