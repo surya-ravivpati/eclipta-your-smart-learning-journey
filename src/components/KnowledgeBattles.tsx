@@ -244,8 +244,9 @@ function BattleArena() {
       if (newMom > longestStreak) setLongestStreak(newMom);
 
       if (currentAction === "defend") {
-        const heal = Math.min(10, player.maxHp - player.hp);
-        setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + 10), focus: Math.min(prev.maxFocus, prev.focus + 10) }));
+        const healAmt = archetype === "healer" ? 20 : 10;
+        const heal = Math.min(healAmt, player.maxHp - player.hp);
+        setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + healAmt), focus: Math.min(prev.maxFocus, prev.focus + 10) }));
         setShowPlayerHeal(true);
         addLog(`✅ Correct! Defend: +${heal} HP, +10 Focus.`);
       } else if (currentAction === "wild") {
