@@ -204,7 +204,15 @@ function BattleArena() {
   const [longestStreak, setLongestStreak] = useState(0);
   const [fastestAnswer, setFastestAnswer] = useState(Infinity);
   const [battleStats, setBattleStats] = useState<BattleStats | null>(null);
+  const [gamblerStats, setGamblerStats] = useState<{ health: number; time: number; damage: number; multiplier: number; difficulty: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Returns archetype, with stats overridden by per-battle randomized stats for gambler
+  const getArch = useCallback((id: ArchetypeId) => {
+    const base = ARCHETYPES[id];
+    if (id === "gambler" && gamblerStats) return { ...base, stats: gamblerStats };
+    return base;
+  }, [gamblerStats]);
 
   const comboThreshold = archetype === "fulcrum" ? 2 : 3;
   const addLog = useCallback((msg: string) => setLogs(prev => [...prev, msg]), []);
@@ -231,7 +239,7 @@ function BattleArena() {
     if (correct && timeSpent < fastestAnswer) setFastestAnswer(timeSpent);
 
     const action = ACTIONS[currentAction];
-    const arch = ARCHETYPES[archetype];
+    const arch = getArch(archetype);
     const streakMult = statToStreakMult(arch.stats.multiplier);
     // Multiplier grows with streak length
     const currentStreakMult = momentum > 0 ? 1 + (momentum * (streakMult - 1)) : 1;
@@ -244,8 +252,9 @@ function BattleArena() {
       if (newMom > longestStreak) setLongestStreak(newMom);
 
       if (currentAction === "defend") {
-        const heal = Math.min(10, player.maxHp - player.hp);
-        setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + 10), focus: Math.min(prev.maxFocus, prev.focus + 10) }));
+        const healAmt = archetype === "healer" ? 20 : 10;
+        const heal = Math.min(healAmt, player.maxHp - player.hp);
+        setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + healAmt), focus: Math.min(prev.maxFocus, prev.focus + 10) }));
         setShowPlayerHeal(true);
         addLog(`✅ Correct! Defend: +${heal} HP, +10 Focus.`);
       } else if (currentAction === "wild") {
@@ -258,9 +267,8 @@ function BattleArena() {
       } else {
         let baseDmg = action.dmg;
         // Apply damage stat multiplier
-        const dmgMult = archetype === "gambler"
-          ? 0.5 + Math.random() * 1.5
-          : statToDmgMult(arch.stats.damage);
+        // Damage uses stat multiplier (gambler's damage stat is randomized per battle in startBattle)
+        const dmgMult = statToDmgMult(arch.stats.damage);
         baseDmg = Math.floor(baseDmg * dmgMult);
         // Accelerator scaling bonus
         if (archetype === "accelerator") {
@@ -325,7 +333,7 @@ function BattleArena() {
   }, [totalScore, records, longestStreak, fastestAnswer, archetype]);
 
   const aiTurn = useCallback(() => {
-    const oppArch = ARCHETYPES[opponentArchetype];
+    const oppArch = getArch(opponentArchetype);
     const dmgMult = statToDmgMult(oppArch.stats.damage);
     const aiDmg = Math.floor((Math.floor(Math.random() * 8) + 5) * dmgMult);
     setTimeout(() => {
@@ -347,19 +355,14 @@ function BattleArena() {
     setCurrentAction(action);
     if (action === "wild") setPlayer(prev => ({ ...prev, focus: prev.focus - 10 }));
 
-    const arch = ARCHETYPES[archetype];
+    const arch = getArch(archetype);
     const baseDiff = action === "wild" ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)] : ACTIONS[action].difficulty;
-    // Gambler randomizes difficulty
-    const effectiveDiff = archetype === "gambler"
-      ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)]
-      : statToDifficulty(baseDiff, arch.stats.difficulty);
+    const effectiveDiff = statToDifficulty(baseDiff, arch.stats.difficulty);
     const q = generateQuestion(effectiveDiff);
     setQuestion(q);
     let t = TIMER_DURATIONS[effectiveDiff];
-    // Apply time stat multiplier
+    // Apply time stat multiplier (gambler's time stat is already randomized per battle)
     t = Math.max(4, Math.round(t * statToTimeMult(arch.stats.time)));
-    // Gambler randomizes time too
-    if (archetype === "gambler") t = Math.max(4, Math.round(t * (0.5 + Math.random())));
     setMaxTime(t);
     setTimeLeft(t);
     setPhase("question");
@@ -373,6 +376,18 @@ function BattleArena() {
     if (selection?.archetype) setArchetype(selection.archetype);
     if (selection?.ecliptar) setEcliptar(selection.ecliptar);
 
+    // Randomize gambler stats per battle (each 0-4) — true gamble between godlike and garbage
+    const rolledGambler = cls === "gambler"
+      ? {
+          health: Math.floor(Math.random() * 5),
+          time: Math.floor(Math.random() * 5),
+          damage: Math.floor(Math.random() * 5),
+          multiplier: Math.floor(Math.random() * 5),
+          difficulty: Math.floor(Math.random() * 5),
+        }
+      : null;
+    setGamblerStats(rolledGambler);
+
     // Pick a random Ecliptar opponent (different archetype if possible)
     const candidates = ECLIPTARS.filter(e => e.archetype !== cls);
     const oppEclip = candidates[Math.floor(Math.random() * candidates.length)] ?? ECLIPTARS[0];
@@ -381,8 +396,9 @@ function BattleArena() {
 
     setPhase("searching");
     setTimeout(() => {
-      const arch = ARCHETYPES[cls];
-      const playerHp = statToHp(arch.stats.health);
+      const baseArch = ARCHETYPES[cls];
+      const playerStats = rolledGambler ?? baseArch.stats;
+      const playerHp = statToHp(playerStats.health);
       const playerName = eclip?.name ?? "You";
       const playerIcon = eclip?.icon ?? User;
       const oppHp = statToHp(oppArch.stats.health);
@@ -390,7 +406,10 @@ function BattleArena() {
       setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, icon: oppEclip.icon });
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
-      addLog(`⚔️ ${playerName} (${arch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
+      addLog(`⚔️ ${playerName} (${baseArch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
+      if (rolledGambler) {
+        addLog(`🎲 Gambler rolled: HP ${rolledGambler.health}/4 · TIME ${rolledGambler.time}/4 · DMG ${rolledGambler.damage}/4 · MULT ${rolledGambler.multiplier}/4 · DIFF ${rolledGambler.difficulty}/4`);
+      }
     }, 2200);
   };
 

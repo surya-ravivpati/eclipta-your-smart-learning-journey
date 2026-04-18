@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Lightbulb, AlertTriangle, Eye, Sparkles, Coffee, BookOpen, ArrowRight } from "lucide-react";
+import { X, Send, Lightbulb, AlertTriangle, Eye, Sparkles, Coffee, BookOpen, ArrowRight, Monitor, Loader2 } from "lucide-react";
 import { streamLunaChat, parseLunaTag } from "@/lib/luna-api";
 import { getLunaContext, detectFatigue, getSessionDuration, getAccuracy, escalateHint, resetHintLevel } from "@/lib/luna-context";
+import { captureScreenFrame } from "@/lib/luna-screen";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ export type LunaMessage = {
   role: "assistant" | "user";
   content: string;
   tag?: "hint" | "nudge" | "explain" | "challenge" | "break" | null;
+  imageDataUrl?: string;
 };
 
 interface LunaChatPanelProps {
@@ -33,6 +35,8 @@ const TAG_CONFIG = {
 export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChatPanelProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [capturing, setCapturing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const profileRef = useRef<Record<string, unknown> | null>(null);
@@ -114,12 +118,28 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
     return () => clearInterval(interval);
   }, [open, messages, setMessages]);
 
+  const handleScreenShare = async () => {
+    if (capturing || isStreaming) return;
+    setCapturing(true);
+    const dataUrl = await captureScreenFrame();
+    setCapturing(false);
+    if (dataUrl) {
+      setPendingImage(dataUrl);
+    }
+  };
+
   const send = async () => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if ((!text && !pendingImage) || isStreaming) return;
     setInput("");
+    const attachedImage = pendingImage;
+    setPendingImage(null);
 
-    const userMsg: LunaMessage = { role: "user", content: text };
+    const userMsg: LunaMessage = {
+      role: "user",
+      content: text || (attachedImage ? "Here's my screen — can you help with what I'm looking at?" : ""),
+      ...(attachedImage ? { imageDataUrl: attachedImage } : {}),
+    };
     setMessages(prev => [...prev, userMsg]);
     setIsStreaming(true);
 
@@ -135,6 +155,7 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
     const apiMessages = [...messages, userMsg].map(m => ({
       role: m.role as "user" | "assistant",
       content: m.content,
+      ...(m.imageDataUrl ? { imageDataUrl: m.imageDataUrl } : {}),
     }));
 
     let assistantSoFar = "";
@@ -265,9 +286,18 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
                     : "bg-secondary/50 border border-border text-foreground"
                 }`}>
                   {msg.role === "assistant" && tagIcon(msg.tag)}
-                  <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
+                  {msg.imageDataUrl && (
+                    <img
+                      src={msg.imageDataUrl}
+                      alt="Shared screen"
+                      className="rounded mb-2 border border-border max-w-full"
+                    />
+                  )}
+                  {msg.content && (
+                    <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -284,16 +314,39 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
 
           {/* Input */}
           <div className="px-3 py-2 border-t border-border">
+            {pendingImage && (
+              <div className="mb-2 flex items-center gap-2 p-1.5 border border-neon-cyan/30 bg-neon-cyan/5 rounded">
+                <img src={pendingImage} alt="screen preview" className="w-12 h-8 object-cover rounded-sm border border-border" />
+                <span className="text-[10px] font-bold tracking-widest text-neon-cyan flex-1">SCREEN ATTACHED</span>
+                <button
+                  type="button"
+                  onClick={() => setPendingImage(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Remove screen attachment"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
             <form onSubmit={e => { e.preventDefault(); send(); }} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleScreenShare}
+                disabled={capturing || isStreaming}
+                title="Share your screen with Luna"
+                className="p-2 border border-input bg-secondary/30 hover:border-neon-cyan/50 hover:text-neon-cyan transition-colors disabled:opacity-30 rounded-sm"
+              >
+                {capturing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Monitor className="w-3.5 h-3.5" />}
+              </button>
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="Ask Luna anything..."
+                placeholder={pendingImage ? "Ask about your screen..." : "Ask Luna anything..."}
                 className="flex-1 bg-secondary/30 border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple"
               />
               <button
                 type="submit"
-                disabled={!input.trim() || isStreaming}
+                disabled={(!input.trim() && !pendingImage) || isStreaming}
                 className="p-2 bg-neon-purple text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-30 rounded-sm"
               >
                 <Send className="w-3.5 h-3.5" />
