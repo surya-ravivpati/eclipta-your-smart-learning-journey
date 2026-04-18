@@ -286,9 +286,18 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
                     : "bg-secondary/50 border border-border text-foreground"
                 }`}>
                   {msg.role === "assistant" && tagIcon(msg.tag)}
-                  <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
+                  {msg.imageDataUrl && (
+                    <img
+                      src={msg.imageDataUrl}
+                      alt="Shared screen"
+                      className="rounded mb-2 border border-border max-w-full"
+                    />
+                  )}
+                  {msg.content && (
+                    <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -305,16 +314,39 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
 
           {/* Input */}
           <div className="px-3 py-2 border-t border-border">
+            {pendingImage && (
+              <div className="mb-2 flex items-center gap-2 p-1.5 border border-neon-cyan/30 bg-neon-cyan/5 rounded">
+                <img src={pendingImage} alt="screen preview" className="w-12 h-8 object-cover rounded-sm border border-border" />
+                <span className="text-[10px] font-bold tracking-widest text-neon-cyan flex-1">SCREEN ATTACHED</span>
+                <button
+                  type="button"
+                  onClick={() => setPendingImage(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Remove screen attachment"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
             <form onSubmit={e => { e.preventDefault(); send(); }} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleScreenShare}
+                disabled={capturing || isStreaming}
+                title="Share your screen with Luna"
+                className="p-2 border border-input bg-secondary/30 hover:border-neon-cyan/50 hover:text-neon-cyan transition-colors disabled:opacity-30 rounded-sm"
+              >
+                {capturing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Monitor className="w-3.5 h-3.5" />}
+              </button>
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="Ask Luna anything..."
+                placeholder={pendingImage ? "Ask about your screen..." : "Ask Luna anything..."}
                 className="flex-1 bg-secondary/30 border border-input rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-neon-purple"
               />
               <button
                 type="submit"
-                disabled={!input.trim() || isStreaming}
+                disabled={(!input.trim() && !pendingImage) || isStreaming}
                 className="p-2 bg-neon-purple text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-30 rounded-sm"
               >
                 <Send className="w-3.5 h-3.5" />
