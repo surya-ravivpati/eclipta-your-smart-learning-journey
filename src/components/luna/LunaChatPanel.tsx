@@ -118,12 +118,28 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
     return () => clearInterval(interval);
   }, [open, messages, setMessages]);
 
+  const handleScreenShare = async () => {
+    if (capturing || isStreaming) return;
+    setCapturing(true);
+    const dataUrl = await captureScreenFrame();
+    setCapturing(false);
+    if (dataUrl) {
+      setPendingImage(dataUrl);
+    }
+  };
+
   const send = async () => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if ((!text && !pendingImage) || isStreaming) return;
     setInput("");
+    const attachedImage = pendingImage;
+    setPendingImage(null);
 
-    const userMsg: LunaMessage = { role: "user", content: text };
+    const userMsg: LunaMessage = {
+      role: "user",
+      content: text || (attachedImage ? "Here's my screen — can you help with what I'm looking at?" : ""),
+      ...(attachedImage ? { imageDataUrl: attachedImage } : {}),
+    };
     setMessages(prev => [...prev, userMsg]);
     setIsStreaming(true);
 
@@ -139,6 +155,7 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
     const apiMessages = [...messages, userMsg].map(m => ({
       role: m.role as "user" | "assistant",
       content: m.content,
+      ...(m.imageDataUrl ? { imageDataUrl: m.imageDataUrl } : {}),
     }));
 
     let assistantSoFar = "";
