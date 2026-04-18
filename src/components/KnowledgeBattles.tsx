@@ -570,24 +570,7 @@ export function KnowledgeBattles() {
               </div>
             </motion.div>
 
-            <motion.div className="glass-panel p-6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold font-display tracking-widest text-neon-cyan">LEADERBOARD</h3>
-                <Trophy className="w-4 h-4 text-neon-cyan" />
-              </div>
-              <div className="space-y-2">
-                {LEADERBOARD.map(p => (
-                  <div key={p.rank} className="flex items-center gap-3 px-3 py-2 border border-transparent hover:bg-secondary/30 transition-colors">
-                    <span className={`text-xs font-bold w-5 text-center ${p.rank <= 3 ? "text-neon-pink" : "text-muted-foreground"}`}>{p.rank}</span>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs font-bold text-foreground">{p.name}</span>
-                      <span className={`text-[10px] ml-2 font-bold ${tierColors[p.tier]}`}>{p.tier}</span>
-                    </div>
-                    <div className="text-xs font-bold text-foreground">{p.xp.toLocaleString()} XP</div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+            <LeaderboardCard />
 
             <motion.div className="glass-panel p-5 border border-neon-purple/20" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
               <div className="flex items-center gap-3">
