@@ -12,6 +12,7 @@ import { ARCHETYPES } from "./battles/archetypes";
 import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDialog";
 import { BattleReport } from "./battles/BattleReport";
 import { ECLIPTARS, type Ecliptar } from "@/lib/ecliptars";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── Action Config ───────────────────────────────────────────────────
 const ACTIONS: Record<Action, ActionConfig> = {
@@ -21,16 +22,18 @@ const ACTIONS: Record<Action, ActionConfig> = {
   wild:   { label: "Wild",   icon: Dices, difficulty: "medium", dmg: 0, focusCost: 10, desc: "Random effect" },
 };
 
-const LEADERBOARD = [
-  { rank: 1, name: "shadowKing", xp: 24800, wins: 312, tier: "Grandmaster" },
-  { rank: 2, name: "byteCrusher", xp: 22100, wins: 287, tier: "Grandmaster" },
-  { rank: 3, name: "nova_coder", xp: 19400, wins: 251, tier: "Diamond" },
-  { rank: 4, name: "algo_beast", xp: 17200, wins: 223, tier: "Diamond" },
-  { rank: 5, name: "ml_wanderer", xp: 15800, wins: 198, tier: "Platinum" },
-  { rank: 6, name: "code_samurai", xp: 14100, wins: 176, tier: "Platinum" },
-];
+type LeaderboardEntry = { rank: number; name: string; xp: number; tier: string };
+
+function xpToTier(xp: number): string {
+  if (xp >= 20000) return "Grandmaster";
+  if (xp >= 10000) return "Diamond";
+  if (xp >= 5000) return "Platinum";
+  if (xp >= 1000) return "Gold";
+  return "Silver";
+}
+
 const tierColors: Record<string, string> = {
-  Grandmaster: "text-neon-pink", Diamond: "text-neon-cyan", Platinum: "text-neon-purple", Gold: "text-yellow-400",
+  Grandmaster: "text-neon-pink", Diamond: "text-neon-cyan", Platinum: "text-neon-purple", Gold: "text-yellow-400", Silver: "text-muted-foreground",
 };
 
 // ─── Sub-components ──────────────────────────────────────────────────
