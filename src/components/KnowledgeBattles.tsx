@@ -239,7 +239,7 @@ function BattleArena() {
     if (correct && timeSpent < fastestAnswer) setFastestAnswer(timeSpent);
 
     const action = ACTIONS[currentAction];
-    const arch = ARCHETYPES[archetype];
+    const arch = getArch(archetype);
     const streakMult = statToStreakMult(arch.stats.multiplier);
     // Multiplier grows with streak length
     const currentStreakMult = momentum > 0 ? 1 + (momentum * (streakMult - 1)) : 1;
@@ -267,9 +267,8 @@ function BattleArena() {
       } else {
         let baseDmg = action.dmg;
         // Apply damage stat multiplier
-        const dmgMult = archetype === "gambler"
-          ? 0.5 + Math.random() * 1.5
-          : statToDmgMult(arch.stats.damage);
+        // Damage uses stat multiplier (gambler's damage stat is randomized per battle in startBattle)
+        const dmgMult = statToDmgMult(arch.stats.damage);
         baseDmg = Math.floor(baseDmg * dmgMult);
         // Accelerator scaling bonus
         if (archetype === "accelerator") {
@@ -334,7 +333,7 @@ function BattleArena() {
   }, [totalScore, records, longestStreak, fastestAnswer, archetype]);
 
   const aiTurn = useCallback(() => {
-    const oppArch = ARCHETYPES[opponentArchetype];
+    const oppArch = getArch(opponentArchetype);
     const dmgMult = statToDmgMult(oppArch.stats.damage);
     const aiDmg = Math.floor((Math.floor(Math.random() * 8) + 5) * dmgMult);
     setTimeout(() => {
@@ -356,19 +355,14 @@ function BattleArena() {
     setCurrentAction(action);
     if (action === "wild") setPlayer(prev => ({ ...prev, focus: prev.focus - 10 }));
 
-    const arch = ARCHETYPES[archetype];
+    const arch = getArch(archetype);
     const baseDiff = action === "wild" ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)] : ACTIONS[action].difficulty;
-    // Gambler randomizes difficulty
-    const effectiveDiff = archetype === "gambler"
-      ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)]
-      : statToDifficulty(baseDiff, arch.stats.difficulty);
+    const effectiveDiff = statToDifficulty(baseDiff, arch.stats.difficulty);
     const q = generateQuestion(effectiveDiff);
     setQuestion(q);
     let t = TIMER_DURATIONS[effectiveDiff];
-    // Apply time stat multiplier
+    // Apply time stat multiplier (gambler's time stat is already randomized per battle)
     t = Math.max(4, Math.round(t * statToTimeMult(arch.stats.time)));
-    // Gambler randomizes time too
-    if (archetype === "gambler") t = Math.max(4, Math.round(t * (0.5 + Math.random())));
     setMaxTime(t);
     setTimeLeft(t);
     setPhase("question");
