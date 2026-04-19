@@ -306,6 +306,18 @@ export function Forum() {
       });
   }, [threads, selectedCourse, searchQuery, sortBy]);
 
+  const trendingTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    threads.forEach((t) => t.tags?.forEach((tag) => {
+      if (!tag) return;
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }));
+    return Array.from(counts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [threads]);
+
   return (
     <section className="min-h-screen pt-24 pb-16">
       <div className="max-w-5xl mx-auto px-6">
