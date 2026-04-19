@@ -377,6 +377,11 @@ export function Forum() {
               SIGN IN TO POST
             </Link>
           )}
+          {isModerator && (
+            <Link to="/admin/forum" className="px-4 py-2.5 text-xs font-bold tracking-widest border border-neon-cyan/40 text-neon-cyan hover:bg-neon-cyan/10 transition-colors inline-flex items-center justify-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" />MOD QUEUE
+            </Link>
+          )}
         </div>
 
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
