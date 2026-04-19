@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlayerXp } from "@/hooks/use-player-xp";
+import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, User, Menu, X, Zap, ChevronDown } from "lucide-react";
+import { LogOut, User, Menu, X, Zap, ChevronDown, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
@@ -38,7 +39,12 @@ const NAV_GROUPS = [
 export function Navbar() {
   const { user, isAuthenticated } = useAuth();
   const { xp } = usePlayerXp();
+  const { theme, toggle: toggleTheme } = useTheme();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isGroupActive = (group: typeof NAV_GROUPS[number]) =>
+    group.items.some((it) => pathname.startsWith(it.to));
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -56,33 +62,48 @@ export function Navbar() {
             <Link to="/" className="px-3 py-1.5 text-muted-foreground hover:text-neon-purple transition-colors">
               ARENA
             </Link>
-            {NAV_GROUPS.map((group) => (
-              <DropdownMenu key={group.label}>
-                <DropdownMenuTrigger className="px-3 py-1.5 text-muted-foreground hover:text-neon-purple transition-colors inline-flex items-center gap-1 outline-none">
-                  {group.label}
-                  <ChevronDown className="w-3 h-3 opacity-60" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="bg-background/95 backdrop-blur-xl border-border min-w-56"
-                >
-                  {group.items.map((it) => (
-                    <DropdownMenuItem key={it.to} asChild>
-                      <Link
-                        to={it.to}
-                        className="flex flex-col items-start gap-0.5 cursor-pointer focus:bg-neon-purple/10 focus:text-neon-purple"
-                      >
-                        <span className="text-sm font-medium">{it.label}</span>
-                        <span className="text-[11px] text-muted-foreground">{it.desc}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ))}
+            {NAV_GROUPS.map((group) => {
+              const active = isGroupActive(group);
+              return (
+                <DropdownMenu key={group.label}>
+                  <DropdownMenuTrigger
+                    className={`px-3 py-1.5 transition-colors inline-flex items-center gap-1 outline-none ${
+                      active ? "text-neon-purple" : "text-muted-foreground hover:text-neon-purple"
+                    }`}
+                  >
+                    {group.label}
+                    <ChevronDown className="w-3 h-3 opacity-60" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="bg-background/95 backdrop-blur-xl border-border min-w-56"
+                  >
+                    {group.items.map((it) => (
+                      <DropdownMenuItem key={it.to} asChild>
+                        <Link
+                          to={it.to}
+                          className="flex flex-col items-start gap-0.5 cursor-pointer focus:bg-neon-purple/10 focus:text-neon-purple"
+                        >
+                          <span className="text-sm font-medium">{it.label}</span>
+                          <span className="text-[11px] text-muted-foreground">{it.desc}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            })}
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-muted-foreground hover:text-neon-purple transition-colors"
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           {isAuthenticated ? (
             <>
               <Link
