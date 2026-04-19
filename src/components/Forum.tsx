@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { MessageSquare, Search, Users, BookOpen, ChevronUp, ChevronDown, Clock, MessageCircle, Plus, X, Loader2, Tag } from "lucide-react";
+import { MessageSquare, Search, Users, BookOpen, ChevronUp, ChevronDown, Clock, MessageCircle, Plus, X, Loader2, Tag, Flag, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useModerator } from "@/hooks/use-moderator";
+import { ReportDialog } from "@/components/forum/ReportDialog";
 import { toast } from "sonner";
 
 type Thread = {
@@ -242,6 +244,8 @@ function NewThreadDialog({ open, onClose, onCreated }: { open: boolean; onClose:
 
 export function Forum() {
   const { user, isAuthenticated } = useAuth();
+  const { isModerator } = useModerator();
+  const [reportTarget, setReportTarget] = useState<string | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{ threads: number; answers: number; contributors: number } | null>(null);
