@@ -157,6 +157,21 @@ function AdminForumPage() {
                   <span className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString()}</span>
                 </div>
                 <p className="text-sm text-foreground mb-3"><span className="text-muted-foreground">Reason:</span> {r.reason}</p>
+                {snippets[r.target_id] ? (
+                  <div className="mb-3 p-3 border-l-2 border-neon-purple/40 bg-secondary/30 rounded-sm">
+                    {snippets[r.target_id].title && (
+                      <p className="text-xs font-bold font-display mb-1">{snippets[r.target_id].title}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{snippets[r.target_id].body}</p>
+                    {snippets[r.target_id].author && (
+                      <p className="text-[10px] text-muted-foreground mt-1.5">— {snippets[r.target_id].author}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mb-3 p-3 border-l-2 border-destructive/40 bg-destructive/5 rounded-sm">
+                    <p className="text-[11px] text-destructive italic">Original content was deleted or is unavailable.</p>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 flex-wrap">
                   {r.target_type === "thread" && (
                     <Link to="/forum/$threadId" params={{ threadId: r.target_id }} className="text-[11px] font-bold tracking-widest text-neon-purple hover:underline inline-flex items-center gap-1">
