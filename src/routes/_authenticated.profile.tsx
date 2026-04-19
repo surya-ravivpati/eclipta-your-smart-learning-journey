@@ -34,6 +34,7 @@ type Profile = {
 type Ecliptar = { id: string; ecliptar_name: string; archetype: string; claimed_at: string };
 type Enrollment = { id: string; course_slug: string; course_title: string; enrolled_at: string };
 type ForumActivity = { id: string; title: string; created_at: string };
+type Proposal = { id: string; topic: string; status: string; created_at: string };
 
 function ProfilePage() {
   const { user } = useAuth();
@@ -42,22 +43,25 @@ function ProfilePage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [threads, setThreads] = useState<ForumActivity[]>([]);
   const [answersCount, setAnswersCount] = useState(0);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
 
   const reload = async () => {
     if (!user) return;
-    const [p, e, en, t, a] = await Promise.all([
+    const [p, e, en, t, a, pr] = await Promise.all([
       supabase.from("user_profiles").select("username,xp,current_streak,best_streak,total_correct,total_questions,total_sessions,preferred_pace,preferred_style,equipped_ecliptar,avatar_url").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_ecliptars").select("id,ecliptar_name,archetype,claimed_at").eq("user_id", user.id).order("claimed_at", { ascending: false }),
       supabase.from("enrollments").select("id,course_slug,course_title,enrolled_at").eq("user_id", user.id).order("enrolled_at", { ascending: false }),
       supabase.from("forum_threads").select("id,title,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
       supabase.from("forum_answers").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("course_proposals").select("id,topic,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
     ]);
     setProfile((p.data as Profile) || null);
     setEcliptars((e.data as Ecliptar[]) || []);
     setEnrollments((en.data as Enrollment[]) || []);
     setThreads((t.data as ForumActivity[]) || []);
     setAnswersCount(a.count || 0);
+    setProposals((pr.data as Proposal[]) || []);
     setLoading(false);
   };
 
