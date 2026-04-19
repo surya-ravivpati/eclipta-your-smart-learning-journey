@@ -29,6 +29,24 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection
   const unlocked = getUnlockedArchetypes(xp);
   const allArchetypes = Object.values(ARCHETYPES);
   const [pickedArch, setPickedArch] = useState<ArchetypeId | null>(null);
+  const [equippedSlug, setEquippedSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("equipped_ecliptar")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setEquippedSlug((data as any)?.equipped_ecliptar ?? null);
+    })();
+  }, []);
+
+  const equipped = equippedSlug ? getEcliptarBySlug(equippedSlug) : undefined;
+  const equippedOwned = equipped ? ownedSlugs.has(equipped.slug) : false;
+  const equippedArch = equipped ? ARCHETYPES[equipped.archetype] : undefined;
 
   // Step 2: Ecliptar select
   if (pickedArch) {
