@@ -14,6 +14,24 @@ export function BattleReport({ stats, onRematch, onContinueWithEcliptar, onBack 
   onBack: () => void;
 }) {
   const xpSavedRef = useRef(false);
+  const [xpCount, setXpCount] = useState(0);
+
+  // Animate XP count-up
+  useEffect(() => {
+    const target = stats.xp;
+    if (target <= 0) { setXpCount(0); return; }
+    const duration = 1200;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setXpCount(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [stats.xp]);
 
   // Award XP and update profile on mount
   useEffect(() => {
@@ -131,12 +149,12 @@ export function BattleReport({ stats, onRematch, onContinueWithEcliptar, onBack 
         </div>
         <div className="text-center">
           <motion.div
-            className="text-2xl font-bold font-display text-neon-cyan"
+            className="text-2xl font-bold font-display text-neon-cyan tabular-nums"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.3, type: "spring" }}
           >
-            +{stats.xp} XP
+            +{xpCount} XP
           </motion.div>
           <div className="text-[10px] tracking-widest text-muted-foreground">EARNED</div>
         </div>
