@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { User, Trophy, Flame, Target, Zap, BookOpen, Sparkles, Loader2, MessageSquare, LogOut, Sun, Moon, Settings, Check, Lock, ExternalLink, AlertTriangle, Camera } from "lucide-react";
+import { User, Trophy, Flame, Target, Zap, BookOpen, Sparkles, Loader2, MessageSquare, LogOut, Sun, Moon, Settings, Check, Lock, ExternalLink, AlertTriangle, Camera, ListChecks, Clock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { ARCHETYPES } from "@/components/battles/archetypes";
 import { ECLIPTARS, getEcliptarsByArchetype } from "@/lib/ecliptars";
@@ -191,6 +191,23 @@ function ProfilePage() {
                     <EmptyState text="No ecliptars yet." cta={<Link to="/progress" className="text-neon-purple hover:underline">Walk the trophy road →</Link>} />
                   ) : (
                     <p className="text-xs text-muted-foreground">Click any ecliptar below to equip ↓</p>
+                  )}
+                </Card>
+
+                <Card title="Course Proposals" icon={<ListChecks className="w-4 h-4 text-neon-purple" />} count={proposals.length}>
+                  {proposals.length === 0 ? (
+                    <EmptyState text="No proposals submitted." cta={<Link to="/build-course" className="text-neon-purple hover:underline">Build a course →</Link>} />
+                  ) : (
+                    <ul className="space-y-2">
+                      {proposals.slice(0, 5).map((p) => (
+                        <li key={p.id} className="text-xs border-b border-border/50 pb-2 flex items-center justify-between gap-2">
+                          <span className="font-medium truncate">{p.topic}</span>
+                          <span className="text-[9px] font-bold tracking-widest uppercase text-neon-purple/80 inline-flex items-center gap-1 shrink-0">
+                            <Clock className="w-2.5 h-2.5" />{p.status}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </Card>
               </div>
