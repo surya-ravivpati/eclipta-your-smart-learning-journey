@@ -133,36 +133,28 @@ function AboutPage() {
           viewport={{ once: true }}
         >
           <h2 className="text-2xl font-bold font-display mb-6 text-center text-neon-purple">Get in Touch</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a
-              href="mailto:hello@eclipta.app"
-              className="glass-panel p-6 border border-neon-purple/20 hover:border-neon-purple/50 transition-colors group"
-            >
-              <Mail className="w-6 h-6 text-neon-purple mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="font-bold font-display text-base mb-1">Email Us</h3>
-              <p className="text-xs text-muted-foreground mb-2">Questions, feedback, partnerships.</p>
-              <p className="text-xs text-neon-purple font-medium">hello@eclipta.app</p>
-            </a>
-            <Link
-              to="/forum"
-              className="glass-panel p-6 border border-neon-pink/20 hover:border-neon-pink/50 transition-colors group block"
-            >
-              <MessageSquare className="w-6 h-6 text-neon-pink mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="font-bold font-display text-base mb-1">Community Forum</h3>
-              <p className="text-xs text-muted-foreground mb-2">Best for product questions and learner support.</p>
-              <p className="text-xs text-neon-pink font-medium">Visit the forum →</p>
-            </Link>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass-panel p-6 border border-neon-cyan/20 hover:border-neon-cyan/50 transition-colors group"
-            >
-              <Github className="w-6 h-6 text-neon-cyan mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="font-bold font-display text-base mb-1">Open Source</h3>
-              <p className="text-xs text-muted-foreground mb-2">Report bugs, suggest features, or contribute.</p>
-              <p className="text-xs text-neon-cyan font-medium">github.com →</p>
-            </a>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+            <ContactForm />
+            <div className="grid gap-4 content-start">
+              <Link
+                to="/forum"
+                className="glass-panel p-5 border border-neon-pink/20 hover:border-neon-pink/50 transition-colors group block"
+              >
+                <MessageSquare className="w-5 h-5 text-neon-pink mb-2 group-hover:scale-110 transition-transform" />
+                <h3 className="font-bold font-display text-sm mb-1">Community Forum</h3>
+                <p className="text-xs text-muted-foreground">Best for product questions and learner support.</p>
+              </Link>
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-panel p-5 border border-neon-cyan/20 hover:border-neon-cyan/50 transition-colors group block"
+              >
+                <Github className="w-5 h-5 text-neon-cyan mb-2 group-hover:scale-110 transition-transform" />
+                <h3 className="font-bold font-display text-sm mb-1">Open Source</h3>
+                <p className="text-xs text-muted-foreground">Report bugs, suggest features, or contribute.</p>
+              </a>
+            </div>
           </div>
         </motion.div>
 
