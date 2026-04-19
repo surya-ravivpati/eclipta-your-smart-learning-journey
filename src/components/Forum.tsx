@@ -306,6 +306,18 @@ export function Forum() {
       });
   }, [threads, selectedCourse, searchQuery, sortBy]);
 
+  const trendingTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    threads.forEach((t) => t.tags?.forEach((tag) => {
+      if (!tag) return;
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }));
+    return Array.from(counts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [threads]);
+
   return (
     <section className="min-h-screen pt-24 pb-16">
       <div className="max-w-5xl mx-auto px-6">
@@ -399,32 +411,60 @@ export function Forum() {
           ))}
         </div>
 
-        <div className="space-y-3">
-          {loading ? (
-            <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-neon-purple" /></div>
-          ) : (
-            <AnimatePresence mode="popLayout">
-              {filtered.map((thread) => (
-                <ThreadCard
-                  key={thread.id}
-                  thread={thread}
-                  userVote={userVotes[thread.id] ?? null}
-                  onVote={(dir) => handleVote(thread.id, dir)}
-                />
-              ))}
-            </AnimatePresence>
-          )}
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-16 text-muted-foreground">
-              <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-40" />
-              <p className="text-sm mb-4">{threads.length === 0 ? "No threads yet — be the first to start a discussion." : "No threads match your filters."}</p>
-              {isAuthenticated && threads.length === 0 && (
-                <button onClick={() => setShowNew(true)} className="px-5 py-2 text-xs font-bold tracking-widest bg-neon-pink text-foreground hover:opacity-90 transition-opacity inline-flex items-center gap-2">
-                  <Plus className="w-3.5 h-3.5" />START THE FIRST THREAD
-                </button>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-6">
+          <div className="space-y-3 min-w-0">
+            {loading ? (
+              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-neon-purple" /></div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {filtered.map((thread) => (
+                  <ThreadCard
+                    key={thread.id}
+                    thread={thread}
+                    userVote={userVotes[thread.id] ?? null}
+                    onVote={(dir) => handleVote(thread.id, dir)}
+                  />
+                ))}
+              </AnimatePresence>
+            )}
+            {!loading && filtered.length === 0 && (
+              <div className="text-center py-16 text-muted-foreground">
+                <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-40" />
+                <p className="text-sm mb-4">{threads.length === 0 ? "No threads yet — be the first to start a discussion." : "No threads match your filters."}</p>
+                {isAuthenticated && threads.length === 0 && (
+                  <button onClick={() => setShowNew(true)} className="px-5 py-2 text-xs font-bold tracking-widest bg-neon-pink text-foreground hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+                    <Plus className="w-3.5 h-3.5" />START THE FIRST THREAD
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <aside className="hidden lg:block">
+            <div className="glass-panel p-4 sticky top-24">
+              <div className="flex items-center gap-2 mb-3">
+                <Tag className="w-3.5 h-3.5 text-neon-pink" />
+                <h3 className="text-[10px] font-bold tracking-widest text-neon-pink">TRENDING TAGS</h3>
+              </div>
+              {trendingTags.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">No tags yet. Add some when you post.</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {trendingTags.map(({ tag, count }) => (
+                    <li key={tag}>
+                      <button
+                        onClick={() => setSearchQuery(tag)}
+                        className="w-full flex items-center justify-between text-left group"
+                      >
+                        <span className="text-xs text-foreground group-hover:text-neon-purple transition-colors truncate">#{tag}</span>
+                        <span className="text-[10px] font-bold text-muted-foreground tabular-nums">{count}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-          )}
+          </aside>
         </div>
 
         <motion.div

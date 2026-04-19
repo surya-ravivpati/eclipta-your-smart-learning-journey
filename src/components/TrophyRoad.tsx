@@ -123,6 +123,10 @@ function RoadNodeItem({ node, index, ownedSlugs, onClaimed }: {
       toast(`🎉 ${ARCHETYPES[node.archetype].name} Ecliptars unlocked!`, {
         description: `You now own ${granted.map(g => g.name).join(" & ")} for battle.`,
         duration: 6000,
+        action: {
+          label: "View in Profile",
+          onClick: () => { window.location.href = "/profile"; },
+        },
       });
       onClaimed();
     }

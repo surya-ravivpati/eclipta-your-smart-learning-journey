@@ -1,7 +1,98 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Sparkles, Target, Swords, Trophy, Brain, Users, User, Mail, Github, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Sparkles, Target, Swords, Trophy, Brain, Users, User, Mail, Github, MessageSquare, Send } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+
+function ContactForm() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      toast.error("Please fill in your name, email, and message.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    const body = `From: ${name} <${email}>\n\n${message}`;
+    const mailto = `mailto:hello@eclipta.app?subject=${encodeURIComponent(subject || "Hello from Eclipta")}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+    setSent(true);
+    toast.success("Opening your email client...");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="glass-panel p-6 border border-neon-purple/20 space-y-4">
+      <div className="flex items-center gap-2 mb-1">
+        <Mail className="w-5 h-5 text-neon-purple" />
+        <h3 className="font-bold font-display text-base">Send us a message</h3>
+      </div>
+      <p className="text-xs text-muted-foreground -mt-2">We'll route this to hello@eclipta.app via your email client.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Name</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={80}
+            className="w-full mt-1 bg-secondary/30 border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            maxLength={120}
+            className="w-full mt-1 bg-secondary/30 border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Subject</label>
+        <input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          maxLength={120}
+          placeholder="What's this about?"
+          className="w-full mt-1 bg-secondary/30 border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple"
+        />
+      </div>
+      <div>
+        <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Message</label>
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={5}
+          maxLength={2000}
+          placeholder="How can we help?"
+          className="w-full mt-1 bg-secondary/30 border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple resize-none"
+        />
+        <p className="text-[10px] text-muted-foreground mt-1">{message.length}/2000</p>
+      </div>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        {sent ? (
+          <p className="text-[11px] text-neon-cyan">Email client opened. If nothing happened, write to <a href="mailto:hello@eclipta.app" className="underline">hello@eclipta.app</a>.</p>
+        ) : <span />}
+        <button
+          type="submit"
+          className="px-5 py-2 text-xs font-bold tracking-widest bg-neon-purple text-primary-foreground hover:opacity-90 transition-opacity inline-flex items-center gap-2"
+        >
+          <Send className="w-3.5 h-3.5" />SEND MESSAGE
+        </button>
+      </div>
+    </form>
+  );
+}
 
 const FOUNDERS = [
   { name: "Surya Ravipati", role: "Co-Founder", bio: "Architect of Eclipta's adaptive learning engine and arena design." },
@@ -133,36 +224,28 @@ function AboutPage() {
           viewport={{ once: true }}
         >
           <h2 className="text-2xl font-bold font-display mb-6 text-center text-neon-purple">Get in Touch</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a
-              href="mailto:hello@eclipta.app"
-              className="glass-panel p-6 border border-neon-purple/20 hover:border-neon-purple/50 transition-colors group"
-            >
-              <Mail className="w-6 h-6 text-neon-purple mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="font-bold font-display text-base mb-1">Email Us</h3>
-              <p className="text-xs text-muted-foreground mb-2">Questions, feedback, partnerships.</p>
-              <p className="text-xs text-neon-purple font-medium">hello@eclipta.app</p>
-            </a>
-            <Link
-              to="/forum"
-              className="glass-panel p-6 border border-neon-pink/20 hover:border-neon-pink/50 transition-colors group block"
-            >
-              <MessageSquare className="w-6 h-6 text-neon-pink mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="font-bold font-display text-base mb-1">Community Forum</h3>
-              <p className="text-xs text-muted-foreground mb-2">Best for product questions and learner support.</p>
-              <p className="text-xs text-neon-pink font-medium">Visit the forum →</p>
-            </Link>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="glass-panel p-6 border border-neon-cyan/20 hover:border-neon-cyan/50 transition-colors group"
-            >
-              <Github className="w-6 h-6 text-neon-cyan mb-3 group-hover:scale-110 transition-transform" />
-              <h3 className="font-bold font-display text-base mb-1">Open Source</h3>
-              <p className="text-xs text-muted-foreground mb-2">Report bugs, suggest features, or contribute.</p>
-              <p className="text-xs text-neon-cyan font-medium">github.com →</p>
-            </a>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+            <ContactForm />
+            <div className="grid gap-4 content-start">
+              <Link
+                to="/forum"
+                className="glass-panel p-5 border border-neon-pink/20 hover:border-neon-pink/50 transition-colors group block"
+              >
+                <MessageSquare className="w-5 h-5 text-neon-pink mb-2 group-hover:scale-110 transition-transform" />
+                <h3 className="font-bold font-display text-sm mb-1">Community Forum</h3>
+                <p className="text-xs text-muted-foreground">Best for product questions and learner support.</p>
+              </Link>
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-panel p-5 border border-neon-cyan/20 hover:border-neon-cyan/50 transition-colors group block"
+              >
+                <Github className="w-5 h-5 text-neon-cyan mb-2 group-hover:scale-110 transition-transform" />
+                <h3 className="font-bold font-display text-sm mb-1">Open Source</h3>
+                <p className="text-xs text-muted-foreground">Report bugs, suggest features, or contribute.</p>
+              </a>
+            </div>
           </div>
         </motion.div>
 
