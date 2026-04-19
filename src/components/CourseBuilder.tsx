@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, BookOpen, Target, Clock, Layers, FileText, Send, Check, AlertTriangle, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Target, Clock, Layers, FileText, Send, Check, AlertTriangle, Sparkles, ListChecks } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -389,8 +390,14 @@ export function CourseBuilder() {
                         className="p-4 border border-neon-purple/40 bg-neon-purple/10 text-center neon-glow-purple"
                       >
                         <Check className="w-6 h-6 text-neon-purple mx-auto mb-2" />
-                        <p className="font-display font-bold tracking-wide">COURSE APPROVED</p>
-                        <p className="text-sm text-muted-foreground mt-1">Your course is now live in the arena.</p>
+                        <p className="font-display font-bold tracking-wide">PROPOSAL SUBMITTED</p>
+                        <p className="text-sm text-muted-foreground mt-1 mb-4">Your course is queued for editorial review.</p>
+                        <Link
+                          to="/profile"
+                          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold tracking-widest bg-neon-purple text-primary-foreground hover:opacity-90 transition-opacity"
+                        >
+                          <ListChecks className="w-3.5 h-3.5" />VIEW MY PROPOSALS
+                        </Link>
                       </motion.div>
                     )}
                   </div>
