@@ -256,6 +256,22 @@ function BattleArena() {
   const [battleStats, setBattleStats] = useState<BattleStats | null>(null);
   const [gamblerStats, setGamblerStats] = useState<{ health: number; time: number; damage: number; multiplier: number; difficulty: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [playerXp, setPlayerXp] = useState<number>(0);
+  const [opponentTier, setOpponentTier] = useState<string>("");
+
+  // Fetch player XP once for matchmaking
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("xp")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setPlayerXp((data as any)?.xp ?? 0);
+    })();
+  }, []);
 
   // Returns archetype, with stats overridden by per-battle randomized stats for gambler
   const getArch = useCallback((id: ArchetypeId) => {
