@@ -13,6 +13,42 @@ import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDia
 import { BattleReport } from "./battles/BattleReport";
 import { ECLIPTARS, type Ecliptar } from "@/lib/ecliptars";
 import { supabase } from "@/integrations/supabase/client";
+import { ROAD_NODES, type MonsterArchetypeKey } from "@/lib/trophy-road-data";
+
+/** Map each archetype → XP at which it is unlocked on the trophy road */
+const ARCHETYPE_UNLOCK_XP: Record<MonsterArchetypeKey, number> = ROAD_NODES.reduce(
+  (acc, n) => {
+    if (n.type === "monster" && n.archetype) acc[n.archetype] = n.xp;
+    return acc;
+  },
+  {} as Record<MonsterArchetypeKey, number>,
+);
+
+/** Pick an opponent Ecliptar within the player's rank band (±1 tier step). */
+function matchmakeOpponent(playerXp: number, playerArch: ArchetypeId): Ecliptar {
+  const archKeys = Object.keys(ARCHETYPE_UNLOCK_XP) as MonsterArchetypeKey[];
+  // Sort archetypes by unlock XP
+  const sorted = [...archKeys].sort(
+    (a, b) => (ARCHETYPE_UNLOCK_XP[a] ?? 0) - (ARCHETYPE_UNLOCK_XP[b] ?? 0),
+  );
+  // Player's own tier index = highest archetype unlocked at their XP
+  const unlockedIdx = sorted.reduce(
+    (best, a, i) => (ARCHETYPE_UNLOCK_XP[a] <= playerXp ? i : best),
+    0,
+  );
+  // Allow ±1 tier band, never include "god" tier unless player is already there
+  const lo = Math.max(0, unlockedIdx - 1);
+  const hi = Math.min(sorted.length - 1, unlockedIdx + 1);
+  const allowed = new Set(sorted.slice(lo, hi + 1));
+  // Prefer different archetype than player; fall back to same archetype
+  const candidates = ECLIPTARS.filter(
+    (e) => allowed.has(e.archetype) && e.archetype !== playerArch,
+  );
+  const pool = candidates.length > 0
+    ? candidates
+    : ECLIPTARS.filter((e) => allowed.has(e.archetype));
+  return pool[Math.floor(Math.random() * pool.length)] ?? ECLIPTARS[0];
+}
 
 // ─── Action Config ───────────────────────────────────────────────────
 const ACTIONS: Record<Action, ActionConfig> = {
