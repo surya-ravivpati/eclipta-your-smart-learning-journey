@@ -268,6 +268,8 @@ function BattleArena() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [playerXp, setPlayerXp] = useState<number>(0);
   const [opponentTier, setOpponentTier] = useState<string>("");
+  const [searchBand, setSearchBand] = useState<number>(1);
+  const [searchAiFallback, setSearchAiFallback] = useState<boolean>(false);
 
   // Fetch player XP once for matchmaking
   useEffect(() => {
@@ -501,13 +503,41 @@ function BattleArena() {
       : null;
     setGamblerStats(rolledGambler);
 
-    // Rank-based matchmaking: pick an opponent within ±1 tier of the player's XP.
-    const oppEclip = matchmakeOpponent(playerXp, cls);
+    // Progressive rank-based matchmaking: try ±1, widen to ±2, ±3, then AI fallback.
+    setSearchBand(1);
+    setSearchAiFallback(false);
+    setOpponentTier("");
+    setPhase("searching");
+
+    const tryBands: number[] = [1, 2, 3];
+    let resolved: { ecliptar: Ecliptar; band: number } | null = null;
+    for (const b of tryBands) {
+      const r = matchmakeOpponent(playerXp, cls, b);
+      if (r) { resolved = r; break; }
+    }
+    // AI fallback: if every band is empty, pick any Ecliptar as a stand-in opponent.
+    const usedAiFallback = !resolved;
+    const oppEclip: Ecliptar = resolved?.ecliptar ?? ECLIPTARS[Math.floor(Math.random() * ECLIPTARS.length)];
+    const finalBand: number = resolved?.band ?? 99;
     const oppArch = ARCHETYPES[oppEclip.archetype];
     setOpponentArchetype(oppEclip.archetype);
     setOpponentTier(xpToTier(ARCHETYPE_UNLOCK_XP[oppEclip.archetype] ?? 0));
 
-    setPhase("searching");
+    // Animate the band-widening UI: show ±1 (400ms) → ±2 (400ms) → ±3 (400ms) → reveal.
+    // Total ≤ ~1.4s which fits well inside the existing 2.2s search window.
+    const widenSteps: Array<{ band: number; ai: boolean }> = [];
+    for (const b of tryBands) {
+      widenSteps.push({ band: b, ai: false });
+      if (b >= finalBand && !usedAiFallback) break;
+    }
+    if (usedAiFallback) widenSteps.push({ band: 3, ai: true });
+    widenSteps.forEach((step, i) => {
+      setTimeout(() => {
+        setSearchBand(step.band);
+        setSearchAiFallback(step.ai);
+      }, i * 450);
+    });
+
     setTimeout(() => {
       const baseArch = ARCHETYPES[cls];
       const playerStats = rolledGambler ?? baseArch.stats;
@@ -520,6 +550,11 @@ function BattleArena() {
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
       addLog(`⚔️ ${playerName} (${baseArch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
+      addLog(
+        usedAiFallback
+          ? `🤖 No live opponents in range — AI fallback engaged.`
+          : `🎯 Matched within ±${finalBand} tier${finalBand > 1 ? "s" : ""} of your rank.`,
+      );
       if (rolledGambler) {
         addLog(`🎲 Gambler rolled: HP ${rolledGambler.health}/4 · TIME ${rolledGambler.time}/4 · DMG ${rolledGambler.damage}/4 · MULT ${rolledGambler.multiplier}/4 · DIFF ${rolledGambler.difficulty}/4`);
       }
