@@ -10,7 +10,7 @@ import { ReportDialog } from "@/components/forum/ReportDialog";
 import { AnswerComments } from "@/components/forum/AnswerComments";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/forum/$threadId")({
+export const Route = createFileRoute("/_authenticated/forum_/$threadId")({
   head: () => ({
     meta: [
       { title: "Thread – Eclipta Forum" },
