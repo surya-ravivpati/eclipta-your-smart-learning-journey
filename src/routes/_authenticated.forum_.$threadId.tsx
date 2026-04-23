@@ -51,7 +51,7 @@ function AuthorLink({ name }: { name: string }) {
 }
 
 function ThreadPage() {
-  const { threadId } = useParams({ from: "/_authenticated/forum/$threadId" });
+  const { threadId } = useParams({ from: "/_authenticated/forum_/$threadId" });
   const { user } = useAuth();
   const { isModerator } = useModerator();
   const navigate = useNavigate();
