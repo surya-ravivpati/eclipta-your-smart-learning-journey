@@ -246,7 +246,6 @@ function NewThreadDialog({ open, onClose, onCreated }: { open: boolean; onClose:
 export function Forum() {
   const { user, isAuthenticated } = useAuth();
   const { isModerator } = useModerator();
-  const [reportTarget, setReportTarget] = useState<string | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{ threads: number; answers: number; contributors: number } | null>(null);
@@ -304,6 +303,14 @@ export function Forum() {
     }
     setUserVotes(optimistic);
     setThreads((prev) => prev.map((t) => t.id === threadId ? { ...t, votes: t.votes + delta } : t));
+  };
+
+  const handleDeleteThread = async (threadId: string) => {
+    if (!confirm("Delete this thread permanently? All answers and comments will be removed.")) return;
+    const { error } = await supabase.from("forum_threads").delete().eq("id", threadId);
+    if (error) return toast.error(error.message);
+    setThreads((prev) => prev.filter((t) => t.id !== threadId));
+    toast.success("Thread deleted");
   };
 
   const filtered = useMemo(() => {
@@ -438,6 +445,8 @@ export function Forum() {
                     thread={thread}
                     userVote={userVotes[thread.id] ?? null}
                     onVote={(dir) => handleVote(thread.id, dir)}
+                    canDelete={!!user && (user.id === thread.user_id || isModerator)}
+                    onDelete={() => handleDeleteThread(thread.id)}
                   />
                 ))}
               </AnimatePresence>
