@@ -5,7 +5,7 @@ import { ARCHETYPES } from "./archetypes";
 import type { ArchetypeId } from "./types";
 import { ROAD_NODES } from "@/lib/trophy-road-data";
 import { cn } from "@/lib/utils";
-import { useOwnedEcliptars, usePlayerXp } from "@/hooks/use-player-xp";
+import { useOwnedEcliptars } from "@/hooks/use-player-xp";
 import { getEcliptarsByArchetype, getEcliptarBySlug, type Ecliptar } from "@/lib/ecliptars";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,6 @@ export interface ClassSelection {
 }
 
 export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection) => void }) {
-  const { xp } = usePlayerXp();
   const { slugs: ownedSlugs } = useOwnedEcliptars();
   const allArchetypes = Object.values(ARCHETYPES);
   // Decoupled rule: an archetype is usable as long as the player owns at least one of its Ecliptars,
