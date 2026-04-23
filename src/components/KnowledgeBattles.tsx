@@ -549,6 +549,7 @@ function BattleArena() {
   // ── Searching ──
   if (phase === "searching") {
     const arch = ARCHETYPES[archetype];
+    const playerTier = xpToTier(playerXp);
     return (
       <motion.div className="glass-panel p-10 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <motion.div className="w-20 h-20 mx-auto mb-6 border-2 border-neon-pink/50 flex items-center justify-center"
@@ -557,8 +558,15 @@ function BattleArena() {
         >
           <Target className="w-8 h-8 text-neon-pink" />
         </motion.div>
-        <h3 className="text-xl font-bold font-display mb-1">Matching opponent...</h3>
+        <h3 className="text-xl font-bold font-display mb-1">Matching rank-tier opponent…</h3>
         <p className={`inline-flex items-center gap-1 text-xs font-bold ${arch.color}`}><arch.icon className="w-3.5 h-3.5" /> {arch.name}</p>
+        <div className="mt-3 flex items-center justify-center gap-2 text-[10px] font-bold tracking-widest">
+          <span className={tierColors[playerTier]}>YOU · {playerTier.toUpperCase()}</span>
+          <span className="text-muted-foreground">VS</span>
+          <span className={opponentTier ? tierColors[opponentTier] : "text-muted-foreground"}>
+            {opponentTier ? `${opponentTier.toUpperCase()} TIER` : "…"}
+          </span>
+        </div>
         <motion.div className="flex justify-center gap-1 mt-4" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }}>
           {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-neon-pink rounded-full" />)}
         </motion.div>
