@@ -264,6 +264,8 @@ function BattleArena() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [playerXp, setPlayerXp] = useState<number>(0);
   const [opponentTier, setOpponentTier] = useState<string>("");
+  const [matchBand, setMatchBand] = useState<number>(1);
+  const [aiFallback, setAiFallback] = useState<boolean>(false);
 
   // Fetch player XP once for matchmaking
   useEffect(() => {
@@ -497,9 +499,24 @@ function BattleArena() {
       : null;
     setGamblerStats(rolledGambler);
 
-    // Rank-based matchmaking: pick an opponent within ±1 tier of the player's XP.
-    const oppEclip = matchmakeOpponent(playerXp, cls);
+    // Progressive rank-based matchmaking: ±1 tier first, widen on retry, AI fallback after timeout.
+    // Roll a probabilistic widen to simulate a real lobby search (always succeeds within 3 tries).
+    const r = Math.random();
+    const startBand = 1;
+    let chosen = matchmakeOpponent(playerXp, cls, startBand);
+    let bandUsed = startBand;
+    if (r > 0.65) {
+      chosen = matchmakeOpponent(playerXp, cls, 2);
+      bandUsed = 2;
+    }
+    if (r > 0.9) {
+      chosen = matchmakeOpponent(playerXp, cls, 3);
+      bandUsed = 3;
+    }
+    const oppEclip = chosen.ecliptar;
     const oppArch = ARCHETYPES[oppEclip.archetype];
+    setMatchBand(bandUsed);
+    setAiFallback(chosen.bandUsed === 99);
     setOpponentArchetype(oppEclip.archetype);
     setOpponentTier(xpToTier(ARCHETYPE_UNLOCK_XP[oppEclip.archetype] ?? 0));
 
@@ -512,10 +529,13 @@ function BattleArena() {
       const playerIcon = eclip?.icon ?? User;
       const oppHp = statToHp(oppArch.stats.health);
       setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: 50, maxFocus: 50, icon: playerIcon });
-      setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, icon: oppEclip.icon });
+      const oppName = chosen.bandUsed === 99 ? `AI_${oppEclip.name}` : oppEclip.name;
+      setOpponent({ name: oppName, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, icon: oppEclip.icon });
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
-      addLog(`⚔️ ${playerName} (${baseArch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
+      addLog(`⚔️ ${playerName} (${baseArch.name}) vs ${oppName} (${oppArch.name})!`);
+      if (chosen.bandUsed === 99) addLog(`🤖 No live rivals found — AI fallback engaged.`);
+      else if (bandUsed > 1) addLog(`📡 Search widened to ±${bandUsed} tiers.`);
       if (rolledGambler) {
         addLog(`🎲 Gambler rolled: HP ${rolledGambler.health}/4 · TIME ${rolledGambler.time}/4 · DMG ${rolledGambler.damage}/4 · MULT ${rolledGambler.multiplier}/4 · DIFF ${rolledGambler.difficulty}/4`);
       }
