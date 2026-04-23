@@ -854,6 +854,7 @@ function DailyChallengeCard() {
 
 // ─── Main Export ──────────────────────────────────────────────────────
 export function KnowledgeBattles() {
+  const [howOpen, setHowOpen] = useState(false);
   return (
     <section className="min-h-screen pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-6">
@@ -895,6 +896,93 @@ export function KnowledgeBattles() {
           </div>
         </div>
       </div>
+
+      {/* Floating "How to Play" button */}
+      <motion.button
+        onClick={() => setHowOpen(true)}
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-neon-purple text-primary-foreground shadow-lg shadow-neon-purple/30 flex items-center justify-center hover:opacity-90 transition-opacity"
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label="How to play"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <HelpCircle className="w-6 h-6" />
+      </motion.button>
+
+      <Dialog open={howOpen} onOpenChange={setHowOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl flex items-center gap-2">
+              <Info className="w-5 h-5 text-neon-purple" />
+              How Knowledge Battles work
+            </DialogTitle>
+            <DialogDescription>
+              Everything you need to know — matchmaking, combat, and rewards.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 text-sm">
+            <section>
+              <h4 className="text-xs font-bold tracking-widest text-neon-pink mb-2 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5" /> MATCHMAKING
+              </h4>
+              <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-5">
+                <li>
+                  Your <span className="text-foreground font-bold">tier</span> is derived from your XP — the same tiers
+                  used on the Trophy Road (Bronze → God).
+                </li>
+                <li>
+                  Matchmaking starts at <span className="text-foreground font-bold">±1 tier</span>. If no opponent fits,
+                  it widens to <span className="text-foreground font-bold">±2</span>, then <span className="text-foreground font-bold">±3</span>.
+                </li>
+                <li>
+                  After ±3 with no match, an <span className="text-foreground font-bold">AI opponent</span> is dispatched
+                  so you never wait. The current search range is shown in the matchmaking screen.
+                </li>
+                <li>
+                  Whenever possible, the system picks an opponent of a <span className="text-foreground font-bold">different
+                  archetype</span> than yours for variety.
+                </li>
+                <li>
+                  Gods can't farm Bronze — the band is symmetric, so a higher-tier player won't be matched against someone
+                  far below them.
+                </li>
+              </ul>
+            </section>
+
+            <section>
+              <h4 className="text-xs font-bold tracking-widest text-neon-cyan mb-2 flex items-center gap-1.5">
+                <Swords className="w-3.5 h-3.5" /> COMBAT
+              </h4>
+              <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-5">
+                <li><span className="text-foreground font-bold">Attack</span> — medium question, deals damage.</li>
+                <li><span className="text-foreground font-bold">Defend</span> — easy question, heals + builds Focus.</li>
+                <li><span className="text-foreground font-bold">Charge</span> — hard question, max damage.</li>
+                <li><span className="text-foreground font-bold">Wild</span> — costs 10 Focus, random outcome.</li>
+                <li>Correct answers grow your <span className="text-neon-pink font-bold">Streak</span>; combos amplify damage.</li>
+                <li>Wrong answers or timeouts reset your streak and trigger a counter-attack.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h4 className="text-xs font-bold tracking-widest text-neon-purple mb-2 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> ARCHETYPES & REWARDS
+              </h4>
+              <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-5">
+                <li>Each archetype tweaks HP, time, damage, multiplier, and question difficulty.</li>
+                <li>Win 3 battles in a day to unlock the <span className="text-foreground font-bold">2x XP daily bonus</span>.</li>
+                <li>XP earned advances your Trophy Road and unlocks new Ecliptars to claim.</li>
+              </ul>
+            </section>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button onClick={() => setHowOpen(false)} variant="default">Got it</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
