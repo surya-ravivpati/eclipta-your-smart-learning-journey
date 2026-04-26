@@ -109,9 +109,10 @@ export function LunaFullSession() {
   const handleScreenShare = async () => {
     if (capturing || isStreaming) return;
     setCapturing(true);
-    const dataUrl = await captureScreenFrame();
+    const result = await captureScreenFrame();
     setCapturing(false);
-    if (dataUrl) setPendingImage(dataUrl);
+    if (result.ok) setPendingImage(result.dataUrl);
+    else toast.error(result.message);
   };
 
   const send = async () => {
