@@ -1,36 +1,33 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Send, Lightbulb, Eye, Sparkles, Coffee, BookOpen, ArrowLeft, RotateCcw, Zap } from "lucide-react";
+import { Send, Coffee, ArrowLeft, RotateCcw, Zap, Monitor, Loader2, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { streamLunaChat, parseLunaTag } from "@/lib/luna-api";
-import { getLunaContext, getAccuracy, getSessionDuration, detectFatigue, escalateHint, resetHintLevel } from "@/lib/luna-context";
+import { streamLunaChat, parseLunaTag, LUNA_TAG_CONFIG, LUNA_HISTORY_KEY } from "@/lib/luna-api";
+import { getLunaContext, getAccuracy, getSessionDuration, detectFatigue, escalateHint, resetHintLevel, subscribeFatigue } from "@/lib/luna-context";
+import { captureScreenFrame } from "@/lib/luna-screen";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
-import { checkMilestones, fireMilestoneToasts, markExistingMilestones } from "@/lib/milestones";
+import { useXpMilestones } from "@/hooks/use-xp-milestones";
+import { toast } from "sonner";
 
 type LunaMessage = {
   role: "assistant" | "user";
   content: string;
   tag?: "hint" | "nudge" | "explain" | "challenge" | "break" | null;
+  imageDataUrl?: string;
   id?: string;
 };
 
-const TAG_CONFIG: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  hint: { icon: Lightbulb, color: "text-neon-cyan", label: "HINT" },
-  nudge: { icon: Sparkles, color: "text-neon-purple", label: "NUDGE" },
-  explain: { icon: BookOpen, color: "text-neon-cyan", label: "EXPLAIN" },
-  challenge: { icon: Eye, color: "text-neon-pink", label: "CHALLENGE" },
-  break: { icon: Coffee, color: "text-neon-pink", label: "BREAK" },
-};
-
-const STORAGE_KEY = "luna:full-session:v1";
+// Mini panel and full session share one history so dropping in mid-flow
+// continues the same conversation.
+const STORAGE_KEY = LUNA_HISTORY_KEY;
 const INTRO_MSG: LunaMessage = {
   role: "assistant",
-  content: "Welcome to a deep learning session. 🌙 I'm Luna, your Socratic tutor. Tell me what you're working on, or pick a topic — I'll guide you through it step by step. No shortcuts, just real understanding.",
+  content: "Welcome to a deep learning session. 🌙 I'm Luna, your Socratic tutor. Tell me what you're working on, or pick a topic, and I'll guide you through it step by step. No shortcuts, just real understanding.",
   tag: null,
 };
 
@@ -48,12 +45,22 @@ export function LunaFullSession() {
   });
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [capturing, setCapturing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const profileRef = useRef<Record<string, unknown> | null>(null);
   const historyRef = useRef<Record<string, unknown>[] | null>(null);
-  const lastXpRef = useRef<number>(0);
+
+  useXpMilestones({
+    onLunaMessages: (msgs) => {
+      setMessages(prev => [
+        ...prev,
+        ...msgs.map(content => ({ role: "assistant" as const, content, tag: "nudge" as const })),
+      ]);
+    },
+  });
 
   // Persist chat history
   useEffect(() => {
@@ -68,7 +75,7 @@ export function LunaFullSession() {
     inputRef.current?.focus();
   }, []);
 
-  // Load user profile, history, and init milestones
+  // Load user profile + recent history.
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -77,50 +84,48 @@ export function LunaFullSession() {
         supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("learning_history").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(15),
       ]);
-      if (profileRes.data) {
-        profileRef.current = profileRes.data;
-        const xp = (profileRes.data as any).xp ?? 0;
-        markExistingMilestones(xp);
-        lastXpRef.current = xp;
-      }
+      if (profileRes.data) profileRef.current = profileRes.data;
       if (historyRes.data) historyRef.current = historyRes.data;
     })();
   }, []);
 
-  // Poll for XP changes to detect milestones
+  // Event-driven fatigue: surface a [BREAK] suggestion the moment recordAnswer
+  // drives the level to severe.
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from("user_profiles").select("xp").eq("user_id", user.id).maybeSingle();
-      if (!data) return;
-      const newXp = (data as any).xp ?? 0;
-      const prevXp = lastXpRef.current;
-      if (newXp > prevXp) {
-        lastXpRef.current = newXp;
-        const { toasts, lunaMessages } = checkMilestones(prevXp, newXp);
-        fireMilestoneToasts(toasts);
-        if (lunaMessages.length > 0) {
-          setMessages(prev => [
-            ...prev,
-            ...lunaMessages.map(msg => ({
-              role: "assistant" as const,
-              content: msg,
-              tag: "nudge" as const,
-            })),
-          ]);
-        }
-      }
-    }, 10000);
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeFatigue((level) => {
+      if (level !== "severe") return;
+      setMessages(prev => {
+        if (prev.some(m => m.tag === "break")) return prev;
+        return [...prev, {
+          role: "assistant",
+          content: "You've been pushing through tough spots. 🌙 Take 5 minutes, grab some water, then come back fresh. I'll be here.",
+          tag: "break",
+        }];
+      });
+    });
+    return unsubscribe;
   }, []);
+
+  const handleScreenShare = async () => {
+    if (capturing || isStreaming) return;
+    setCapturing(true);
+    const dataUrl = await captureScreenFrame();
+    setCapturing(false);
+    if (dataUrl) setPendingImage(dataUrl);
+  };
 
   const send = async () => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if ((!text && !pendingImage) || isStreaming) return;
     setInput("");
+    const attachedImage = pendingImage;
+    setPendingImage(null);
 
-    const userMsg: LunaMessage = { role: "user", content: text };
+    const userMsg: LunaMessage = {
+      role: "user",
+      content: text || (attachedImage ? "Here's my screen, can you help with what I'm looking at?" : ""),
+      ...(attachedImage ? { imageDataUrl: attachedImage } : {}),
+    };
     setMessages(prev => [...prev, userMsg]);
     setIsStreaming(true);
 
@@ -132,6 +137,7 @@ export function LunaFullSession() {
     const apiMessages = [...messages, userMsg].map(m => ({
       role: m.role as "user" | "assistant",
       content: m.content,
+      ...(m.imageDataUrl ? { imageDataUrl: m.imageDataUrl } : {}),
     }));
 
     let assistantSoFar = "";
@@ -192,9 +198,10 @@ export function LunaFullSession() {
         })();
       },
       onError: (err) => {
+        toast.error(err);
         setMessages(prev => [...prev, {
           role: "assistant",
-          content: `Something went wrong. 🌙 ${err}. Let's try again?`,
+          content: `Something went wrong. 🌙 ${err}`,
           tag: null,
         }]);
         setIsStreaming(false);
