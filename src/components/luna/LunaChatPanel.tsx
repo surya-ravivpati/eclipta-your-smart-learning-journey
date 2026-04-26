@@ -299,7 +299,7 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
                   )}
                   {msg.content && (
                     <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>
                     </div>
                   )}
                 </div>
