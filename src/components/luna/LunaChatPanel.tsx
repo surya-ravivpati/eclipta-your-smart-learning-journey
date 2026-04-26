@@ -99,6 +99,17 @@ export function LunaChatPanel({ open, onClose, messages, setMessages }: LunaChat
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  // Abort any in-flight stream when the panel closes so we stop billing
+  // the AI gateway for tokens the user can no longer see.
+  useEffect(() => {
+    if (open) return;
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+      setIsStreaming(false);
+    }
+  }, [open]);
+
   // Proactive fatigue check
   useEffect(() => {
     if (!open) return;
