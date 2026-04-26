@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, ArrowRight, Monitor, Loader2 } from "lucide-react";
+import { X, Send, ArrowRight, Monitor, Loader2, RotateCcw } from "lucide-react";
 import { streamLunaChat, parseLunaTag, LUNA_TAG_CONFIG } from "@/lib/luna-api";
 import { getLunaContext, getSessionDuration, getAccuracy, escalateHint, resetHintLevel, subscribeFatigue } from "@/lib/luna-context";
 import { captureScreenFrame } from "@/lib/luna-screen";
@@ -107,9 +107,9 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
     setCapturing(true);
     const result = await captureScreenFrame();
     setCapturing(false);
-    if (result.dataUrl) {
+    if ("dataUrl" in result && result.dataUrl) {
       setPendingImage(result.dataUrl);
-    } else {
+    } else if ("error" in result) {
       // Surface denial / unsupported / failure so the user knows nothing got attached.
       toast.error(result.message);
     }
@@ -242,17 +242,6 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
     void send(last);
   };
 
-  // Old onError block stub (replaced above) - keep send() flow intact.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _noop = () => {
-    setMessages(prev => [...prev, {
-          role: "assistant",
-          content: ``,
-          tag: null,
-        }]);
-        setIsStreaming(false);
-  };
-
   const tagIcon = (tag?: string | null) => {
     if (!tag || !(tag in LUNA_TAG_CONFIG)) return null;
     const config = LUNA_TAG_CONFIG[tag as keyof typeof LUNA_TAG_CONFIG];
@@ -324,6 +313,16 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
                     <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0">
                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>
                     </div>
+                  )}
+                  {msg.role === "assistant" && typeof msg.id === "string" && msg.id.startsWith("err-") && (
+                    <button
+                      type="button"
+                      onClick={retryLast}
+                      disabled={isStreaming}
+                      className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold tracking-widest text-neon-purple hover:text-neon-pink transition-colors disabled:opacity-50"
+                    >
+                      <RotateCcw className="w-3 h-3" /> RETRY
+                    </button>
                   )}
                 </div>
               </motion.div>
