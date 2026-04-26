@@ -107,9 +107,9 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
     setCapturing(true);
     const result = await captureScreenFrame();
     setCapturing(false);
-    if ("dataUrl" in result && result.dataUrl) {
+    if (result.ok) {
       setPendingImage(result.dataUrl);
-    } else if ("error" in result) {
+    } else {
       // Surface denial / unsupported / failure so the user knows nothing got attached.
       toast.error(result.message);
     }
