@@ -116,7 +116,9 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
 
     const upsertAssistant = (chunk: string) => {
       assistantSoFar += chunk;
-      if (awaitingFirstToken) setAwaitingFirstToken(false);
+      // First delta arrived — drop the "thinking" placeholder. setState is
+      // a no-op when value is already false, so calling every chunk is fine.
+      setAwaitingFirstToken(false);
       const { tag, text: cleanText } = parseLunaTag(assistantSoFar);
       setMessages(prev => {
         const idx = prev.findIndex(m => m.id === streamId);
