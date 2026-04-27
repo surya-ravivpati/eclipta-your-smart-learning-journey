@@ -129,7 +129,7 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
 
     const userMsg: LunaMessage = {
       role: "user",
-      content: text || (attachedImage ? "Here's my screen — can you help with what I'm looking at?" : ""),
+      content: text || (attachedImage ? "Here's my screen, can you help with what I'm looking at?" : ""),
       ...(attachedImage ? { imageDataUrl: attachedImage } : {}),
     };
     setMessages(prev => [...prev, userMsg]);
