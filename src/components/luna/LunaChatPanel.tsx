@@ -27,9 +27,11 @@ interface LunaChatPanelProps {
   messages: LunaMessage[];
   setMessages: React.Dispatch<React.SetStateAction<LunaMessage[]>>;
   onStreamingChange?: (streaming: boolean) => void;
+  /** Presentational intro shown when messages is empty. Not persisted. */
+  introContent?: string | null;
 }
 
-export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamingChange }: LunaChatPanelProps) {
+export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamingChange, introContent }: LunaChatPanelProps) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
@@ -289,6 +291,15 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
 
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[200px] max-h-[360px]">
+            {messages.length === 0 && introContent && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] px-3 py-2 text-sm leading-relaxed rounded bg-secondary/50 border border-border text-foreground">
+                  <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0">
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{introContent}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            )}
             {messages.map((msg, i) => (
               <motion.div
                 key={i}
