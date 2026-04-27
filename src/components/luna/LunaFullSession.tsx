@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Send, Coffee, ArrowLeft, RotateCcw, Zap, Monitor, Loader2, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { streamLunaChat, parseLunaTag, LUNA_TAG_CONFIG, LUNA_HISTORY_KEY } from "@/lib/luna-api";
+import { streamLunaChat, parseLunaTag, LUNA_TAG_CONFIG } from "@/lib/luna-api";
 import { getLunaContext, getAccuracy, getSessionDuration, detectFatigue, escalateHint, resetHintLevel, subscribeFatigue } from "@/lib/luna-context";
 import { captureScreenFrame } from "@/lib/luna-screen";
 import ReactMarkdown from "react-markdown";
@@ -12,6 +12,7 @@ import "katex/dist/katex.min.css";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useXpMilestones } from "@/hooks/use-xp-milestones";
+import { useLunaHistory } from "@/hooks/use-luna-history";
 import { toast } from "sonner";
 
 type LunaMessage = {
@@ -22,27 +23,16 @@ type LunaMessage = {
   id?: string;
 };
 
-// Mini panel and full session share one history so dropping in mid-flow
-// continues the same conversation.
-const STORAGE_KEY = LUNA_HISTORY_KEY;
-const INTRO_MSG: LunaMessage = {
-  role: "assistant",
-  content: "Welcome to a deep learning session. 🌙 I'm Luna, your Socratic tutor. Tell me what you're working on, or pick a topic, and I'll guide you through it step by step. No shortcuts, just real understanding.",
-  tag: null,
-};
+// Presentational intro — rendered when history is empty, never persisted.
+const INTRO_CONTENT = "Welcome to a deep learning session. 🌙 I'm Luna, your Socratic tutor. Tell me what you're working on, or pick a topic, and I'll guide you through it step by step. No shortcuts, just real understanding.";
 
 export function LunaFullSession() {
-  const [messages, setMessages] = useState<LunaMessage[]>(() => {
-    if (typeof window === "undefined") return [INTRO_MSG];
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as LunaMessage[];
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch { /* ignore */ }
-    return [INTRO_MSG];
-  });
+  // Shared history with the mini panel via a single hook + storage key.
+  const { messages, setMessages, clear: clearHistory } = useLunaHistory() as {
+    messages: LunaMessage[];
+    setMessages: React.Dispatch<React.SetStateAction<LunaMessage[]>>;
+    clear: () => void;
+  };
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
@@ -62,11 +52,6 @@ export function LunaFullSession() {
       ]);
     },
   });
-
-  // Persist chat history
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-100))); } catch { /* ignore */ }
-  }, [messages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -237,12 +222,8 @@ export function LunaFullSession() {
 
   const resetSession = () => {
     if (abortRef.current) abortRef.current.abort();
-    setMessages([{
-      role: "assistant",
-      content: "Fresh start! 🌙 What would you like to work on?",
-      tag: null,
-    }]);
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+    // Clear shared history; the intro placeholder will render automatically.
+    clearHistory();
     setIsStreaming(false);
   };
 
@@ -291,6 +272,15 @@ export function LunaFullSession() {
         {/* Chat area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-0">
           <div className="max-w-2xl mx-auto py-6 space-y-4">
+            {messages.length === 0 && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] px-4 py-3 text-sm leading-relaxed rounded-lg bg-secondary/40 border border-border text-foreground">
+                  <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0">
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{INTRO_CONTENT}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            )}
             {messages.map((msg, i) => (
               <motion.div
                 key={i}
