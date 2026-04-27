@@ -188,7 +188,7 @@ export async function streamLunaChat({
     }
     if (idleTimer) clearTimeout(idleTimer);
     if (idleAborted) {
-      onError?.("Luna went quiet. The connection timed out - try again.");
+      onError?.("Luna went quiet. The connection timed out. Try again.");
       onDone();
       return;
     }

@@ -38,6 +38,9 @@ interface Options {
 export function useLunaConversation({ messages, setMessages, sessionType, reasoning, breakMessage, active }: Options) {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  // True from send() until the first delta lands. The "Luna is thinking..."
+  // spinner keys off this so it actually shows during the pre-token wait.
+  const [awaitingFirstToken, setAwaitingFirstToken] = useState(false);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -93,6 +96,7 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
     };
     setMessages(prev => [...prev, userMsg]);
     setIsStreaming(true);
+    setAwaitingFirstToken(true);
 
     const askingForAnswer = /\b(just (tell|give) me|tell me the answer|give me the answer|what(?:'s| is) the answer|the solution|skip the hint|stop hinting)\b/i.test(text);
     if (askingForAnswer) escalateHint();
@@ -112,6 +116,9 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
 
     const upsertAssistant = (chunk: string) => {
       assistantSoFar += chunk;
+      // First delta arrived — drop the "thinking" placeholder. setState is
+      // a no-op when value is already false, so calling every chunk is fine.
+      setAwaitingFirstToken(false);
       const { tag, text: cleanText } = parseLunaTag(assistantSoFar);
       setMessages(prev => {
         const idx = prev.findIndex(m => m.id === streamId);
@@ -145,18 +152,30 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
       onDelta: upsertAssistant,
       onDone: () => {
         setIsStreaming(false);
+        setAwaitingFirstToken(false);
         (async () => {
           try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             const { tag } = parseLunaTag(assistantSoFar);
+            // Strip LaTeX delimiters, code fences, and tag markers before
+            // slicing — otherwise the stored summary is mostly \frac{...}.
+            const cleanedSummary = assistantSoFar
+              .replace(/```[\s\S]*?```/g, " ")
+              .replace(/\$\$[\s\S]*?\$\$/g, " ")
+              .replace(/\$[^$\n]+\$/g, " ")
+              .replace(/\\\(([\s\S]*?)\\\)/g, " ")
+              .replace(/\\\[([\s\S]*?)\\\]/g, " ")
+              .replace(/\\[a-zA-Z]+\{[^}]*\}/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
             await supabase.from("learning_history").insert({
               user_id: user.id,
               session_type: sessionType,
               topic: ctx.lessonTitle || ctx.courseId || null,
               question_text: text.slice(0, 500),
               hint_level_used: ctx.hintLevel,
-              luna_summary: tag ? `[${tag.toUpperCase()}] ${assistantSoFar.slice(0, 200)}` : assistantSoFar.slice(0, 200),
+              luna_summary: tag ? `[${tag.toUpperCase()}] ${cleanedSummary.slice(0, 200)}` : cleanedSummary.slice(0, 200),
             });
           } catch { /* non-critical, don't break chat */ }
         })();
@@ -175,6 +194,7 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
           id: `err-${Date.now()}`,
         }]);
         setIsStreaming(false);
+        setAwaitingFirstToken(false);
       },
       signal: abortController.signal,
     });
@@ -200,11 +220,13 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = null;
     setIsStreaming(false);
+    setAwaitingFirstToken(false);
   };
 
   return {
     input, setInput,
     isStreaming,
+    awaitingFirstToken,
     pendingImage, setPendingImage,
     capturing,
     handleScreenShare,
