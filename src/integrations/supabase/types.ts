@@ -407,6 +407,7 @@ export type Database = {
           current_streak: number
           equipped_ecliptar: string | null
           id: string
+          luna_notes: string | null
           preferred_pace: string
           preferred_style: string
           strong_areas: string[] | null
@@ -427,6 +428,7 @@ export type Database = {
           current_streak?: number
           equipped_ecliptar?: string | null
           id?: string
+          luna_notes?: string | null
           preferred_pace?: string
           preferred_style?: string
           strong_areas?: string[] | null
@@ -447,6 +449,7 @@ export type Database = {
           current_streak?: number
           equipped_ecliptar?: string | null
           id?: string
+          luna_notes?: string | null
           preferred_pace?: string
           preferred_style?: string
           strong_areas?: string[] | null
