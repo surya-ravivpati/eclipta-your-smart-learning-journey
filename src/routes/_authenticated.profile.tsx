@@ -361,40 +361,46 @@ function SettingsPanel({ profile, userId, onSaved }: {
         {/* Theme */}
         <div>
           <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Appearance</label>
-          <p className="text-[11px] text-muted-foreground mt-1 mb-2">Switch between dark and light arena.</p>
+          <p className="text-[11px] text-muted-foreground mt-1 mb-2">Choose dark, light, or follow your system setting.</p>
           <div className="flex gap-2">
-            <button
-              onClick={() => setTheme("dark")}
-              className={cn(
-                "flex-1 px-3 py-2 text-xs font-bold tracking-widest border transition-colors inline-flex items-center justify-center gap-2",
-                theme === "dark"
-                  ? "border-neon-purple bg-neon-purple/10 text-neon-purple"
-                  : "border-border text-muted-foreground hover:border-neon-purple/40"
-              )}
-            >
-              <Moon className="w-3.5 h-3.5" />DARK
-            </button>
-            <button
-              onClick={() => setTheme("light")}
-              className={cn(
-                "flex-1 px-3 py-2 text-xs font-bold tracking-widest border transition-colors inline-flex items-center justify-center gap-2",
-                theme === "light"
-                  ? "border-neon-purple bg-neon-purple/10 text-neon-purple"
-                  : "border-border text-muted-foreground hover:border-neon-purple/40"
-              )}
-            >
-              <Sun className="w-3.5 h-3.5" />LIGHT
-            </button>
+            {([
+              { id: "dark", label: "DARK", Icon: Moon },
+              { id: "light", label: "LIGHT", Icon: Sun },
+              { id: "system", label: "SYSTEM", Icon: Monitor },
+            ] as const).map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => setTheme(id)}
+                className={cn(
+                  "flex-1 px-3 py-2 text-xs font-bold tracking-widest border transition-colors inline-flex items-center justify-center gap-2",
+                  theme === id
+                    ? "border-neon-purple bg-neon-purple/10 text-neon-purple"
+                    : "border-border text-muted-foreground hover:border-neon-purple/40"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />{label}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Learning preferences */}
         <div className="md:col-span-2 border-t border-border pt-5">
           <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Learning Preferences</label>
-          <p className="text-[11px] text-muted-foreground mt-1 mb-3">Tunes how Luna paces hints and selects question styles.</p>
+          <p className="text-[11px] text-muted-foreground mt-1 mb-3">Tunes how Luna paces hints, picks examples, and writes responses. You can also tell Luna in chat ("write shorter", "use more analogies") and she'll remember.</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5">PACE</p>
+              <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                PACE
+                <PrefInfo
+                  title="Pace"
+                  options={[
+                    { name: "Slow", desc: "More worked examples, smaller steps, extra check-ins. Best when a topic is brand new or you want time to digest." },
+                    { name: "Normal", desc: "Balanced — Luna explains, then asks. Default for most learners." },
+                    { name: "Fast", desc: "Tighter responses, fewer recap sentences, harder follow-ups. Use when you already have the basics." },
+                  ]}
+                />
+              </p>
               <div className="flex gap-1">
                 {(["slow", "normal", "fast"] as const).map((opt) => (
                   <button key={opt} onClick={() => setPace(opt)} className={cn(
@@ -405,7 +411,18 @@ function SettingsPanel({ profile, userId, onSaved }: {
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5">STYLE</p>
+              <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                STYLE
+                <PrefInfo
+                  title="Style"
+                  options={[
+                    { name: "Visual", desc: "Leans on diagrams, spatial analogies, and 'picture this' framing." },
+                    { name: "Verbal", desc: "Definitions, words, and step-by-step prose. Light on imagery." },
+                    { name: "Mixed", desc: "Alternates verbal explanations with concrete examples. Default." },
+                    { name: "Applied", desc: "Leads with real-world problems and code/use cases first, theory after." },
+                  ]}
+                />
+              </p>
               <div className="flex gap-1">
                 {(["visual", "verbal", "mixed", "applied"] as const).map((opt) => (
                   <button key={opt} onClick={() => setStyle(opt)} className={cn(
@@ -416,10 +433,30 @@ function SettingsPanel({ profile, userId, onSaved }: {
               </div>
             </div>
           </div>
+          <div className="mt-4">
+            <p className="text-[10px] font-bold tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+              NOTES FOR LUNA
+              <PrefInfo
+                title="Notes for Luna"
+                options={[
+                  { name: "What this is", desc: "Free-form notes Luna reads on every reply. Use it for things the dropdowns don't cover, like 'answer in Spanish', 'avoid sports analogies', or 'I'm prepping for the SAT'." },
+                  { name: "Auto-learning", desc: "When you tell Luna things in chat (e.g. 'write shorter', 'use more analogies'), she'll add them here automatically. Edit or clear at any time." },
+                ]}
+              />
+            </p>
+            <textarea
+              value={lunaNotes}
+              onChange={(e) => setLunaNotes(e.target.value.slice(0, 600))}
+              placeholder="e.g. Use shorter responses. Prefer cooking analogies. I'm a college freshman."
+              rows={3}
+              className="w-full px-3 py-2 text-xs bg-background border border-border focus:border-neon-purple/60 focus:outline-none rounded resize-none"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">{lunaNotes.length}/600 characters</p>
+          </div>
           <div className="flex justify-end mt-3">
             <button
               onClick={savePrefs}
-              disabled={savingPrefs || (pace === profile?.preferred_pace && style === profile?.preferred_style)}
+              disabled={savingPrefs || (pace === profile?.preferred_pace && style === profile?.preferred_style && lunaNotes.trim() === (profile?.luna_notes || "").trim())}
               className="px-4 py-2 text-xs font-bold tracking-widest bg-neon-purple text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-opacity inline-flex items-center gap-2"
             >
               {savingPrefs ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
