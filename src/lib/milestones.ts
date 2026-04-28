@@ -113,7 +113,14 @@ export function fireMilestoneToasts(milestoneToasts: { title: string; descriptio
 }
 
 /** Get all milestones already achieved at a given XP (for initial load) */
+let lastMarkedXp = -1;
 export function markExistingMilestones(currentXp: number) {
+  // Both Luna panels mount useXpMilestones, so this runs twice on a typical
+  // page. The shownMilestones Set is module-level (correct), but re-walking
+  // the thresholds on every mount is pure waste — short-circuit when we've
+  // already marked at or above the current XP.
+  if (lastMarkedXp >= currentXp) return;
+  lastMarkedXp = currentXp;
   for (const threshold of XP_MILESTONES) {
     if (currentXp >= threshold) shownMilestones.add(`xp-${threshold}`);
   }
