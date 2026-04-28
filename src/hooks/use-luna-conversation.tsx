@@ -11,6 +11,7 @@ import { getLunaContext, getAccuracy, getSessionDuration, escalateHint, resetHin
 import { captureScreenFrame } from "@/lib/luna-screen";
 import { supabase } from "@/integrations/supabase/client";
 import { useLunaProfile } from "@/hooks/use-luna-profile";
+import { extractPreference, mergePreference } from "@/lib/luna-preference-detector";
 
 export type ConversationMessage = {
   role: "assistant" | "user";
@@ -97,6 +98,29 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
     setMessages(prev => [...prev, userMsg]);
     setIsStreaming(true);
     setAwaitingFirstToken(true);
+
+    // Detect preference statements ("write shorter", "use more analogies", ...)
+    // and merge them into user_profiles.luna_notes so future Luna replies
+    // honour them. Uses the latest profile from useLunaProfile to avoid
+    // clobbering anything saved manually on /profile.
+    if (text) {
+      const pref = extractPreference(text);
+      if (pref) {
+        (async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const currentNotes = (profileRef.current?.luna_notes as string | null | undefined) ?? null;
+            const merged = mergePreference(currentNotes, pref);
+            if (merged === currentNotes) return;
+            const { error } = await supabase.from("user_profiles")
+              .update({ luna_notes: merged })
+              .eq("user_id", user.id);
+            if (!error) toast.success(`Got it — I'll remember: "${pref}"`, { duration: 3000 });
+          } catch { /* non-critical */ }
+        })();
+      }
+    }
 
     const askingForAnswer = /\b(just (tell|give) me|tell me the answer|give me the answer|what(?:'s| is) the answer|the solution|skip the hint|stop hinting)\b/i.test(text);
     if (askingForAnswer) escalateHint();
