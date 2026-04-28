@@ -31,6 +31,7 @@ type Profile = {
   preferred_pace: string; preferred_style: string;
   equipped_ecliptar: string | null;
   avatar_url: string | null;
+  luna_notes: string | null;
 };
 type Ecliptar = { id: string; ecliptar_name: string; archetype: string; claimed_at: string };
 type Enrollment = { id: string; course_slug: string; course_title: string; enrolled_at: string };
