@@ -690,3 +690,30 @@ function Row({ label, value }: { label: string; value: number }) {
     </div>
   );
 }
+
+function PrefInfo({ title, options }: { title: string; options: { name: string; desc: string }[] }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`More info about ${title}`}
+          className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-border text-muted-foreground hover:text-neon-purple hover:border-neon-purple/60 transition-colors"
+        >
+          <Info className="w-2.5 h-2.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="top" align="start" className="w-72 text-xs space-y-2">
+        <p className="text-[10px] font-bold tracking-widest text-neon-purple">{title.toUpperCase()}</p>
+        <ul className="space-y-2">
+          {options.map((o) => (
+            <li key={o.name}>
+              <p className="font-bold text-foreground">{o.name}</p>
+              <p className="text-muted-foreground leading-snug">{o.desc}</p>
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
+}
