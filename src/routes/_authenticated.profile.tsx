@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { User, Trophy, Flame, Target, Zap, BookOpen, Sparkles, Loader2, MessageSquare, LogOut, Sun, Moon, Monitor, Settings, Check, Lock, ExternalLink, AlertTriangle, Camera, ListChecks, Clock, Info } from "lucide-react";
+import { User, Trophy, Flame, Target, Zap, BookOpen, Sparkles, Loader2, MessageSquare, LogOut, Sun, Moon, Monitor, Settings, Check, Lock, ExternalLink, AlertTriangle, Camera, ListChecks, Clock, Info, Pencil, XCircle } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { ARCHETYPES } from "@/components/battles/archetypes";
 import { ECLIPTARS, getEcliptarsByArchetype } from "@/lib/ecliptars";
@@ -37,6 +37,8 @@ type Ecliptar = { id: string; ecliptar_name: string; archetype: string; claimed_
 type Enrollment = { id: string; course_slug: string; course_title: string; enrolled_at: string };
 type ForumActivity = { id: string; title: string; created_at: string };
 type Proposal = { id: string; topic: string; status: string; created_at: string };
+type ProposalFull = { id: string; topic: string; status: string; created_at: string; denial_reason: string | null; course_id: string | null };
+type UserCourse = { id: string; slug: string; title: string; status: string; updated_at: string };
 
 function ProfilePage() {
   const { user } = useAuth();
@@ -45,25 +47,31 @@ function ProfilePage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [threads, setThreads] = useState<ForumActivity[]>([]);
   const [answersCount, setAnswersCount] = useState(0);
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [myCourses, setMyCourses] = useState<UserCourse[]>([]);
+  const [deniedProposals, setDeniedProposals] = useState<ProposalFull[]>([]);
+  const [pendingProposals, setPendingProposals] = useState<ProposalFull[]>([]);
   const [loading, setLoading] = useState(true);
 
   const reload = async () => {
     if (!user) return;
-    const [p, e, en, t, a, pr] = await Promise.all([
+    const [p, e, en, t, a, pr, uc] = await Promise.all([
       supabase.from("user_profiles").select("username,xp,current_streak,best_streak,total_correct,total_questions,total_sessions,preferred_pace,preferred_style,equipped_ecliptar,avatar_url,luna_notes").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_ecliptars").select("id,ecliptar_name,archetype,claimed_at").eq("user_id", user.id).order("claimed_at", { ascending: false }),
       supabase.from("enrollments").select("id,course_slug,course_title,enrolled_at").eq("user_id", user.id).order("enrolled_at", { ascending: false }),
       supabase.from("forum_threads").select("id,title,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
       supabase.from("forum_answers").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-      supabase.from("course_proposals").select("id,topic,status,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
+      supabase.from("course_proposals").select("id,topic,status,created_at,denial_reason,course_id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(20),
+      supabase.from("user_courses").select("id,slug,title,status,updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }),
     ]);
     setProfile((p.data as Profile) || null);
     setEcliptars((e.data as Ecliptar[]) || []);
     setEnrollments((en.data as Enrollment[]) || []);
     setThreads((t.data as ForumActivity[]) || []);
     setAnswersCount(a.count || 0);
-    setProposals((pr.data as Proposal[]) || []);
+    const allProps = (pr.data as ProposalFull[]) || [];
+    setDeniedProposals(allProps.filter((p) => p.status === "denied"));
+    setPendingProposals(allProps.filter((p) => p.status !== "denied" && p.status !== "approved"));
+    setMyCourses((uc.data as UserCourse[]) || []);
     setLoading(false);
   };
 
@@ -196,22 +204,57 @@ function ProfilePage() {
                   )}
                 </Card>
 
-                <Card title="Course Proposals" icon={<ListChecks className="w-4 h-4 text-neon-purple" />} count={proposals.length}>
-                  {proposals.length === 0 ? (
-                    <EmptyState text="No proposals submitted." cta={<Link to="/build-course" className="text-neon-purple hover:underline">Build a course →</Link>} />
+                <Card title="Your Courses" icon={<ListChecks className="w-4 h-4 text-neon-purple" />} count={myCourses.length}>
+                  {myCourses.length === 0 && pendingProposals.length === 0 ? (
+                    <EmptyState text="No courses yet." cta={<Link to="/build-course" className="text-neon-purple hover:underline">Build a course →</Link>} />
                   ) : (
                     <ul className="space-y-2">
-                      {proposals.slice(0, 5).map((p) => (
+                      {myCourses.slice(0, 5).map((c) => (
+                        <li key={c.id} className="text-xs border-b border-border/50 pb-2 flex items-center justify-between gap-2">
+                          <Link
+                            to="/courses/$courseId/edit"
+                            params={{ courseId: c.id }}
+                            className="font-medium truncate hover:text-neon-purple transition-colors flex-1"
+                          >
+                            {c.title}
+                          </Link>
+                          <span className={cn(
+                            "text-[9px] font-bold tracking-widest uppercase inline-flex items-center gap-1 shrink-0",
+                            c.status === "published" ? "text-emerald-400" : "text-neon-purple/80"
+                          )}>
+                            <Pencil className="w-2.5 h-2.5" />{c.status}
+                          </span>
+                        </li>
+                      ))}
+                      {pendingProposals.slice(0, 3).map((p) => (
                         <li key={p.id} className="text-xs border-b border-border/50 pb-2 flex items-center justify-between gap-2">
-                          <span className="font-medium truncate">{p.topic}</span>
-                          <span className="text-[9px] font-bold tracking-widest uppercase text-neon-purple/80 inline-flex items-center gap-1 shrink-0">
-                            <Clock className="w-2.5 h-2.5" />{p.status}
+                          <span className="font-medium truncate flex-1">{p.topic}</span>
+                          <span className="text-[9px] font-bold tracking-widest uppercase text-muted-foreground inline-flex items-center gap-1 shrink-0">
+                            <Clock className="w-2.5 h-2.5" />reviewing
                           </span>
                         </li>
                       ))}
                     </ul>
                   )}
                 </Card>
+
+                {deniedProposals.length > 0 && (
+                  <Card title="Denied Proposals" icon={<XCircle className="w-4 h-4 text-destructive" />} count={deniedProposals.length}>
+                    <ul className="space-y-3">
+                      {deniedProposals.slice(0, 5).map((p) => (
+                        <li key={p.id} className="text-xs border-b border-border/50 pb-2">
+                          <p className="font-medium truncate">{p.topic}</p>
+                          {p.denial_reason && (
+                            <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{p.denial_reason}</p>
+                          )}
+                          <Link to="/build-course" className="text-[10px] font-bold tracking-widest text-neon-purple hover:underline mt-1 inline-block">
+                            REVISE & RESUBMIT →
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
               </div>
 
               {/* Embedded Collection w/ click-to-equip */}
