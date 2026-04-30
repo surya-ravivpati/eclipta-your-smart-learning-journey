@@ -15,6 +15,7 @@ const NAV_GROUPS = [
     label: "LEARN",
     items: [
       { to: "/certified", label: "Certified Courses", desc: "Curated learning tracks" },
+      { to: "/courses", label: "Community Courses", desc: "Built by learners" },
       { to: "/build-course", label: "Build a Course", desc: "Personalized syllabi" },
       { to: "/luna", label: "Luna Tutor", desc: "Your AI guide" },
     ],
