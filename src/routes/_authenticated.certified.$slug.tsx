@@ -59,7 +59,7 @@ function CourseDetail() {
     setIsEnrolled(true);
     toast.success(`Enrolled in ${course.title}`);
     // Send straight into the player on first enroll.
-    window.location.href = `/certified/${course.slug}/learn`;
+    navigate({ to: "/certified/$slug/learn", params: { slug: course.slug } });
   };
 
   return (
