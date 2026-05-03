@@ -226,11 +226,11 @@ export function ProgressDashboard() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="text-5xl font-bold font-display mb-4">
-            Your <span className="text-neon-purple text-glow-purple">Progress</span>
+            Your <span className="text-neon-purple text-glow-purple">Learning</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl leading-relaxed">
-            Track everything in one place. Your courses, paths, milestones, and collaborations — 
-            all adapting as you grow.
+            Pick up where you left off. Everything you're learning, your structured paths,
+            and your rank — all in one place.
           </p>
         </motion.div>
 
@@ -264,15 +264,17 @@ export function ProgressDashboard() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-secondary/60 mb-8">
-            <TabsTrigger value="overview">Courses</TabsTrigger>
-            <TabsTrigger value="paths">Learning Paths</TabsTrigger>
+            <TabsTrigger value="overview">Continue Learning</TabsTrigger>
+            <TabsTrigger value="paths">Paths</TabsTrigger>
             <TabsTrigger value="trophies">Trophy Road</TabsTrigger>
-            <TabsTrigger value="recommendations">For You</TabsTrigger>
-            <TabsTrigger value="collaborate">Collaborate</TabsTrigger>
+            <TabsTrigger value="discover">Discover</TabsTrigger>
           </TabsList>
 
           {/* ── Courses ────────────────────────── */}
           <TabsContent value="overview">
+            <p className="text-sm text-muted-foreground mb-4">
+              Your active courses — jump back in where you left off.
+            </p>
             <div className="grid md:grid-cols-2 gap-4">
               {enrolledCourses.map(c => <CourseProgressCard key={c.id} course={c} />)}
             </div>
@@ -310,47 +312,49 @@ export function ProgressDashboard() {
             <TrophyRoad />
           </TabsContent>
 
-          {/* ── Recommendations ────────────────── */}
-          <TabsContent value="recommendations">
-            <p className="text-sm text-muted-foreground mb-6">
-              Based on your goals, activity, and performance — Luna recommends these next steps.
-            </p>
-            <div className="grid md:grid-cols-2 gap-4">
-              {recommendations.map((r, i) => (
-                <motion.div
-                  key={r.title}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Card className="bg-card/60 border-border hover:border-neon-purple/30 transition-colors group cursor-pointer">
-                    <CardContent className="p-5 flex items-center gap-4">
-                      <div className="bg-secondary p-2.5 rounded-xl">
-                        <Brain className="w-5 h-5 text-neon-cyan" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold font-display text-sm">{r.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-0.5">{r.reason}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-neon-purple font-mono font-bold text-sm">{r.match}%</span>
-                        <p className="text-[10px] text-muted-foreground">match</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+          {/* ── Discover (recs + collab merged) ── */}
+          <TabsContent value="discover">
+            <div className="mb-8">
+              <h3 className="font-display font-bold text-lg mb-1">Recommended for you</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Based on your goals and performance — Luna's next-step picks.
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                {recommendations.map((r, i) => (
+                  <motion.div
+                    key={r.title}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    <Card className="bg-card/60 border-border hover:border-neon-purple/30 transition-colors group cursor-pointer">
+                      <CardContent className="p-5 flex items-center gap-4">
+                        <div className="bg-secondary p-2.5 rounded-xl">
+                          <Brain className="w-5 h-5 text-neon-cyan" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold font-display text-sm">{r.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">{r.reason}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-neon-purple font-mono font-bold text-sm">{r.match}%</span>
+                          <p className="text-[10px] text-muted-foreground">match</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
             </div>
-          </TabsContent>
 
-          {/* ── Collaborate ────────────────────── */}
-          <TabsContent value="collaborate">
-            <p className="text-sm text-muted-foreground mb-6">
-              Learn together. Join study groups, share courses, and mentor other learners.
-            </p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {collaborationGroups.map((g, i) => (
+            <div>
+              <h3 className="font-display font-bold text-lg mb-1">Study groups</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Learn together — join a group or start your own.
+              </p>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {collaborationGroups.map((g, i) => (
                 <motion.div
                   key={g.name}
                   initial={{ opacity: 0, y: 12 }}
@@ -374,14 +378,15 @@ export function ProgressDashboard() {
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))}
-              {/* Create group CTA */}
-              <Card className="bg-card/30 border-dashed border-border hover:border-neon-pink/40 transition-colors cursor-pointer group flex items-center justify-center min-h-[160px]">
-                <CardContent className="text-center p-6">
-                  <Users className="w-6 h-6 text-muted-foreground mx-auto mb-2 group-hover:text-neon-pink transition-colors" />
-                  <p className="font-display font-bold text-sm">Create Study Group</p>
-                </CardContent>
-              </Card>
+                ))}
+                {/* Create group CTA */}
+                <Card className="bg-card/30 border-dashed border-border hover:border-neon-pink/40 transition-colors cursor-pointer group flex items-center justify-center min-h-[160px]">
+                  <CardContent className="text-center p-6">
+                    <Users className="w-6 h-6 text-muted-foreground mx-auto mb-2 group-hover:text-neon-pink transition-colors" />
+                    <p className="font-display font-bold text-sm">Create Study Group</p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
