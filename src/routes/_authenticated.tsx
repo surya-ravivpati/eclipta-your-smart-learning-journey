@@ -3,6 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
+    // Auth state lives in localStorage; on the server there's no session to
+    // read so we'd incorrectly redirect to /login on every hard navigation.
+    // Defer the check to the client.
+    if (typeof window === "undefined") return;
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       throw redirect({
