@@ -7,6 +7,7 @@ import {
   Apple, Atom,
   // Per-tier rank icons
   Hammer, Swords, Medal, Gem, Diamond as DiamondIcon, Flame, Sparkle, Sun,
+  ChevronDown,
 } from "lucide-react";
 
 // Distinct icon per rank tier (used for "rank" road nodes)
@@ -621,48 +622,17 @@ export function TrophyRoad({ compact = false }: { compact?: boolean }) {
     <div>
       <ProgressOverview playerXp={playerXp} />
 
-      {/* How it works */}
-      <motion.div
-        className="glass-panel rounded-2xl p-5 mb-6 border border-border"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-neon-pink" />
-          <h3 className="font-display font-bold text-sm tracking-widest uppercase">How the Trophy Road works</h3>
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Earn XP through battles, lessons, and tests to climb 8 ranks — Bronze to God Tier.
-          Each stop on the road is a <span className="text-neon-purple font-bold">monster</span>,
-          a <span className="text-neon-pink font-bold">reward chest</span>, or a
-          <span className="text-tier-gold font-bold"> rank promotion</span>.
-          Defeat monsters to claim their Ecliptars and equip them in battle.
-        </p>
-        <div className="flex flex-wrap gap-3 mt-3 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-tier-gold" /> Locked → unlocks at the listed XP</span>
-          <span className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-emerald-500" /> Cleared</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-neon-pink animate-pulse" /> You are here</span>
-        </div>
-      </motion.div>
-
-      {/* Monster Archetypes — moved up so the road icons make sense */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-5 h-5 text-neon-purple" />
-          <h3 className="font-display font-bold text-lg">Monster Archetypes</h3>
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          A quick reference — each icon you'll see on the road belongs to one of these archetypes.
-        </p>
-        <ArchetypeLegend />
-      </div>
-
-      {/* Scrollable Road */}
+      {/* PRIMARY: Scrollable Road — the core action */}
       <div className="glass-panel rounded-2xl p-6 border border-border overflow-hidden">
         <div className="flex items-center gap-2 mb-4">
           <Trophy className="w-5 h-5 text-tier-gold" />
-          <h3 className="font-display font-bold text-lg">Progression Road</h3>
+          <h3 className="font-display font-bold text-lg">Your Progression Road</h3>
           <span className="text-xs text-muted-foreground ml-auto">← Scroll to explore →</span>
+        </div>
+        <div className="flex flex-wrap gap-3 mb-4 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-neon-pink animate-pulse" /> You are here</span>
+          <span className="flex items-center gap-1.5"><CheckCircle className="w-3 h-3 text-emerald-500" /> Cleared</span>
+          <span className="flex items-center gap-1.5"><Lock className="w-3 h-3" /> Locked — unlocks at listed XP</span>
         </div>
 
         <div
@@ -692,17 +662,49 @@ export function TrophyRoad({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
 
-      {/* Final Unlocks */}
-      <div className="mt-10">
-        <div className="flex items-center gap-2 mb-2">
-          <Crown className="w-5 h-5 text-tier-god" />
-          <h3 className="font-display font-bold text-lg text-tier-god text-glow-god">End-Game Bosses</h3>
+      {/* SECONDARY: collapsible details */}
+      <details className="group mt-6 glass-panel rounded-2xl border border-border overflow-hidden">
+        <summary className="flex items-center gap-2 p-4 cursor-pointer list-none hover:bg-white/[0.02]">
+          <Sparkles className="w-4 h-4 text-neon-pink" />
+          <span className="font-display font-bold text-sm tracking-widest uppercase">How the Trophy Road works</span>
+          <ChevronDown className="w-4 h-4 ml-auto transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-5 pb-5 text-sm text-muted-foreground leading-relaxed">
+          Earn XP through battles, lessons, and tests to climb 8 ranks — Bronze to God Tier.
+          Each stop on the road is a <span className="text-neon-purple font-bold">monster</span>,
+          a <span className="text-neon-pink font-bold">reward chest</span>, or a
+          <span className="text-tier-gold font-bold"> rank promotion</span>.
+          Defeat monsters to claim their Ecliptars and equip them in battle.
         </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          At the peak of the road — two legendary bosses await once you reach God Tier.
-        </p>
-        <FinalMonsters />
-      </div>
+      </details>
+
+      <details className="group mt-3 glass-panel rounded-2xl border border-border overflow-hidden">
+        <summary className="flex items-center gap-2 p-4 cursor-pointer list-none hover:bg-white/[0.02]">
+          <Sparkles className="w-4 h-4 text-neon-purple" />
+          <span className="font-display font-bold text-sm tracking-widest uppercase">Monster Archetypes</span>
+          <ChevronDown className="w-4 h-4 ml-auto transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-5 pb-5">
+          <p className="text-sm text-muted-foreground mb-3">
+            Each icon on the road belongs to one of these archetypes.
+          </p>
+          <ArchetypeLegend />
+        </div>
+      </details>
+
+      <details className="group mt-3 glass-panel rounded-2xl border border-border overflow-hidden">
+        <summary className="flex items-center gap-2 p-4 cursor-pointer list-none hover:bg-white/[0.02]">
+          <Crown className="w-4 h-4 text-tier-god" />
+          <span className="font-display font-bold text-sm tracking-widest uppercase text-tier-god">End-Game Bosses</span>
+          <ChevronDown className="w-4 h-4 ml-auto transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="px-5 pb-5">
+          <p className="text-sm text-muted-foreground mb-4">
+            At the peak of the road — two legendary bosses await once you reach God Tier.
+          </p>
+          <FinalMonsters />
+        </div>
+      </details>
     </div>
   );
 }
