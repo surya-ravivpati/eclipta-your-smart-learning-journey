@@ -46,7 +46,7 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const voice = useLunaVoice({ onTranscript: (t) => { setInput(prev => (prev ? prev + " " : "") + t); } });
+  const voice = useLunaVoice({ onTranscript: (t: string) => { setInput((prev: string) => (prev ? prev + " " : "") + t); } });
 
   // Speak each newly-completed assistant turn (when TTS toggle is on).
   const lastSpokenRef = useRef<string | null>(null);
@@ -243,7 +243,7 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
                   </button>
                   <button
                     type="button"
-                    onClick={() => voice.setSpeakEnabled(v => !v)}
+                    onClick={() => voice.setSpeakEnabled((v: boolean) => !v)}
                     title={voice.speakEnabled ? "Mute Luna's voice" : "Hear Luna's replies"}
                     className={`p-2 border border-input transition-colors rounded-sm ${voice.speakEnabled ? "bg-neon-purple/20 border-neon-purple text-neon-purple" : "bg-secondary/30 hover:border-neon-purple/50 hover:text-neon-purple"}`}
                   >
