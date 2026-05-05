@@ -208,13 +208,13 @@ function CoursePlayer() {
             </Link>
 
             <nav className="space-y-4">
-              {course.syllabus.map((mod, mi) => (
+              {course.syllabus.map((mod: { title: string; lessons: string[] }, mi: number) => (
                 <div key={mod.title}>
                   <p className="text-[10px] font-bold tracking-widest text-neon-purple/80 mb-1.5">
                     {String(mi + 1).padStart(2, "0")} · {mod.title.toUpperCase()}
                   </p>
                   <ul className="space-y-0.5">
-                    {mod.lessons.map((title, li) => {
+                    {mod.lessons.map((title: string, li: number) => {
                       const idx = lessons.findIndex(x => x.moduleIdx === mi && x.lessonIdx === li);
                       const active = idx === currentIndex;
                       const done = completed.has(`${mi}:${li}`);
