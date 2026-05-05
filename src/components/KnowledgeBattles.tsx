@@ -475,40 +475,11 @@ function BattleArena() {
       : null;
     setGamblerStats(rolledGambler);
 
-    // Progressive rank-based matchmaking: try ±1, widen to ±2, ±3, then AI fallback.
-    setSearchBand(1);
-    setSearchAiFallback(false);
-    setOpponentTier("");
+    // Random opponent — rank-based matchmaking removed.
     setPhase("searching");
-
-    const tryBands: number[] = [1, 2, 3];
-    let resolved: { ecliptar: Ecliptar; band: number } | null = null;
-    for (const b of tryBands) {
-      const r = matchmakeOpponent(playerXp, cls, b);
-      if (r) { resolved = r; break; }
-    }
-    // AI fallback: if every band is empty, pick any Ecliptar as a stand-in opponent.
-    const usedAiFallback = !resolved;
-    const oppEclip: Ecliptar = resolved?.ecliptar ?? ECLIPTARS[Math.floor(Math.random() * ECLIPTARS.length)];
-    const finalBand: number = resolved?.band ?? 99;
+    const oppEclip: Ecliptar = pickOpponent(cls);
     const oppArch = ARCHETYPES[oppEclip.archetype];
     setOpponentArchetype(oppEclip.archetype);
-    setOpponentTier(xpToTier(ARCHETYPE_UNLOCK_XP[oppEclip.archetype] ?? 0));
-
-    // Animate the band-widening UI: show ±1 (400ms) → ±2 (400ms) → ±3 (400ms) → reveal.
-    // Total ≤ ~1.4s which fits well inside the existing 2.2s search window.
-    const widenSteps: Array<{ band: number; ai: boolean }> = [];
-    for (const b of tryBands) {
-      widenSteps.push({ band: b, ai: false });
-      if (b >= finalBand && !usedAiFallback) break;
-    }
-    if (usedAiFallback) widenSteps.push({ band: 3, ai: true });
-    widenSteps.forEach((step, i) => {
-      setTimeout(() => {
-        setSearchBand(step.band);
-        setSearchAiFallback(step.ai);
-      }, i * 450);
-    });
 
     setTimeout(() => {
       const baseArch = ARCHETYPES[cls];
@@ -522,15 +493,10 @@ function BattleArena() {
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
       addLog(`⚔️ ${playerName} (${baseArch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
-      addLog(
-        usedAiFallback
-          ? `🤖 No live opponents in range — AI fallback engaged.`
-          : `🎯 Matched within ±${finalBand} tier${finalBand > 1 ? "s" : ""} of your rank.`,
-      );
       if (rolledGambler) {
         addLog(`🎲 Gambler rolled: HP ${rolledGambler.health}/4 · TIME ${rolledGambler.time}/4 · DMG ${rolledGambler.damage}/4 · MULT ${rolledGambler.multiplier}/4 · DIFF ${rolledGambler.difficulty}/4`);
       }
-    }, 2200);
+    }, 1100);
   };
 
   const reset = () => { setPhase("idle"); setBattleStats(null); };
@@ -566,7 +532,6 @@ function BattleArena() {
   // ── Searching ──
   if (phase === "searching") {
     const arch = ARCHETYPES[archetype];
-    const playerTier = xpToTier(playerXp);
     return (
       <motion.div className="glass-panel p-10 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <motion.div className="w-20 h-20 mx-auto mb-6 border-2 border-neon-pink/50 flex items-center justify-center"
@@ -575,21 +540,8 @@ function BattleArena() {
         >
           <Target className="w-8 h-8 text-neon-pink" />
         </motion.div>
-        <h3 className="text-xl font-bold font-display mb-1">
-          {searchAiFallback ? "No live opponents — engaging AI…" : "Matching rank-tier opponent…"}
-        </h3>
+        <h3 className="text-xl font-bold font-display mb-1">Finding an opponent…</h3>
         <p className={`inline-flex items-center gap-1 text-xs font-bold ${arch.color}`}><arch.icon className="w-3.5 h-3.5" /> {arch.name}</p>
-        <div className="mt-3 flex items-center justify-center gap-2 text-[10px] font-bold tracking-widest">
-          <span className={tierColors[playerTier]}>YOU · {playerTier.toUpperCase()}</span>
-          <span className="text-muted-foreground">VS</span>
-          <span className={opponentTier ? tierColors[opponentTier] : "text-muted-foreground"}>
-            {opponentTier ? `${opponentTier.toUpperCase()} TIER` : "…"}
-          </span>
-        </div>
-        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 border border-neon-purple/30 bg-neon-purple/5 text-[10px] font-bold tracking-widest text-neon-purple">
-          <Target className="w-3 h-3" />
-          {searchAiFallback ? "AI FALLBACK" : `SEARCH RANGE · ±${searchBand} TIER${searchBand > 1 ? "S" : ""}`}
-        </div>
         <motion.div className="flex justify-center gap-1 mt-4" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }}>
           {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-neon-pink rounded-full" />)}
         </motion.div>
