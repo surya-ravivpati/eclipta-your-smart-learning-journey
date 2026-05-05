@@ -581,6 +581,9 @@ export function TrophyRoad({ compact = false }: { compact?: boolean }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { xp: playerXp } = usePlayerXp();
   const { slugs: ownedSlugs, refresh: refreshOwned } = useOwnedEcliptars();
+  const [claimedChestIds, setClaimedChestIds] = useState<Set<number>>(new Set());
+  const refreshChests = async () => setClaimedChestIds(await fetchClaimedChestNodeIds());
+  useEffect(() => { void refreshChests(); }, []);
 
   const ROAD_NODES = deriveNodes(playerXp);
 
@@ -695,7 +698,14 @@ export function TrophyRoad({ compact = false }: { compact?: boolean }) {
               return (
                 <div key={node.id} className="flex items-end gap-1">
                   {showTierSep && <TierSeparator tier={TIERS[node.tier]} />}
-                  <RoadNodeItem node={node} index={i} ownedSlugs={ownedSlugs} onClaimed={refreshOwned} />
+                  <RoadNodeItem
+                    node={node}
+                    index={i}
+                    ownedSlugs={ownedSlugs}
+                    claimedChestIds={claimedChestIds}
+                    onClaimed={refreshOwned}
+                    onChestClaimed={() => { void refreshChests(); }}
+                  />
                   {i < ROAD_NODES.length - 1 && <RoadConnector from={node} to={ROAD_NODES[i + 1]} />}
                 </div>
               );
