@@ -695,9 +695,9 @@ function LeaderboardCard() {
 // ─── Daily Challenge (live) ───────────────────────────────────────────
 function DailyChallengeCard() {
   const [wins, setWins] = useState(0);
-  const [bonusClaimed, setBonusClaimed] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [countdown, setCountdown] = useState("");
+  const challenge = getTodayChallenge();
 
   const refresh = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -711,7 +711,6 @@ function DailyChallengeCard() {
       .eq("challenge_date", today)
       .maybeSingle();
     setWins(data?.wins ?? 0);
-    setBonusClaimed(data?.bonus_claimed ?? false);
   }, []);
 
   useEffect(() => {
@@ -739,7 +738,7 @@ function DailyChallengeCard() {
     return () => clearInterval(id);
   }, []);
 
-  const target = 3;
+  const target = challenge.target;
   const display = Math.min(wins, target);
   const complete = wins >= target;
 
@@ -750,9 +749,13 @@ function DailyChallengeCard() {
           <Sparkles className="w-5 h-5 text-neon-purple" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-xs font-bold tracking-widest">DAILY CHALLENGE</h4>
+          <h4 className="text-xs font-bold tracking-widest">DAILY · {challenge.title.toUpperCase()}</h4>
           <p className="text-[10px] text-muted-foreground">
-            {!authed ? "Sign in to track daily wins" : complete ? "Bonus unlocked! 🎉" : "Win 3 battles today for 2x XP bonus"}
+            {!authed
+              ? `Sign in to track today's challenge`
+              : complete
+                ? `Bonus unlocked! 🎉 ${challenge.reward}`
+                : `${challenge.goal} → ${challenge.reward}`}
           </p>
         </div>
         <div className={`text-lg font-bold font-display ${complete ? "text-neon-cyan" : "text-neon-purple"}`}>
