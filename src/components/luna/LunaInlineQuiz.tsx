@@ -24,48 +24,19 @@ export function LunaInlineQuiz({ topic, count, onSendBack }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/luna-chat`, {
+        const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/luna-quiz`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({
-            messages: [{
-              role: "user",
-              content: `Generate exactly ${count} multiple-choice quiz questions about: ${topic}. Reply with ONLY a raw JSON array, no prose, no code fences, no [TAG]. Each item must be: { "question": string, "choices": [string,string,string,string], "answer_index": 0|1|2|3, "explanation": short string }`,
-            }],
-          }),
+          body: JSON.stringify({ topic, count }),
         });
-        if (!resp.ok || !resp.body) throw new Error("Failed to load quiz");
-        const reader = resp.body.getReader();
-        const dec = new TextDecoder();
-        let buf = "";
-        let full = "";
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, { stream: true });
-          for (let nl: number; (nl = buf.indexOf("\n")) !== -1;) {
-            const line = buf.slice(0, nl).trim();
-            buf = buf.slice(nl + 1);
-            if (!line.startsWith("data: ")) continue;
-            const j = line.slice(6).trim();
-            if (j === "[DONE]") break;
-            try {
-              const p = JSON.parse(j);
-              const c = p.choices?.[0]?.delta?.content;
-              if (c) full += c;
-            } catch { /* ignore */ }
-          }
-        }
-        const clean = full.replace(/^\s*\[[A-Z]+\]\s*/, "").replace(/```json|```/g, "").trim();
-        const start = clean.indexOf("[");
-        const end = clean.lastIndexOf("]");
-        const json = clean.slice(start, end + 1);
-        const parsed = JSON.parse(json) as Q[];
+        if (!resp.ok) throw new Error("Failed to load quiz");
+        const data = await resp.json() as { questions?: Q[]; error?: string };
         if (cancelled) return;
-        setQuestions(parsed.filter(q => q && Array.isArray(q.choices) && q.choices.length === 4));
+        if (!data.questions?.length) throw new Error(data.error || "No questions");
+        setQuestions(data.questions);
         setStartedAt(Date.now());
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
