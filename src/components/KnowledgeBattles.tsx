@@ -236,11 +236,8 @@ function BattleArena() {
   const [gamblerStats, setGamblerStats] = useState<{ health: number; time: number; damage: number; multiplier: number; difficulty: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [playerXp, setPlayerXp] = useState<number>(0);
-  const [opponentTier, setOpponentTier] = useState<string>("");
-  const [searchBand, setSearchBand] = useState<number>(1);
-  const [searchAiFallback, setSearchAiFallback] = useState<boolean>(false);
 
-  // Fetch player XP once for matchmaking
+  // Fetch player XP for tier display only (no longer used for matchmaking)
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -396,6 +393,7 @@ function BattleArena() {
       });
       if (won) {
         const today = new Date().toISOString().slice(0, 10);
+        const challenge = getTodayChallenge();
         const { data: existing } = await supabase
           .from("daily_challenge_progress")
           .select("id, wins, bonus_claimed")
@@ -406,14 +404,14 @@ function BattleArena() {
           const newWins = (existing.wins ?? 0) + 1;
           await supabase
             .from("daily_challenge_progress")
-            .update({ wins: newWins, bonus_claimed: existing.bonus_claimed || newWins >= 3 })
+            .update({ wins: newWins, bonus_claimed: existing.bonus_claimed || newWins >= challenge.target })
             .eq("id", existing.id);
         } else {
           await supabase.from("daily_challenge_progress").insert({
             user_id: user.id,
             challenge_date: today,
             wins: 1,
-            bonus_claimed: false,
+            bonus_claimed: 1 >= challenge.target,
           });
         }
         window.dispatchEvent(new Event("daily-challenge-updated"));
