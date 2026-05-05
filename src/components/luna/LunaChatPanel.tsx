@@ -11,6 +11,7 @@ import { useXpMilestones } from "@/hooks/use-xp-milestones";
 import { useLunaConversation, type ConversationMessage } from "@/hooks/use-luna-conversation";
 import { LunaActions } from "./LunaActions";
 import { useLunaVoice } from "@/hooks/use-luna-voice";
+import { processUserImage } from "@/lib/luna-image";
 
 export type LunaMessage = ConversationMessage;
 
@@ -62,11 +63,9 @@ export function LunaChatPanel({ open, onClose, messages, setMessages, onStreamin
   const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     e.target.value = "";
-    if (!f || !f.type.startsWith("image/")) return;
-    if (f.size > 5 * 1024 * 1024) return;
-    const reader = new FileReader();
-    reader.onload = () => setPendingImage(typeof reader.result === "string" ? reader.result : null);
-    reader.readAsDataURL(f);
+    if (!f) return;
+    const processed = await processUserImage(f);
+    if (processed) setPendingImage(processed);
   };
 
   // Lift streaming status so the floating Luna icon can show the thinking emoji.
