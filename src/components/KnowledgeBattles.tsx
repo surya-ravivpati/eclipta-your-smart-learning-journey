@@ -817,27 +817,20 @@ export function KnowledgeBattles() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3"><BattleArena /></div>
-          <div className="lg:col-span-2 space-y-4">
-            <motion.div className="glass-panel p-6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              <h3 className="text-sm font-bold font-display tracking-widest mb-4 text-neon-purple">ARCHETYPES</h3>
-              <div className="space-y-3">
-                {Object.values(ARCHETYPES).map(a => (
-                  <div key={a.id} className="flex items-start gap-3">
-                    <a.icon className={`w-4 h-4 mt-0.5 ${a.color}`} />
-                    <div>
-                      <span className={`text-xs font-bold ${a.color}`}>{a.name}</span>
-                      <p className="text-[10px] text-muted-foreground">{a.passive}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <LeaderboardCard />
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 relative">
+            <button
+              onClick={() => setHowOpen(true)}
+              className="absolute -top-2 right-0 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-widest text-neon-purple border border-neon-purple/40 bg-neon-purple/5 hover:bg-neon-purple/10 transition-colors"
+              aria-label="Battle info"
+            >
+              <Info className="w-3.5 h-3.5" /> INFO
+            </button>
+            <BattleArena />
+          </div>
+          <div className="lg:col-span-1 space-y-4">
             <DailyChallengeCard />
+            <LeaderboardCard />
           </div>
         </div>
       </div>
