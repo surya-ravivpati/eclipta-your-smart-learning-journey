@@ -30,11 +30,15 @@ function pickOpponent(playerArch: ArchetypeId): Ecliptar {
 }
 
 // ─── Action Config ───────────────────────────────────────────────────
+// Focus economy: Attack & Defend BUILD focus, Charge & Wild SPEND it.
+// This gives Attack a real role (cheap, fast focus build) and makes Charge
+// a payoff move that requires setup rather than a strictly-better Attack.
+const FOCUS_GAIN: Record<Action, number> = { attack: 15, defend: 10, charge: 0, wild: 0 };
 const ACTIONS: Record<Action, ActionConfig> = {
-  attack: { label: "Attack", icon: Swords, difficulty: "medium", dmg: 15, focusCost: 0, desc: "Deal 15 DMG" },
-  defend: { label: "Defend", icon: Shield, difficulty: "easy", dmg: 0, focusCost: 0, desc: "Heal 10 HP" },
-  charge: { label: "Charge", icon: Zap, difficulty: "hard", dmg: 25, focusCost: 0, desc: "Deal 25 DMG" },
-  wild:   { label: "Wild",   icon: Dices, difficulty: "medium", dmg: 0, focusCost: 10, desc: "Random effect" },
+  attack: { label: "Attack", icon: Swords, difficulty: "medium", dmg: 18, focusCost: 0,  desc: "18 DMG · +15 Focus" },
+  defend: { label: "Defend", icon: Shield, difficulty: "easy",   dmg: 0,  focusCost: 0,  desc: "Heal · +10 Focus" },
+  charge: { label: "Charge", icon: Zap,    difficulty: "hard",   dmg: 32, focusCost: 25, desc: "32 DMG · −25 Focus" },
+  wild:   { label: "Wild",   icon: Dices,  difficulty: "medium", dmg: 0,  focusCost: 15, desc: "Random · −15 Focus" },
 };
 
 type LeaderboardEntry = { rank: number; name: string; xp: number; tier: string };
@@ -217,8 +221,8 @@ function BattleArena() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [archetype, setArchetype] = useState<ArchetypeId>("speedster");
   const [opponentArchetype, setOpponentArchetype] = useState<ArchetypeId>("tank");
-  const [player, setPlayer] = useState<Fighter>({ name: "You", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, icon: User });
-  const [opponent, setOpponent] = useState<Fighter>({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 50, maxFocus: 50, icon: Bot });
+  const [player, setPlayer] = useState<Fighter>({ name: "You", hp: 100, maxHp: 100, focus: 20, maxFocus: 100, icon: User });
+  const [opponent, setOpponent] = useState<Fighter>({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 20, maxFocus: 100, icon: Bot });
   const [momentum, setMomentum] = useState(0);
   const [currentAction, setCurrentAction] = useState<Action | null>(null);
   const [question, setQuestion] = useState<MathQuestion | null>(null);
@@ -303,9 +307,10 @@ function BattleArena() {
       if (currentAction === "defend") {
         const healAmt = archetype === "healer" ? 20 : 10;
         const heal = Math.min(healAmt, player.maxHp - player.hp);
-        setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + healAmt), focus: Math.min(prev.maxFocus, prev.focus + 10) }));
+        const gain = FOCUS_GAIN.defend;
+        setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + healAmt), focus: Math.min(prev.maxFocus, prev.focus + gain) }));
         setShowPlayerHeal(true);
-        addLog(`✅ Correct! Defend: +${heal} HP, +10 Focus.`);
+        addLog(`✅ Defend: +${heal} HP, +${gain} Focus.`);
       } else if (currentAction === "wild") {
         const effects = [
           () => { const d = Math.floor(Math.random() * 30) + 10; setOpponent(prev => ({ ...prev, hp: Math.max(0, prev.hp - d) })); setShowOpponentHit(true); addLog(`🎲 Wild: ${d} random DMG!`); },
@@ -326,8 +331,13 @@ function BattleArena() {
         // Apply streak multiplier
         const dmg = Math.floor(baseDmg * currentStreakMult);
         setOpponent(prev => ({ ...prev, hp: Math.max(0, prev.hp - dmg) }));
+        const focusGain = FOCUS_GAIN[currentAction];
+        if (focusGain > 0) {
+          setPlayer(prev => ({ ...prev, focus: Math.min(prev.maxFocus, prev.focus + focusGain) }));
+        }
         setShowOpponentHit(true);
-        addLog(`✅ ${action.label}: ${dmg} DMG!${currentStreakMult > 1.1 ? ` 🔥 ${currentStreakMult.toFixed(1)}x STREAK!` : ""}`);
+        const focusNote = focusGain > 0 ? ` +${focusGain} Focus.` : "";
+        addLog(`✅ ${action.label}: ${dmg} DMG!${focusNote}${currentStreakMult > 1.1 ? ` 🔥 ${currentStreakMult.toFixed(1)}x STREAK!` : ""}`);
       }
       setTotalScore(prev => prev + (currentAction === "charge" ? 150 : currentAction === "attack" ? 100 : 75) * currentStreakMult);
     } else {
@@ -438,9 +448,10 @@ function BattleArena() {
   }, [addLog, finishBattle, opponentArchetype, opponent.name]);
 
   const selectAction = (action: Action) => {
-    if (action === "wild" && player.focus < 10) { addLog("⚠️ Not enough Focus!"); return; }
+    const cost = ACTIONS[action].focusCost;
+    if (cost > 0 && player.focus < cost) { addLog(`⚠️ Need ${cost} Focus!`); return; }
     setCurrentAction(action);
-    if (action === "wild") setPlayer(prev => ({ ...prev, focus: prev.focus - 10 }));
+    if (cost > 0) setPlayer(prev => ({ ...prev, focus: Math.max(0, prev.focus - cost) }));
 
     const arch = getArch(archetype);
     const baseDiff = action === "wild" ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)] : ACTIONS[action].difficulty;
@@ -488,8 +499,8 @@ function BattleArena() {
       const playerName = eclip?.name ?? "You";
       const playerIcon = eclip?.icon ?? User;
       const oppHp = statToHp(oppArch.stats.health);
-      setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: 50, maxFocus: 50, icon: playerIcon });
-      setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 50, maxFocus: 50, icon: oppEclip.icon });
+      setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: 20, maxFocus: 100, icon: playerIcon });
+      setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: 20, maxFocus: 100, icon: oppEclip.icon });
       setMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
       addLog(`⚔️ ${playerName} (${baseArch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
@@ -597,15 +608,22 @@ function BattleArena() {
         <div className="grid grid-cols-4 gap-2">
           {(Object.entries(ACTIONS) as [Action, ActionConfig][]).map(([key, act]) => {
             const Icon = act.icon;
-            const disabled = phase !== "select" || (key === "wild" && player.focus < 10);
+            const cost = act.focusCost;
+            const disabled = phase !== "select" || (cost > 0 && player.focus < cost);
             return (
               <motion.button key={key} onClick={() => selectAction(key)} disabled={disabled}
-                className={`glass-panel p-4 text-center transition-colors ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-neon-purple/5 hover:border-neon-purple/30"}`}
+                className={`glass-panel p-5 text-center transition-colors relative ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-neon-purple/5 hover:border-neon-purple/30"}`}
                 whileHover={!disabled ? { scale: 1.03, y: -2 } : {}} whileTap={!disabled ? { scale: 0.97 } : {}}
               >
-                <Icon className={`w-6 h-6 mx-auto mb-1 ${key === "charge" ? "text-neon-pink" : key === "defend" ? "text-neon-cyan" : key === "wild" ? "text-neon-purple" : "text-foreground"}`} />
-                <div className="text-[10px] font-bold tracking-widest">{act.label.toUpperCase()}</div>
-                <div className="text-[9px] text-muted-foreground mt-0.5">{act.desc}</div>
+                <Icon className={`w-7 h-7 mx-auto mb-1.5 ${key === "charge" ? "text-neon-pink" : key === "defend" ? "text-neon-cyan" : key === "wild" ? "text-neon-purple" : "text-foreground"}`} />
+                <div className="text-xs font-bold tracking-widest">{act.label.toUpperCase()}</div>
+                <div className="text-[10px] text-muted-foreground mt-1 leading-tight">{act.desc}</div>
+                {cost > 0 && (
+                  <div className="absolute top-1.5 right-1.5 text-[9px] font-bold text-neon-purple bg-neon-purple/10 border border-neon-purple/30 px-1 rounded-sm">−{cost}</div>
+                )}
+                {FOCUS_GAIN[key] > 0 && (
+                  <div className="absolute top-1.5 right-1.5 text-[9px] font-bold text-neon-cyan bg-neon-cyan/10 border border-neon-cyan/30 px-1 rounded-sm">+{FOCUS_GAIN[key]}</div>
+                )}
               </motion.button>
             );
           })}
@@ -799,27 +817,20 @@ export function KnowledgeBattles() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3"><BattleArena /></div>
-          <div className="lg:col-span-2 space-y-4">
-            <motion.div className="glass-panel p-6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              <h3 className="text-sm font-bold font-display tracking-widest mb-4 text-neon-purple">ARCHETYPES</h3>
-              <div className="space-y-3">
-                {Object.values(ARCHETYPES).map(a => (
-                  <div key={a.id} className="flex items-start gap-3">
-                    <a.icon className={`w-4 h-4 mt-0.5 ${a.color}`} />
-                    <div>
-                      <span className={`text-xs font-bold ${a.color}`}>{a.name}</span>
-                      <p className="text-[10px] text-muted-foreground">{a.passive}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <LeaderboardCard />
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 relative">
+            <button
+              onClick={() => setHowOpen(true)}
+              className="absolute -top-2 right-0 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-widest text-neon-purple border border-neon-purple/40 bg-neon-purple/5 hover:bg-neon-purple/10 transition-colors"
+              aria-label="Battle info"
+            >
+              <Info className="w-3.5 h-3.5" /> INFO
+            </button>
+            <BattleArena />
+          </div>
+          <div className="lg:col-span-1 space-y-4">
             <DailyChallengeCard />
+            <LeaderboardCard />
           </div>
         </div>
       </div>
@@ -867,12 +878,13 @@ export function KnowledgeBattles() {
                 <Swords className="w-3.5 h-3.5" /> COMBAT
               </h4>
               <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-5">
-                <li><span className="text-foreground font-bold">Attack</span> — medium question, deals damage.</li>
-                <li><span className="text-foreground font-bold">Defend</span> — easy question, heals + builds Focus.</li>
-                <li><span className="text-foreground font-bold">Charge</span> — hard question, max damage.</li>
-                <li><span className="text-foreground font-bold">Wild</span> — costs 10 Focus, random outcome.</li>
-                <li>Correct answers grow your <span className="text-neon-pink font-bold">Streak</span>; combos amplify damage.</li>
-                <li>Wrong answers or timeouts reset your streak and trigger a counter-attack.</li>
+                <li><span className="text-foreground font-bold">Attack</span> — medium Q, 18 DMG and <span className="text-neon-cyan">+15 Focus</span>. Your bread-and-butter focus builder.</li>
+                <li><span className="text-foreground font-bold">Defend</span> — easy Q, heals HP and <span className="text-neon-cyan">+10 Focus</span>.</li>
+                <li><span className="text-foreground font-bold">Charge</span> — hard Q, 32 DMG but <span className="text-neon-purple">−25 Focus</span>. The payoff move.</li>
+                <li><span className="text-foreground font-bold">Wild</span> — random effect for <span className="text-neon-purple">−15 Focus</span>.</li>
+                <li><span className="text-neon-purple font-bold">Focus</span> is your resource — Attack/Defend build it, Charge/Wild spend it. Plan your rhythm.</li>
+                <li>Correct answers grow <span className="text-neon-pink font-bold">Momentum</span>; each streak hit multiplies your damage.</li>
+                <li>Wrong answers or timeouts reset Momentum and trigger a counter-attack.</li>
               </ul>
             </section>
 
