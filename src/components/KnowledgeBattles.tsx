@@ -716,7 +716,7 @@ function BattleArena() {
           </motion.div>
           <span className="text-[10px] font-bold tracking-widest text-muted-foreground mt-1">VS</span>
         </div>
-        <FighterCard fighter={opponent} side="right" momentum={0} showHit={showOpponentHit} showHeal={false} />
+        <FighterCard fighter={opponent} side="right" momentum={opponentMomentum} archetype={opponentArchetype} showHit={showOpponentHit} showHeal={false} />
       </div>
 
       <div className="space-y-3">
