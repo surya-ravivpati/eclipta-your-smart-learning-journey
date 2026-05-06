@@ -247,6 +247,7 @@ function BattleArena() {
   const [player, setPlayer] = useState<Fighter>({ name: "You", hp: 100, maxHp: 100, focus: 20, maxFocus: 100, icon: User });
   const [opponent, setOpponent] = useState<Fighter>({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 20, maxFocus: 100, icon: Bot });
   const [momentum, setMomentum] = useState(0);
+  const [opponentMomentum, setOpponentMomentum] = useState(0);
   const [currentAction, setCurrentAction] = useState<Action | null>(null);
   const [question, setQuestion] = useState<MathQuestion | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -455,20 +456,104 @@ function BattleArena() {
   const aiTurn = useCallback(() => {
     const oppArch = getArch(opponentArchetype);
     const dmgMult = statToDmgMult(oppArch.stats.damage);
-    const aiDmg = Math.floor((Math.floor(Math.random() * 8) + 5) * dmgMult);
+    const streakMult = statToStreakMult(oppArch.stats.multiplier);
+
     setTimeout(() => {
-      setPlayer(prev => {
-        const newHp = Math.max(0, prev.hp - aiDmg);
-        addLog(`${opponent.name} strikes: -${aiDmg} HP.`);
-        setShowPlayerHit(true);
-        setTimeout(() => {
-          setShowPlayerHit(false);
-          if (newHp <= 0) { finishBattle(false); } else { setPhase("select"); }
-        }, 600);
-        return { ...prev, hp: newHp };
+      // ── Bot decision logic: pick Attack / Heal / Charge / Wild based on state ──
+      setOpponent(prevOpp => {
+        setPlayer(prevPlayer => {
+          const hpPct = prevOpp.hp / prevOpp.maxHp;
+          const focus = prevOpp.focus;
+          const playerHpPct = prevPlayer.hp / prevPlayer.maxHp;
+
+          // Choose action
+          let choice: Action = "attack";
+          if (hpPct < 0.35 && prevOpp.hp < prevOpp.maxHp) {
+            // Low HP — prefer Heal if affordable, but finisher Charge if player almost dead
+            choice = (focus >= 25 && playerHpPct < 0.3) ? "charge" : "defend";
+          } else if (focus >= 25 && (playerHpPct < 0.5 || Math.random() < 0.45)) {
+            choice = "charge"; // payoff move
+          } else if (focus >= 15 && Math.random() < 0.12) {
+            choice = "wild"; // occasional gamble
+          } else {
+            choice = "attack"; // default focus builder
+          }
+          // Healer archetype loves to defend
+          if (opponentArchetype === "healer" && hpPct < 0.7 && Math.random() < 0.4) choice = "defend";
+          // Chud always charges if it can
+          if (opponentArchetype === "chud" && focus >= 25) choice = "charge";
+
+          // Bot success rate scales inversely with question difficulty stat
+          const baseAcc = 0.78 - oppArch.stats.difficulty * 0.05;
+          const success = Math.random() < Math.max(0.45, baseAcc);
+
+          let newPlayerHp = prevPlayer.hp;
+          let newOppHp = prevOpp.hp;
+          let newOppFocus = prevOpp.focus;
+          let nextOppMom = opponentMomentum;
+
+          if (success) {
+            nextOppMom = opponentMomentum + 1;
+            const sMult = nextOppMom > 1 ? 1 + ((nextOppMom - 1) * (streakMult - 1)) : 1;
+
+            if (choice === "defend") {
+              const healAmt = opponentArchetype === "healer" ? 20 : 10;
+              newOppHp = Math.min(prevOpp.maxHp, prevOpp.hp + healAmt);
+              newOppFocus = Math.min(prevOpp.maxFocus, prevOpp.focus + FOCUS_GAIN.defend);
+              addLog(`💚 ${prevOpp.name} heals: +${healAmt} HP, +${FOCUS_GAIN.defend} Focus.`);
+            } else if (choice === "wild") {
+              newOppFocus = Math.max(0, prevOpp.focus - 15);
+              const roll = Math.random();
+              if (roll < 0.34) {
+                const d = Math.floor(Math.random() * 30) + 10;
+                newPlayerHp = Math.max(0, prevPlayer.hp - d);
+                setShowPlayerHit(true);
+                addLog(`🎲 ${prevOpp.name} Wild: ${d} chaos DMG!`);
+              } else if (roll < 0.67) {
+                newOppHp = Math.min(prevOpp.maxHp, prevOpp.hp + 20);
+                addLog(`🎲 ${prevOpp.name} Wild: +20 HP!`);
+              } else {
+                const d = 20;
+                newPlayerHp = Math.max(0, prevPlayer.hp - d);
+                setShowPlayerHit(true);
+                addLog(`🎲 ${prevOpp.name} Wild: ${d} DMG.`);
+              }
+            } else {
+              const baseDmg = ACTIONS[choice].dmg;
+              const dmg = Math.floor(baseDmg * dmgMult * sMult);
+              newPlayerHp = Math.max(0, prevPlayer.hp - dmg);
+              const cost = ACTIONS[choice].focusCost;
+              if (cost > 0) newOppFocus = Math.max(0, prevOpp.focus - cost);
+              const gain = FOCUS_GAIN[choice];
+              if (gain > 0) newOppFocus = Math.min(prevOpp.maxFocus, newOppFocus + gain);
+              setShowPlayerHit(true);
+              const streakNote = sMult > 1.1 ? ` 🔥 ${sMult.toFixed(1)}x` : "";
+              addLog(`⚔️ ${prevOpp.name} ${ACTIONS[choice].label}: ${dmg} DMG.${streakNote}`);
+            }
+          } else {
+            nextOppMom = 0;
+            // Bot fluffs answer — small self-damage
+            const flub = Math.floor((Math.floor(Math.random() * 6) + 4) * statToSelfDmgMult(oppArch.stats.health));
+            newOppHp = Math.max(0, prevOpp.hp - flub);
+            addLog(`❌ ${prevOpp.name} fluffs ${ACTIONS[choice].label}: -${flub} HP.`);
+          }
+
+          setOpponentMomentum(nextOppMom);
+          setTimeout(() => {
+            setShowPlayerHit(false);
+            if (newPlayerHp <= 0) { finishBattle(false); }
+            else if (newOppHp <= 0) { finishBattle(true); }
+            else { setPhase("select"); }
+          }, 600);
+
+          // Update opponent in same pass
+          setOpponent(o => ({ ...o, hp: newOppHp, focus: newOppFocus }));
+          return { ...prevPlayer, hp: newPlayerHp };
+        });
+        return prevOpp;
       });
     }, 400);
-  }, [addLog, finishBattle, opponentArchetype, opponent.name]);
+  }, [addLog, finishBattle, opponentArchetype, opponentMomentum, getArch]);
 
   const selectAction = (action: Action) => {
     const cost = ACTIONS[action].focusCost;
