@@ -878,12 +878,13 @@ export function KnowledgeBattles() {
                 <Swords className="w-3.5 h-3.5" /> COMBAT
               </h4>
               <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-5">
-                <li><span className="text-foreground font-bold">Attack</span> — medium question, deals damage.</li>
-                <li><span className="text-foreground font-bold">Defend</span> — easy question, heals + builds Focus.</li>
-                <li><span className="text-foreground font-bold">Charge</span> — hard question, max damage.</li>
-                <li><span className="text-foreground font-bold">Wild</span> — costs 10 Focus, random outcome.</li>
-                <li>Correct answers grow your <span className="text-neon-pink font-bold">Streak</span>; combos amplify damage.</li>
-                <li>Wrong answers or timeouts reset your streak and trigger a counter-attack.</li>
+                <li><span className="text-foreground font-bold">Attack</span> — medium Q, 18 DMG and <span className="text-neon-cyan">+15 Focus</span>. Your bread-and-butter focus builder.</li>
+                <li><span className="text-foreground font-bold">Defend</span> — easy Q, heals HP and <span className="text-neon-cyan">+10 Focus</span>.</li>
+                <li><span className="text-foreground font-bold">Charge</span> — hard Q, 32 DMG but <span className="text-neon-purple">−25 Focus</span>. The payoff move.</li>
+                <li><span className="text-foreground font-bold">Wild</span> — random effect for <span className="text-neon-purple">−15 Focus</span>.</li>
+                <li><span className="text-neon-purple font-bold">Focus</span> is your resource — Attack/Defend build it, Charge/Wild spend it. Plan your rhythm.</li>
+                <li>Correct answers grow <span className="text-neon-pink font-bold">Momentum</span>; each streak hit multiplies your damage.</li>
+                <li>Wrong answers or timeouts reset Momentum and trigger a counter-attack.</li>
               </ul>
             </section>
 
