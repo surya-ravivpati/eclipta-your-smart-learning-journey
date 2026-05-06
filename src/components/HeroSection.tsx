@@ -8,23 +8,33 @@ export function HeroSection() {
   const ctaTo = isAuthenticated ? "/battles" : "/signup";
   return (
     <section className="pt-32 pb-20 px-6 relative overflow-hidden">
-      {/* Ambient glow */}
-      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-neon-purple/20 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[10%] left-[-5%] w-80 h-80 bg-neon-pink/10 rounded-full blur-[100px]" />
+      {/* Ambient glow — drifts like arena energy, not a generic pulse */}
+      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-neon-purple/20 rounded-full blur-[120px] animate-arena-drift" />
+      <div className="absolute bottom-[10%] left-[-5%] w-80 h-80 bg-neon-pink/10 rounded-full blur-[100px] animate-arena-drift [animation-delay:-6s]" />
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative">
         <motion.div
           className="lg:col-span-7"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="inline-block px-3 py-1 mb-6 border border-neon-pink/50 text-neon-pink text-[10px] font-bold tracking-[0.2em] uppercase">
+          <motion.div
+            className="inline-block px-3 py-1 mb-6 border border-neon-pink/50 text-neon-pink text-[10px] font-bold tracking-[0.2em] uppercase relative overflow-hidden"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+          >
             Season 01: The Awakening
-          </div>
+            <motion.div
+              className="absolute inset-0 bg-neon-pink/15 pointer-events-none"
+              animate={{ opacity: [0, 0.5, 0] }}
+              transition={{ duration: 4, repeat: Infinity, delay: 2 }}
+            />
+          </motion.div>
           <h1 className="text-7xl md:text-8xl font-bold tracking-tighter leading-[0.9] mb-8 font-display">
             LEARN AT <br />
-            <span className="text-neon-purple">
+            <span className="text-neon-purple animate-neon-flicker">
               VELOCITY.
             </span>
           </h1>
@@ -35,7 +45,7 @@ export function HeroSection() {
           <div className="flex flex-wrap gap-4">
             <Link
               to={ctaTo}
-              className="px-8 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest flex items-center gap-3 group transition-all hover:scale-105 neon-glow-pink"
+              className="px-8 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest flex items-center gap-3 group transition-transform hover:scale-105 animate-battle-charge"
             >
               START YOUR ASCENT
               <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -49,12 +59,12 @@ export function HeroSection() {
           </div>
         </motion.div>
 
-        {/* Featured Duel Card */}
+        {/* Featured Duel Card — scans in like a battle HUD terminal */}
         <motion.div
           className="lg:col-span-5 relative"
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
+          initial={{ opacity: 0, x: 48, skewX: -4 }}
+          animate={{ opacity: 1, x: 0, skewX: 0 }}
+          transition={{ duration: 0.55, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="absolute -inset-1 bg-gradient-to-tr from-neon-purple/20 to-neon-pink/20 blur-2xl opacity-50" />
           <div className="relative glass-panel p-8">
@@ -97,9 +107,9 @@ export function HeroSection() {
       {/* Hero Image */}
       <motion.div
         className="max-w-7xl mx-auto mt-20 relative"
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.4 }}
+        transition={{ duration: 0.6, delay: 0.32, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="absolute -inset-2 bg-gradient-to-r from-neon-purple/20 to-neon-pink/10 blur-3xl opacity-40" />
         <div className="relative border border-border rounded-xl overflow-hidden">

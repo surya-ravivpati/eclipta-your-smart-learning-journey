@@ -281,6 +281,64 @@
   }
 }
 
+/* ─── Eclipta motion keyframes ──────────────────────────────── */
+
+/* Background orbs drift organically — replaces generic animate-pulse */
+@keyframes arena-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%       { transform: translate(-1.5%, 2.5%) scale(1.05); }
+  50%       { transform: translate(2.5%, -1.5%) scale(0.96); }
+  75%       { transform: translate(-0.5%, -2%) scale(1.03); }
+}
+
+/* Neon text flickers like a live arena display */
+@keyframes neon-flicker {
+  0%, 88%, 91%, 94%, 100% { opacity: 1; }
+  89%, 92%                 { opacity: 0.55; }
+  93%                      { opacity: 0.8; }
+}
+
+/* Battle CTA button glow breathes with energy */
+@keyframes battle-charge {
+  0%, 100% {
+    box-shadow:
+      0 0 20px oklch(0.6 0.24 350 / 55%),
+      0 0 45px oklch(0.6 0.24 350 / 28%);
+  }
+  50% {
+    box-shadow:
+      0 0 38px oklch(0.6 0.24 350 / 90%),
+      0 0 80px oklch(0.6 0.24 350 / 45%),
+      0 0 120px oklch(0.6 0.24 350 / 18%);
+  }
+}
+
+/* Progress / XP bar shimmer sweep */
+@keyframes xp-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* Road connector unlocked fill sweep */
+@keyframes road-fill {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+/* Rank badge pulse ring */
+@keyframes rank-aura {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%       { opacity: 0.75; transform: scale(1.18); }
+}
+
+@layer utilities {
+  .animate-arena-drift  { animation: arena-drift 18s ease-in-out infinite; }
+  .animate-neon-flicker { animation: neon-flicker 10s ease-in-out infinite; }
+  .animate-battle-charge { animation: battle-charge 2.8s ease-in-out infinite; }
+  .animate-xp-shimmer   { animation: xp-shimmer 2.2s linear infinite; }
+  .animate-rank-aura    { animation: rank-aura 2.2s ease-in-out infinite; }
+}
+
 /* Milestone celebration toast */
 .milestone-toast {
   border: 1px solid oklch(0.55 0.25 290 / 40%) !important;
