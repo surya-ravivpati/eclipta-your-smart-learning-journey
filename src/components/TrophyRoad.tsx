@@ -32,6 +32,18 @@ import { usePlayerXp, useOwnedEcliptars } from "@/hooks/use-player-xp";
 import { claimArchetypeReward, getEcliptarsByArchetype } from "@/lib/ecliptars";
 import { claimChest, fetchClaimedChestNodeIds, CHEST_BONUS_XP } from "@/lib/xp-service";
 
+/* ── Tier shadow OKLCH values for Framer Motion boxShadow ──── */
+const TIER_SHADOW: Record<TierId, string> = {
+  bronze:   "0.6 0.12 55",
+  silver:   "0.72 0.02 260",
+  gold:     "0.75 0.16 85",
+  diamond:  "0.7 0.18 240",
+  platinum: "0.8 0.1 190",
+  champion: "0.65 0.22 25",
+  unreal:   "0.6 0.28 310",
+  god:      "0.85 0.12 90",
+};
+
 /* ── Types ─────────────────────────────────────────────────── */
 
 type ArchetypeKey = MonsterArchetypeKey;
@@ -199,10 +211,10 @@ function RoadNodeItem({ node, index, ownedSlugs, claimedChestIds, onClaimed, onC
     <motion.div
       className="relative flex flex-col items-center shrink-0"
       style={{ marginTop: yOffset }}
-      initial={{ opacity: 0, scale: 0.6, y: 20 }}
+      initial={{ opacity: 0, scale: 0.5, y: 16 }}
       whileInView={{ opacity: 1, scale: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay: index * 0.04, type: "spring", stiffness: 200 }}
+      transition={{ delay: index * 0.035, type: "spring", stiffness: 320, damping: 24 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -232,12 +244,12 @@ function RoadNodeItem({ node, index, ownedSlugs, claimedChestIds, onClaimed, onC
         whileTap={{ scale: 0.95 }}
         animate={node.current ? {
           boxShadow: [
-            "0 0 20px oklch(0.75 0.16 85 / 40%)",
-            "0 0 40px oklch(0.75 0.16 85 / 60%)",
-            "0 0 20px oklch(0.75 0.16 85 / 40%)"
+            `0 0 20px oklch(${TIER_SHADOW[node.tier]} / 40%)`,
+            `0 0 48px oklch(${TIER_SHADOW[node.tier]} / 70%)`,
+            `0 0 20px oklch(${TIER_SHADOW[node.tier]} / 40%)`,
           ]
         } : {}}
-        transition={node.current ? { duration: 2, repeat: Infinity } : {}}
+        transition={node.current ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" } : {}}
       >
         {/* Locked overlay */}
         {!node.unlocked && (
@@ -381,11 +393,19 @@ function RoadConnector({ from, to: _to }: { from: RoadNode; to: RoadNode }) {
   const tier = TIERS[from.tier];
 
   return (
-    <div className="flex items-center shrink-0 self-center" style={{ marginTop: Math.sin(0) * 10 }}>
-      <div className={cn(
-        "w-8 h-1 rounded-full transition-all",
-        unlocked ? `${tier.bgClass} opacity-60` : "bg-border/30"
-      )} />
+    <div className="flex items-center shrink-0 self-center">
+      <div className="w-8 h-1 rounded-full overflow-hidden bg-border/30">
+        {unlocked && (
+          <motion.div
+            className={cn("h-full rounded-full", tier.bgClass)}
+            initial={{ scaleX: 0, opacity: 0 }}
+            whileInView={{ scaleX: 1, opacity: 0.65 }}
+            viewport={{ once: true }}
+            style={{ transformOrigin: "left" }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -484,9 +504,14 @@ function ProgressOverview({ playerXp }: { playerXp: number }) {
           className={cn("h-full rounded-full", currentTier.bgClass)}
           initial={{ width: 0 }}
           animate={{ width: `${progressInTier}%` }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
+          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        {/* XP shimmer sweep — signals active progression */}
+        <motion.div
+          className="absolute inset-y-0 w-16 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"
+          animate={{ x: ["-100%", "600%"] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "linear", repeatDelay: 3.5 }}
+        />
       </div>
 
       {/* Tier indicators */}

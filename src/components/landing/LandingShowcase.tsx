@@ -22,21 +22,21 @@ function Hero() {
   const ctaLabel = isAuthenticated ? "ENTER A BATTLE" : "CREATE FREE ACCOUNT";
   return (
     <section className="pt-32 pb-24 px-6 relative overflow-hidden">
-      <div className="absolute top-[-15%] right-[-10%] w-[36rem] h-[36rem] bg-neon-purple/15 rounded-full blur-[140px] animate-pulse" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[28rem] h-[28rem] bg-neon-pink/10 rounded-full blur-[120px]" />
-      <div className="absolute top-[40%] left-[40%] w-[22rem] h-[22rem] bg-neon-cyan/10 rounded-full blur-[120px]" />
+      <div className="absolute top-[-15%] right-[-10%] w-[36rem] h-[36rem] bg-neon-purple/15 rounded-full blur-[140px] animate-arena-drift" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[28rem] h-[28rem] bg-neon-pink/10 rounded-full blur-[120px] animate-arena-drift [animation-delay:-5s]" />
+      <div className="absolute top-[40%] left-[40%] w-[22rem] h-[22rem] bg-neon-cyan/10 rounded-full blur-[120px] animate-arena-drift [animation-delay:-10s]" />
 
       <div className="max-w-6xl mx-auto relative text-center">
         <motion.h1
-          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="pt-4 text-6xl md:text-8xl font-bold tracking-tighter leading-[0.9] mb-8 font-display"
         >
           LEARN LIKE <br />
-          <span className="text-neon-purple">YOU PLAY.</span>
+          <span className="text-neon-purple animate-neon-flicker">YOU PLAY.</span>
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15 }}
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-2xl mx-auto text-lg text-muted-foreground mb-10 leading-relaxed"
         >
           Eclipta is an adaptive learning arena. An AI tutor named Luna guides you,
@@ -45,12 +45,12 @@ function Hero() {
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25 }}
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
           className="flex flex-wrap gap-3 justify-center"
         >
           <Link
             to={ctaTo}
-            className="px-7 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest inline-flex items-center gap-3 group transition-all hover:scale-105 neon-glow-pink"
+            className="px-7 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest inline-flex items-center gap-3 group transition-transform hover:scale-105 animate-battle-charge"
           >
             {ctaLabel}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -66,7 +66,7 @@ function Hero() {
 
         {/* Quick value chips */}
         <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.7, delay: 0.4 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.36 }}
           className="flex flex-wrap justify-center gap-2 mt-10 text-[10px] font-bold tracking-widest uppercase text-muted-foreground"
         >
           {[
@@ -146,9 +146,10 @@ function PillarsGrid() {
     <section id="tour" className="max-w-7xl mx-auto px-6 py-24 scroll-mt-20">
       <motion.div
         className="text-center mb-14"
-        initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
-        <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-neon-pink mb-3">The Arena ⟁ Eight Pillars</p>
+        <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-neon-pink mb-3 animate-neon-flicker">The Arena ⟁ Eight Pillars</p>
         <h2 className="text-4xl md:text-5xl font-bold font-display mb-4">Everything Eclipta covers.</h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
           One platform, eight surfaces, all wired together. Click any tile to dive straight in.
@@ -162,9 +163,12 @@ function PillarsGrid() {
           return (
             <motion.div
               key={p.num}
-              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-              transition={{ delay: (i % 4) * 0.06 }}
+              initial={{ opacity: 0, scale: 0.9, y: 18 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: (i % 4) * 0.07, type: "spring", stiffness: 260, damping: 22 }}
             >
+              <motion.div whileHover={{ scale: 1.02, y: -3 }} transition={{ duration: 0.2 }}>
               <Link
                 to={p.to}
                 className={`group relative block p-6 h-full glass-panel ${c.hoverBorder} transition-colors`}
@@ -189,6 +193,7 @@ function PillarsGrid() {
                   EXPLORE <ArrowRight className="w-3 h-3" />
                 </span>
               </Link>
+              </motion.div>
             </motion.div>
           );
         })}
@@ -213,7 +218,8 @@ function FlowSection() {
     <section className="py-24 px-6 border-y border-border bg-secondary/20">
       <div className="max-w-6xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-14"
         >
           <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-neon-cyan mb-3">A Day in the Arena</p>
@@ -229,8 +235,10 @@ function FlowSection() {
             return (
               <motion.div
                 key={step.title}
-                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                transition={{ delay: (i % 3) * 0.08 }}
+                initial={{ opacity: 0, x: i % 2 === 0 ? -22 : 22, y: 8 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07, type: "spring", stiffness: 300, damping: 26 }}
                 className="glass-panel p-6 relative"
               >
                 <span className="absolute top-4 right-4 text-3xl font-display font-bold text-neon-purple/20 tabular-nums">
@@ -261,7 +269,8 @@ function WhySection() {
   return (
     <section className="max-w-6xl mx-auto px-6 py-24">
       <motion.div
-        initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="text-center mb-14"
       >
         <p className="text-[11px] font-bold tracking-[0.3em] uppercase text-neon-purple mb-3">Why It Works</p>
@@ -274,8 +283,10 @@ function WhySection() {
           return (
             <motion.div
               key={p.label}
-              initial={{ opacity: 0, x: i % 2 ? 20 : -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
+              initial={{ opacity: 0, x: i % 2 ? 28 : -28 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.07, type: "spring", stiffness: 280, damping: 24 }}
               className="flex gap-4 p-6 glass-panel"
             >
               <div className="w-11 h-11 shrink-0 border border-neon-purple/30 bg-neon-purple/10 flex items-center justify-center">
@@ -303,7 +314,13 @@ function FinalCta() {
         <div className="absolute -top-20 -right-20 w-72 h-72 bg-neon-pink/20 rounded-full blur-[100px]" />
         <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-neon-purple/20 rounded-full blur-[100px]" />
         <div className="relative">
-          <Zap className="w-8 h-8 text-neon-pink mx-auto mb-5" />
+          <motion.div
+            animate={{ scale: [1, 1.18, 1], rotate: [0, 8, -8, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="mx-auto mb-5 w-fit"
+          >
+            <Zap className="w-8 h-8 text-neon-pink" />
+          </motion.div>
           <h2 className="text-4xl md:text-5xl font-bold font-display tracking-tight mb-4">
             Step into the arena.
           </h2>
@@ -314,7 +331,7 @@ function FinalCta() {
           <div className="flex flex-wrap justify-center gap-3">
             {isAuthenticated ? (
               <>
-                <Link to="/battles" className="px-7 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest inline-flex items-center gap-2 hover:scale-105 transition-all neon-glow-pink">
+                <Link to="/battles" className="px-7 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest inline-flex items-center gap-2 hover:scale-105 transition-transform animate-battle-charge">
                   ENTER A BATTLE <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link to="/luna" className="px-7 py-4 border border-border hover:border-neon-purple text-foreground font-bold text-sm tracking-widest transition-colors">
@@ -323,7 +340,7 @@ function FinalCta() {
               </>
             ) : (
               <>
-                <Link to="/signup" className="px-7 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest inline-flex items-center gap-2 hover:scale-105 transition-all neon-glow-pink">
+                <Link to="/signup" className="px-7 py-4 bg-neon-pink text-foreground font-bold text-sm tracking-widest inline-flex items-center gap-2 hover:scale-105 transition-transform animate-battle-charge">
                   CREATE ACCOUNT <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link to="/login" className="px-7 py-4 border border-border hover:border-neon-purple text-foreground font-bold text-sm tracking-widest transition-colors">

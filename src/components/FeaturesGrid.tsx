@@ -85,9 +85,10 @@ export function FeaturesGrid() {
     <section className="max-w-7xl mx-auto px-6 py-24">
       <motion.div
         className="text-center mb-16"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       >
         <h2 className="text-5xl font-bold font-display mb-4">The Arsenal</h2>
         <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -101,10 +102,11 @@ export function FeaturesGrid() {
           return (
             <motion.div
               key={feature.number}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.92, y: 18 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.08, type: "spring", stiffness: 260, damping: 22 }}
+              whileHover={{ scale: 1.025, y: -4, transition: { duration: 0.2 } }}
             >
               <Link
                 to={feature.to}
