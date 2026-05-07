@@ -230,21 +230,23 @@ function BattleLog({ logs }: { logs: string[] }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { ref.current?.scrollTo(0, ref.current.scrollHeight); }, [logs]);
   const colorFor = (l: string) => {
-    if (l.startsWith("✅") || l.startsWith("⚔️") && l.includes("DMG")) return "text-foreground";
-    if (l.startsWith("⚔️")) return "text-neon-pink";
-    if (l.startsWith("❌")) return "text-neon-pink/80";
-    if (l.startsWith("💚") || l.includes("+") && l.includes("HP")) return "text-neon-cyan";
-    if (l.startsWith("🎲")) return "text-neon-purple";
-    if (l.startsWith("⚠️")) return "text-tier-gold";
+    if (l.startsWith("⚔️")) return "text-neon-pink";          // attack / opponent action
+    if (l.startsWith("✅")) return "text-foreground";          // your hit landed
+    if (l.startsWith("❌")) return "text-neon-pink/80";        // miss / counter
+    if (l.startsWith("💚")) return "text-neon-cyan";           // heal
+    if (l.startsWith("🎲")) return "text-neon-purple";         // wild
+    if (l.startsWith("⚠️")) return "text-tier-gold";           // warning (low focus)
+    if (l.startsWith("🔰")) return "text-muted-foreground";    // turn separator
     return "text-muted-foreground";
   };
+  const turn = logs.filter(l => l.startsWith("🔰")).length || 1;
   return (
     <div className="glass-panel p-0 overflow-hidden">
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 bg-secondary/20">
         <span className="text-[10px] font-bold tracking-widest text-muted-foreground">BATTLE LOG</span>
-        <span className="text-[10px] tabular-nums text-muted-foreground">Turn {Math.max(1, Math.ceil(logs.length / 2))}</span>
+        <span className="text-[10px] tabular-nums text-muted-foreground">Turn {turn}</span>
       </div>
-      <div ref={ref} className="p-3 h-40 overflow-y-auto space-y-1">
+      <div ref={ref} className="p-3 h-48 overflow-y-auto space-y-1">
         {logs.length === 0 && <p className="text-[10px] text-muted-foreground italic">Battle log will appear here…</p>}
         {logs.map((l, i) => (
           <motion.p
