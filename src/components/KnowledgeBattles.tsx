@@ -938,7 +938,7 @@ export function KnowledgeBattles() {
   const [howOpen, setHowOpen] = useState(false);
   return (
     <section className="min-h-screen pt-24 pb-16">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6">
         <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-neon-pink/30 bg-neon-pink/10 text-neon-pink text-xs font-bold tracking-widest mb-6">
             <Swords className="w-3 h-3" />
@@ -953,15 +953,17 @@ export function KnowledgeBattles() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 relative">
-            <button
-              onClick={() => setHowOpen(true)}
-              className="absolute -top-2 right-0 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-widest text-neon-purple border border-neon-purple/40 bg-neon-purple/5 hover:bg-neon-purple/10 transition-colors"
-              aria-label="Battle info"
-            >
-              <Info className="w-3.5 h-3.5" /> INFO
-            </button>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 relative">
+            <div className="flex items-center justify-end mb-3">
+              <button
+                onClick={() => setHowOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-widest text-neon-purple border border-neon-purple/40 bg-neon-purple/5 hover:bg-neon-purple/10 transition-colors rounded-sm"
+                aria-label="Battle info"
+              >
+                <Info className="w-3.5 h-3.5" /> INFO
+              </button>
+            </div>
             <BattleArena />
           </div>
           <div className="lg:col-span-1 space-y-4">
