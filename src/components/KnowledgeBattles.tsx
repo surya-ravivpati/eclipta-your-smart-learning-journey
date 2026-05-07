@@ -585,6 +585,7 @@ function BattleArena() {
     if (cost > 0 && player.focus < cost) { addLog(`⚠️ Need ${cost} Focus!`); return; }
     setCurrentAction(action);
     if (cost > 0) setPlayer(prev => ({ ...prev, focus: Math.max(0, prev.focus - cost) }));
+    addLog(`🔰 You ${ACTIONS[action].label.toLowerCase()}…`);
 
     const arch = getArch(archetype);
     const baseDiff = action === "wild" ? (["easy", "medium", "hard"] as const)[Math.floor(Math.random() * 3)] : ACTIONS[action].difficulty;
