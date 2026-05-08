@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { ArrowRight, ArrowLeft, Check, Sparkles, Target, Clock, Brain, User2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { containsProfanity } from "@/lib/profanity";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -102,8 +103,7 @@ function OnboardingPage() {
         const u = form.username.trim();
         if (!/^[a-zA-Z0-9_]{3,20}$/.test(u)) return false;
         // Block obvious slurs / profanity in handles.
-        // Lazy import keeps this branch tree-shake friendly.
-        return !require("@/lib/profanity").containsProfanity(u);
+        return !containsProfanity(u);
       }
       case 1: {
         const age = parseInt(form.age, 10);
