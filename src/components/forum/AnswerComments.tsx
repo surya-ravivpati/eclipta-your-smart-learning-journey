@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { ReportDialog } from "./ReportDialog";
+import { containsProfanity } from "@/lib/profanity";
 
 type Comment = {
   id: string;
@@ -57,6 +58,7 @@ export function AnswerComments({ answerId, isModerator }: { answerId: string; is
     e.preventDefault();
     if (!user) return toast.error("Sign in to comment");
     if (reply.trim().length < 2) return toast.error("Comment too short");
+    if (containsProfanity(reply)) return toast.error("Please rephrase — your comment contains language we don't allow.");
     setSubmitting(true);
     const { data: prof } = await supabase.from("user_profiles").select("username").eq("user_id", user.id).maybeSingle();
     const author_name = prof?.username || user.email?.split("@")[0] || "Learner";
