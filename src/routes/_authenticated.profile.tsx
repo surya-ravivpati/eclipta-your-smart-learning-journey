@@ -471,6 +471,30 @@ function SettingsPanel({ profile, userId, onSaved }: {
           </div>
         </div>
 
+        {/* Bio */}
+        <div className="md:col-span-2 border-t border-border pt-5">
+          <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Bio</label>
+          <p className="text-[11px] text-muted-foreground mt-1 mb-2">A short blurb shown on your public profile. Tell people what you're learning, where you're from, what you build.</p>
+          <textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value.slice(0, 280))}
+            placeholder="e.g. Senior majoring in CS. Currently grinding system design + ML foundations."
+            rows={3}
+            className="w-full px-3 py-2 text-sm bg-background border border-border focus:border-neon-purple/60 focus:outline-none rounded resize-none"
+          />
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-[10px] text-muted-foreground">{bio.length}/280 characters</p>
+            <button
+              onClick={saveBio}
+              disabled={savingBio || bio.trim() === (profile?.bio || "").trim()}
+              className="px-4 py-2 text-xs font-bold tracking-widest bg-neon-purple text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-opacity inline-flex items-center gap-2"
+            >
+              {savingBio ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+              SAVE BIO
+            </button>
+          </div>
+        </div>
+
         {/* Learning preferences */}
         <div className="md:col-span-2 border-t border-border pt-5">
           <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Learning Preferences</label>
