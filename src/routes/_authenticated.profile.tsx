@@ -302,20 +302,23 @@ function SettingsPanel({ profile, userId, onSaved }: {
 }) {
   const { theme, setTheme } = useTheme();
   const [username, setUsername] = useState(profile?.username || "");
+  const [bio, setBio] = useState(profile?.bio || "");
   const [pace, setPace] = useState(profile?.preferred_pace || "normal");
   const [style, setStyle] = useState(profile?.preferred_style || "mixed");
   const [lunaNotes, setLunaNotes] = useState(profile?.luna_notes || "");
   const [saving, setSaving] = useState(false);
+  const [savingBio, setSavingBio] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "taken" | "invalid" | "current">("idle");
 
   useEffect(() => {
     setUsername(profile?.username || "");
+    setBio(profile?.bio || "");
     setPace(profile?.preferred_pace || "normal");
     setStyle(profile?.preferred_style || "mixed");
     setLunaNotes(profile?.luna_notes || "");
-  }, [profile?.username, profile?.preferred_pace, profile?.preferred_style, profile?.luna_notes]);
+  }, [profile?.username, profile?.bio, profile?.preferred_pace, profile?.preferred_style, profile?.luna_notes]);
 
   const validateUsername = (v: string) =>
     /^[a-zA-Z0-9_]{3,20}$/.test(v) && !containsProfanity(v);
@@ -366,6 +369,19 @@ function SettingsPanel({ profile, userId, onSaved }: {
     setSavingPrefs(false);
     if (error) return toast.error(error.message);
     toast.success("Learning preferences saved");
+    onSaved();
+  };
+
+  const saveBio = async () => {
+    const trimmed = bio.trim();
+    if (containsProfanity(trimmed)) return toast.error("Please rephrase — your bio contains language we don't allow.");
+    setSavingBio(true);
+    const { error } = await supabase.from("user_profiles")
+      .update({ bio: trimmed || null })
+      .eq("user_id", userId);
+    setSavingBio(false);
+    if (error) return toast.error(error.message);
+    toast.success("Bio updated — visible on your public profile");
     onSaved();
   };
 
