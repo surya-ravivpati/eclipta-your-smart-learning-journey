@@ -98,7 +98,13 @@ function OnboardingPage() {
 
   const canAdvance = (() => {
     switch (step) {
-      case 0: return /^[a-zA-Z0-9_]{3,20}$/.test(form.username.trim());
+      case 0: {
+        const u = form.username.trim();
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(u)) return false;
+        // Block obvious slurs / profanity in handles.
+        // Lazy import keeps this branch tree-shake friendly.
+        return !require("@/lib/profanity").containsProfanity(u);
+      }
       case 1: {
         const age = parseInt(form.age, 10);
         return Number.isFinite(age) && age >= 6 && age <= 120 && form.bio.trim().length <= 240;
