@@ -113,7 +113,9 @@ function NotificationsPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         if (!n.read) markRead(n.id);
-                        navigate({ to: n.link as string });
+                        // Notification links are stored as plain paths (e.g. "/forum/<uuid>"
+                        // or "/u/<name>"). Cast to bypass TanStack's typed-route check.
+                        navigate({ to: n.link as never });
                       }}
                       className="block"
                     >
