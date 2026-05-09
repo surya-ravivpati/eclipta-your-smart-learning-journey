@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { ReportDialog } from "./ReportDialog";
 import { containsProfanity } from "@/lib/profanity";
+import { ForumMarkdown } from "@/components/ForumMarkdown";
 
 type Comment = {
   id: string;
@@ -91,7 +92,9 @@ export function AnswerComments({ answerId, isModerator }: { answerId: string; is
         ) : (
           comments.map((c) => (
             <div key={c.id} className="text-xs py-1.5 border-b border-border/30 last:border-0">
-              <p className="text-foreground/90 leading-snug whitespace-pre-wrap">{c.body}</p>
+              <div className="text-foreground/90 leading-snug">
+                <ForumMarkdown>{c.body}</ForumMarkdown>
+              </div>
               <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
                 <AuthorLink name={c.author_name} />
                 <span>· {timeAgo(c.created_at)}</span>
@@ -124,7 +127,7 @@ export function AnswerComments({ answerId, isModerator }: { answerId: string; is
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               maxLength={1000}
-              placeholder="Add a comment…"
+              placeholder="Add a comment… (@mention to ping)"
               className="flex-1 bg-secondary/30 border border-input px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-neon-purple"
             />
             <button
