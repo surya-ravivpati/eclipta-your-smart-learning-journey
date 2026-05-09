@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useModerator } from "@/hooks/use-moderator";
 import { ReportDialog } from "@/components/forum/ReportDialog";
 import { AnswerComments } from "@/components/forum/AnswerComments";
+import { ForumMarkdown } from "@/components/ForumMarkdown";
 import { toast } from "sonner";
 import { containsProfanity } from "@/lib/profanity";
 
@@ -190,10 +191,16 @@ function ThreadPage() {
                       {thread.solved && <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/30 px-2 py-0.5 mr-2 align-middle">SOLVED</span>}
                       {thread.title}
                     </h1>
-                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mb-4">{thread.body}</p>
+                    <div className="text-sm text-foreground/90 leading-relaxed mb-4">
+                      <ForumMarkdown>{thread.body}</ForumMarkdown>
+                    </div>
                     <div className="flex items-center gap-2 flex-wrap mb-3">
                       <span className="text-[10px] font-bold tracking-widest text-muted-foreground bg-secondary/50 px-2 py-0.5 border border-border">{thread.course}</span>
-                      {thread.tags.map((t) => <span key={t} className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5"><Tag className="w-2.5 h-2.5" />{t}</span>)}
+                      {thread.tags.map((t) => (
+                        <Link key={t} to="/tags/$tag" params={{ tag: t }} className="text-[10px] text-muted-foreground hover:text-neon-purple inline-flex items-center gap-0.5">
+                          <Tag className="w-2.5 h-2.5" />{t}
+                        </Link>
+                      ))}
                     </div>
                     <div className="flex items-center gap-4 text-[11px] text-muted-foreground flex-wrap">
                       <AuthorLink name={thread.author_name} />
@@ -233,7 +240,9 @@ function ThreadPage() {
                             <Check className="w-3 h-3" />ACCEPTED
                           </div>
                         )}
-                        <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap mb-3">{a.body}</p>
+                        <div className="text-sm text-foreground/90 leading-relaxed mb-3">
+                          <ForumMarkdown>{a.body}</ForumMarkdown>
+                        </div>
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
                             <span><AuthorLink name={a.author_name} /> · {timeAgo(a.created_at)}</span>
@@ -269,7 +278,7 @@ function ThreadPage() {
                   onChange={(e) => setReply(e.target.value)}
                   rows={5}
                   maxLength={4000}
-                  placeholder="Share your insight, code snippet, or pointer to a resource."
+                  placeholder="Share your insight. Markdown supported — use ```lang code```, $math$, or @username to ping."
                   className="w-full mt-2 bg-secondary/30 border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple resize-none"
                 />
                 <div className="flex justify-between items-center mt-2">
