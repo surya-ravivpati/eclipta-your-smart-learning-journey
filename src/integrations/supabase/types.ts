@@ -453,6 +453,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          link: string | null
+          meta: Json
+          read: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          meta?: Json
+          read?: boolean
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          meta?: Json
+          read?: boolean
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_chest_claims: {
         Row: {
           bonus_xp: number
@@ -697,6 +730,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      contains_profanity: { Args: { t: string }; Returns: boolean }
       get_forum_stats: {
         Args: never
         Returns: {
@@ -719,6 +753,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      normalize_text: { Args: { t: string }; Returns: string }
+      notify_mentions: {
+        Args: {
+          p_actor_id: string
+          p_kind: string
+          p_link: string
+          p_meta: Json
+          p_text: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
