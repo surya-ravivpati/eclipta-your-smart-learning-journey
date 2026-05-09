@@ -22,6 +22,7 @@ import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated.progress'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated.notifications'
 import { Route as AuthenticatedLunaRouteImport } from './routes/_authenticated.luna'
 import { Route as AuthenticatedForumRouteImport } from './routes/_authenticated.forum'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated.collection'
@@ -100,6 +101,12 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedLunaRoute = AuthenticatedLunaRouteImport.update({
   id: '/luna',
   path: '/luna',
@@ -189,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/collection': typeof AuthenticatedCollectionRoute
   '/forum': typeof AuthenticatedForumRoute
   '/luna': typeof AuthenticatedLunaRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -216,6 +224,7 @@ export interface FileRoutesByTo {
   '/collection': typeof AuthenticatedCollectionRoute
   '/forum': typeof AuthenticatedForumRoute
   '/luna': typeof AuthenticatedLunaRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/forum': typeof AuthenticatedForumRoute
   '/_authenticated/luna': typeof AuthenticatedLunaRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/collection'
     | '/forum'
     | '/luna'
+    | '/notifications'
     | '/profile'
     | '/progress'
     | '/courses/$slug'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/collection'
     | '/forum'
     | '/luna'
+    | '/notifications'
     | '/profile'
     | '/progress'
     | '/courses/$slug'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/collection'
     | '/_authenticated/forum'
     | '/_authenticated/luna'
+    | '/_authenticated/notifications'
     | '/_authenticated/profile'
     | '/_authenticated/progress'
     | '/courses/$slug'
@@ -445,6 +458,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/luna': {
@@ -580,6 +600,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
   AuthenticatedForumRoute: typeof AuthenticatedForumRoute
   AuthenticatedLunaRoute: typeof AuthenticatedLunaRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedAdminForumRoute: typeof AuthenticatedAdminForumRoute
@@ -595,6 +616,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
   AuthenticatedForumRoute: AuthenticatedForumRoute,
   AuthenticatedLunaRoute: AuthenticatedLunaRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedAdminForumRoute: AuthenticatedAdminForumRoute,
