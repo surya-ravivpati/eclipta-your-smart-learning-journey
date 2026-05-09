@@ -19,6 +19,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
+import { Route as TagsTagRouteImport } from './routes/tags.$tag'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated.progress'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
@@ -84,6 +85,11 @@ const IndexRoute = IndexRouteImport.update({
 const UUsernameRoute = UUsernameRouteImport.update({
   id: '/u/$username',
   path: '/u/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TagsTagRoute = TagsTagRouteImport.update({
+  id: '/tags/$tag',
+  path: '/tags/$tag',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesSlugRoute = CoursesSlugRouteImport.update({
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/tags/$tag': typeof TagsTagRoute
   '/u/$username': typeof UUsernameRoute
   '/admin/forum': typeof AuthenticatedAdminForumRoute
   '/certified/$slug': typeof AuthenticatedCertifiedSlugRouteWithChildren
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/tags/$tag': typeof TagsTagRoute
   '/u/$username': typeof UUsernameRoute
   '/admin/forum': typeof AuthenticatedAdminForumRoute
   '/certified/$slug': typeof AuthenticatedCertifiedSlugRouteWithChildren
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/tags/$tag': typeof TagsTagRoute
   '/u/$username': typeof UUsernameRoute
   '/_authenticated/admin/forum': typeof AuthenticatedAdminForumRoute
   '/_authenticated/certified/$slug': typeof AuthenticatedCertifiedSlugRouteWithChildren
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/courses/$slug'
+    | '/tags/$tag'
     | '/u/$username'
     | '/admin/forum'
     | '/certified/$slug'
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/courses/$slug'
+    | '/tags/$tag'
     | '/u/$username'
     | '/admin/forum'
     | '/certified/$slug'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/progress'
     | '/courses/$slug'
+    | '/tags/$tag'
     | '/u/$username'
     | '/_authenticated/admin/forum'
     | '/_authenticated/certified/$slug'
@@ -364,6 +376,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  TagsTagRoute: typeof TagsTagRoute
   UUsernameRoute: typeof UUsernameRoute
 }
 
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/u/$username'
       fullPath: '/u/$username'
       preLoaderRoute: typeof UUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tags/$tag': {
+      id: '/tags/$tag'
+      path: '/tags/$tag'
+      fullPath: '/tags/$tag'
+      preLoaderRoute: typeof TagsTagRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses/$slug': {
@@ -649,6 +669,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  TagsTagRoute: TagsTagRoute,
   UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport
