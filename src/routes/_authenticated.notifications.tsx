@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Navbar } from "@/components/Navbar";
 import { useNotifications, type Notification } from "@/hooks/use-notifications";
 import { Bell, Check, Trash2, MessageSquare, UserPlus, AtSign, MessageCircle, Award, Loader2 } from "lucide-react";
@@ -50,6 +50,7 @@ function timeAgo(iso: string): string {
 
 function NotificationsPage() {
   const { items, unread, loading, markAllRead, markRead, remove } = useNotifications();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -107,9 +108,17 @@ function NotificationsPage() {
               if (n.link) {
                 return (
                   <li key={n.id}>
-                    <Link to={n.link} onClick={() => !n.read && markRead(n.id)} className="block">
+                    <a
+                      href={n.link}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!n.read) markRead(n.id);
+                        navigate({ to: n.link as string });
+                      }}
+                      className="block"
+                    >
                       {Body}
-                    </Link>
+                    </a>
                   </li>
                 );
               }
