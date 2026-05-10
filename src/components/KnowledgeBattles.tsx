@@ -175,6 +175,7 @@ function QuestionOverlay({ question, timeLeft, maxTime, onAnswer }: {
   question: MathQuestion; timeLeft: number; maxTime: number; onAnswer: (correct: boolean, timeSpent: number) => void;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
+  const [showReveal, setShowReveal] = useState(false);
   const startTimeRef = useRef(Date.now());
   const pct = (timeLeft / maxTime) * 100;
 
@@ -182,7 +183,14 @@ function QuestionOverlay({ question, timeLeft, maxTime, onAnswer }: {
     if (selected !== null) return;
     setSelected(val);
     const spent = (Date.now() - startTimeRef.current) / 1000;
-    setTimeout(() => onAnswer(val === question.answer, spent), 600);
+    const correct = val === question.answer;
+    if (correct) {
+      setTimeout(() => onAnswer(true, spent), 600);
+    } else {
+      // Show correct answer reveal for 1.5s before triggering damage
+      setTimeout(() => setShowReveal(true), 300);
+      setTimeout(() => onAnswer(false, spent), 1900);
+    }
   };
 
   return (
@@ -219,6 +227,22 @@ function QuestionOverlay({ question, timeLeft, maxTime, onAnswer }: {
             );
           })}
         </div>
+
+        {/* Correct answer reveal — appears briefly on wrong answer before damage */}
+        <AnimatePresence>
+          {showReveal && (
+            <motion.div
+              className="mt-5 flex items-center justify-center gap-2 px-4 py-2.5 border border-neon-cyan/40 bg-neon-cyan/8"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="text-[10px] font-bold tracking-widest text-muted-foreground">{question.topic.toUpperCase()} · CORRECT ANSWER</span>
+              <span className="text-xl font-bold font-display text-neon-cyan">{question.answer}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   );
