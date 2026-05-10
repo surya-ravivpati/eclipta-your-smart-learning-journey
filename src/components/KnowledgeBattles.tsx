@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Swords, Zap, Trophy, Shield, Flame, Timer, Sparkles,
-  Target, Heart, Skull, Dices, User, Bot, HelpCircle, Info,
+  Target, Heart, Skull, Dices, User, Bot, HelpCircle, Info, FastForward,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -1024,6 +1024,79 @@ function BattleArena() {
                   </motion.p>
                 )}
               </AnimatePresence>
+            </div>
+          );
+        })()}
+
+        {/* ── Accelerator Power-Scaling HUD ───────────────────────────────
+            Only visible when playing as Accelerator. Communicates the
+            core USP: sustained correct answers directly compound combat
+            power. Every question answered is ammunition for the future. */}
+        {archetype === "accelerator" && (() => {
+          const scalePct    = Math.min(records.length / 10, 1);           // 0 → 1 over 10 questions
+          const effectiveDmg  = Math.round(13 + scalePct * 14);           // 13 → 27
+          const effectiveMult = Math.round((0.15 + scalePct * 0.25) * 100); // 15% → 40%
+
+          // Stage labels communicate qualitative feel, not just a number
+          const stage =
+            scalePct >= 0.90 ? { label: "MAXIMUM POWER", color: "text-neon-pink",     bar: "bg-neon-pink" }
+            : scalePct >= 0.60 ? { label: "SURGING",      color: "text-tier-platinum", bar: "bg-tier-platinum" }
+            : scalePct >= 0.30 ? { label: "ASCENDING",    color: "text-tier-gold",     bar: "bg-tier-gold" }
+            : scalePct > 0    ? { label: "AWAKENING",    color: "text-neon-cyan",     bar: "bg-neon-cyan" }
+            :                   { label: "DORMANT",       color: "text-muted-foreground", bar: "bg-neon-cyan" };
+
+          return (
+            <div className="glass-panel p-3 border border-tier-platinum/30">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <FastForward className="w-3.5 h-3.5 text-tier-platinum" />
+                  <span className="text-[10px] font-bold tracking-widest text-tier-platinum">POWER SCALING</span>
+                </div>
+                <motion.span
+                  key={stage.label}
+                  className={`text-[9px] font-bold tracking-widest ${stage.color}`}
+                  initial={{ opacity: 0.6, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  {stage.label}
+                </motion.span>
+              </div>
+
+              {/* Scaling progress bar */}
+              <div className="h-2 bg-secondary/40 overflow-hidden rounded-sm mb-2">
+                <motion.div
+                  className={`h-full rounded-sm ${stage.bar}`}
+                  animate={{
+                    width: `${scalePct * 100}%`,
+                    // Pulse at maximum to signal explosive potential
+                    opacity: scalePct >= 0.90 ? [1, 0.65, 1] : 1,
+                  }}
+                  transition={{
+                    width:   { duration: 0.7, ease: "easeOut" },
+                    opacity: scalePct >= 0.90 ? { duration: 0.9, repeat: Infinity } : {},
+                  }}
+                />
+              </div>
+
+              {/* Live stat readout — the educational feedback loop made visible */}
+              <div className="flex items-center justify-between text-[9px] font-bold tabular-nums">
+                <span className="text-muted-foreground">
+                  DMG{" "}
+                  <span className={scalePct >= 0.60 ? "text-neon-pink" : "text-foreground"}>
+                    {effectiveDmg}
+                  </span>
+                </span>
+                <span className="text-muted-foreground">
+                  MULTI{" "}
+                  <span className={scalePct >= 0.60 ? "text-neon-pink" : "text-foreground"}>
+                    +{effectiveMult}%
+                  </span>
+                </span>
+                <span className="text-muted-foreground">
+                  Q{" "}
+                  <span className="text-foreground">{Math.min(records.length, 10)}/10</span>
+                </span>
+              </div>
             </div>
           );
         })()}
