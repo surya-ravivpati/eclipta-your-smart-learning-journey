@@ -60,7 +60,7 @@ function PublicProfilePage() {
     (async () => {
       setLoading(true);
       const { data: p } = await supabase
-        .from("user_profiles")
+        .from("public_profiles" as any)
         .select("user_id,username,bio,xp,current_streak,best_streak,equipped_ecliptar,avatar_url,created_at")
         .eq("username", username)
         .maybeSingle();
