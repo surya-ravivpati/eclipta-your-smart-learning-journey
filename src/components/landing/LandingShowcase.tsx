@@ -113,12 +113,12 @@ const PILLARS = [
     icon: Swords, num: "05", title: "Knowledge Battles", to: "/battles" as const,
     color: "neon-pink" as const,
     summary: "Pokémon-style 1v1 duels. Pick a class, spend XP, and trade attacks of knowledge. Speedsters, tanks, healers, and more — each plays differently.",
-    bullets: ["8 monster archetypes", "Class abilities & stat mechanics", "Daily challenge bonus"],
+    bullets: ["8 Ecliptar archetypes", "Class abilities & stat mechanics", "Daily challenge bonus"],
   },
   {
     icon: Trophy, num: "06", title: "Trophy Road & Ecliptars", to: "/progress" as const,
     color: "neon-purple" as const,
-    summary: "A Brawl-Stars-inspired progression map. Hit milestones to claim Ecliptars — collectible monsters tied to each archetype you've mastered.",
+    summary: "A Brawl-Stars-inspired progression map. Hit milestones to claim Ecliptars — collectible creatures from each archetype you've mastered.",
     bullets: ["Checkpoint rewards", "16 Ecliptars to collect", "Equip one to your profile"],
   },
   {
@@ -209,7 +209,7 @@ const FLOW = [
   { icon: Brain,      title: "Learn with Luna",    body: "Every lesson is tutor-led. Hints first, screen-share when stuck, no answer-dumping." },
   { icon: Target,     title: "Test adaptively",    body: "An adaptive test finds the exact concept you missed and zeroes in on it." },
   { icon: Swords,     title: "Battle for XP",      body: "Take what you learned into 1v1 duels. Win a streak, climb rank, unlock the road." },
-  { icon: Trophy,     title: "Claim Ecliptars",    body: "Hit milestones on the trophy road and claim collectible monsters tied to your style." },
+  { icon: Trophy,     title: "Claim Ecliptars",    body: "Hit milestones on the trophy road and claim collectible Ecliptars from each archetype you master." },
   { icon: MessagesSquare, title: "Share & rise",   body: "Stuck? Ask the forum. Help a peer? Earn rep. The community sharpens everyone." },
 ] as const;
 

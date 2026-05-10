@@ -199,7 +199,7 @@ function PublicProfilePage() {
                 <Stat icon={<Zap className="w-3.5 h-3.5" />} label="XP" value={profile.xp} color="text-neon-purple" />
                 <Stat icon={<Flame className="w-3.5 h-3.5" />} label="Streak" value={profile.current_streak} color="text-neon-pink" />
                 <Stat icon={<Trophy className="w-3.5 h-3.5" />} label="Best" value={profile.best_streak} color="text-neon-cyan" />
-                <Stat icon={<Sparkles className="w-3.5 h-3.5" />} label="Companions" value={ecliptars.length} color="text-foreground" />
+                <Stat icon={<Sparkles className="w-3.5 h-3.5" />} label="Ecliptars" value={ecliptars.length} color="text-foreground" />
                 <Stat icon={<Users className="w-3.5 h-3.5" />} label="Followers" value={followers} color="text-foreground" />
                 <Stat icon={<UserCheck className="w-3.5 h-3.5" />} label="Following" value={following} color="text-foreground" />
               </div>
@@ -233,12 +233,12 @@ function PublicProfilePage() {
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Companions grid (showcased) — 2 cols on desktop */}
+          {/* Ecliptars grid (showcased) — 2 cols on desktop */}
           <div className="lg:col-span-2 glass-panel p-6">
             <div className="flex items-end justify-between mb-5">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-neon-purple" />
-                <h2 className="font-display font-bold text-sm tracking-widest uppercase">Companions</h2>
+                <h2 className="font-display font-bold text-sm tracking-widest uppercase">Ecliptars</h2>
               </div>
               <span className="text-[10px] font-bold tracking-widest text-muted-foreground">
                 {ecliptars.length} / {ECLIPTARS.length} COLLECTED
@@ -246,7 +246,7 @@ function PublicProfilePage() {
             </div>
 
             {ecliptars.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-6 text-center">No companions claimed yet.</p>
+              <p className="text-xs text-muted-foreground py-6 text-center">No Ecliptars claimed yet.</p>
             ) : (
               <div className="space-y-5">
                 {archetypeKeys.map((archKey) => {
@@ -371,7 +371,7 @@ function FeedRow({ item }: { item: FeedItem }) {
   return (
     <li className="border-b border-border/40 pb-2 last:border-0">
       <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-neon-purple mb-1">
-        <Sparkles className="w-3 h-3" />CLAIMED COMPANION
+        <Sparkles className="w-3 h-3" />CLAIMED ECLIPTAR
         <span className="ml-auto text-muted-foreground">{timeAgo(e.claimed_at)}</span>
       </div>
       <p className={cn("text-xs font-bold", arch?.color ?? "text-foreground")}>{e.ecliptar_name}</p>
