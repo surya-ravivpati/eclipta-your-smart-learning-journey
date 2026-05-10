@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 
 import type { Phase, Action, ArchetypeId, Archetype, Fighter, MathQuestion, QuestionRecord, BattleStats, ActionConfig, GamblerRoll } from "./battles/types";
 import { generateQuestion, TIMER_DURATIONS } from "./battles/questions";
-import { levelToCategory, getActionDifficultyLevel, getEffectiveDamage, getEffectiveMultiplierStep, streakToMultiplier, hpToSelfDmgMult, botAccuracy } from "./battles/stat-mechanics";
+import { levelToCategory, getActionDifficultyLevel, getEffectiveDamage, getEffectiveMultiplierStep, streakToMultiplier, hpToSelfDmgMult } from "./battles/stat-mechanics";
+import { createBattleMemory, updateBattleMemoryPlayerTurn, updateBattleMemoryAiTurn, AI_PERSONALITIES, pickAiAction, computeAiAccuracy, getPressureLogLine, type BattleMemory } from "./battles/ai-brain";
 import { ARCHETYPES, rollGamblerStats } from "./battles/archetypes";
 import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDialog";
 import { BattleReport } from "./battles/BattleReport";
@@ -266,6 +267,7 @@ function BattleArena() {
   const [battleStats, setBattleStats] = useState<BattleStats | null>(null);
   const [gamblerStats, setGamblerStats] = useState<GamblerRoll | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const battleMemoryRef = useRef<BattleMemory | null>(null);
   const [playerXp, setPlayerXp] = useState<number>(0);
 
   // Fetch player XP for tier display only (no longer used for matchmaking)
@@ -306,6 +308,10 @@ function BattleArena() {
   const handleAnswer = useCallback((correct: boolean, timeSpent: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (!currentAction || !question) return;
+
+    if (battleMemoryRef.current) {
+      updateBattleMemoryPlayerTurn(battleMemoryRef.current, currentAction, correct);
+    }
 
     const record: QuestionRecord = { question, correct, timeSpent, action: currentAction };
     setRecords(prev => [...prev, record]);
@@ -450,44 +456,42 @@ function BattleArena() {
   }, [totalScore, records, longestStreak, fastestAnswer, archetype]);
 
   const aiTurn = useCallback(() => {
-    const oppArch = getArch(opponentArchetype);
+    const oppArch    = getArch(opponentArchetype);
+    const personality = AI_PERSONALITIES[opponentArchetype];
+    const memory     = battleMemoryRef.current;
 
     setTimeout(() => {
-      // ── Bot decision logic: pick Attack / Heal / Charge / Wild based on state ──
       setOpponent(prevOpp => {
         setPlayer(prevPlayer => {
-          const hpPct = prevOpp.hp / prevOpp.maxHp;
-          const focus = prevOpp.focus;
+          const oppHpPct    = prevOpp.hp    / prevOpp.maxHp;
           const playerHpPct = prevPlayer.hp / prevPlayer.maxHp;
+          const mem         = memory ?? createBattleMemory();
 
-          // Choose action
-          let choice: Action = "attack";
-          if (hpPct < 0.35 && prevOpp.hp < prevOpp.maxHp) {
-            // Low HP — prefer Heal if affordable, but finisher Charge if player almost dead
-            choice = (focus >= 25 && playerHpPct < 0.3) ? "charge" : "defend";
-          } else if (focus >= 25 && (playerHpPct < 0.5 || Math.random() < 0.45)) {
-            choice = "charge"; // payoff move
-          } else if (focus >= 15 && Math.random() < 0.12) {
-            choice = "wild"; // occasional gamble
-          } else {
-            choice = "attack"; // default focus builder
-          }
-          // Healer archetype loves to defend
-          if (opponentArchetype === "healer" && hpPct < 0.7 && Math.random() < 0.4) choice = "defend";
-          // Chud always charges if it can
-          if (opponentArchetype === "chud" && focus >= 25) choice = "charge";
+          const choice = pickAiAction(
+            mem,
+            personality,
+            { hp: prevOpp.hp, maxHp: prevOpp.maxHp, focus: prevOpp.focus, maxFocus: prevOpp.maxFocus, canHeal: oppArch.healAmount !== null },
+            { hp: prevPlayer.hp, maxHp: prevPlayer.maxHp, momentum: opponentMomentum },
+          );
 
-          const success = Math.random() < botAccuracy(oppArch);
+          const success = Math.random() < computeAiAccuracy(oppArch, personality, mem, oppHpPct, playerHpPct);
+
+          // Narrative pressure line — appears at meaningful moments only
+          const hasData       = mem.playerTurnCount >= 4;
+          const strongPattern = mem.patternConfidence >= personality.counterPlaySensitivity;
+          const pressureLine  = getPressureLogLine(mem, personality, prevOpp.name, oppHpPct, hasData && strongPattern);
+          if (pressureLine) addLog(pressureLine);
 
           let newPlayerHp = prevPlayer.hp;
-          let newOppHp = prevOpp.hp;
+          let newOppHp    = prevOpp.hp;
           let newOppFocus = prevOpp.focus;
-          let nextOppMom = opponentMomentum;
+          let nextOppMom  = opponentMomentum;
 
           if (success) {
             nextOppMom = opponentMomentum + 1;
-            const oppStep = getEffectiveMultiplierStep(oppArch, 0);
-            const sMult = streakToMultiplier(nextOppMom, oppStep);
+            // Fix: pass turnNumber so Accelerator's multiplier step actually ramps
+            const oppStep = getEffectiveMultiplierStep(oppArch, mem.turnNumber);
+            const sMult   = streakToMultiplier(nextOppMom, oppStep);
 
             if (choice === "defend") {
               newOppFocus = Math.min(prevOpp.maxFocus, prevOpp.focus + FOCUS_GAIN.defend);
@@ -532,7 +536,9 @@ function BattleArena() {
             addLog(`❌ ${prevOpp.name} fluffs ${ACTIONS[choice].label}: -${flub} HP.`);
           }
 
+          if (memory) updateBattleMemoryAiTurn(memory, success);
           setOpponentMomentum(nextOppMom);
+
           setTimeout(() => {
             setShowPlayerHit(false);
             if (newPlayerHp <= 0) { finishBattle(false); }
@@ -540,7 +546,6 @@ function BattleArena() {
             else { setPhase("select"); }
           }, 600);
 
-          // Update opponent in same pass
           setOpponent(o => ({ ...o, hp: newOppHp, focus: newOppFocus }));
           return { ...prevPlayer, hp: newPlayerHp };
         });
@@ -592,6 +597,7 @@ function BattleArena() {
       const oppHp = oppArch.maxHp;
       setPlayer({ name: playerName, hp: playerHp, maxHp: playerHp, focus: baseArch.startFocus, maxFocus: baseArch.focusPool, icon: playerIcon });
       setOpponent({ name: oppEclip.name, hp: oppHp, maxHp: oppHp, focus: oppArch.startFocus, maxFocus: oppArch.focusPool, icon: oppEclip.icon });
+      battleMemoryRef.current = createBattleMemory();
       setMomentum(0); setOpponentMomentum(0); setLogs([]); setTotalScore(0); setRecords([]); setLongestStreak(0); setFastestAnswer(Infinity); setBattleStats(null);
       setPhase("select");
       addLog(`⚔️ ${playerName} (${baseArch.name}) vs ${oppEclip.name} (${oppArch.name})!`);
