@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Crown, Skull, Target, Zap, Flame, AlertTriangle, BookOpen, RotateCcw, Star } from "lucide-react";
+import { Crown, Skull, Target, Zap, Flame, AlertTriangle, BookOpen, RotateCcw, Star, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ARCHETYPES } from "./archetypes";
 import type { BattleStats, Difficulty } from "./types";
@@ -193,21 +193,63 @@ export function BattleReport({ stats, onRematch, onContinueWithEcliptar, onBack 
             <StatCard icon={Zap} label="FASTEST" value={stats.fastestAnswer < Infinity ? `${stats.fastestAnswer.toFixed(1)}s` : "—"} color="text-neon-purple" />
             <StatCard icon={Flame} label="BEST STREAK" value={`${stats.longestStreak}`} color="text-neon-pink" />
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {(["easy", "medium", "hard"] as Difficulty[]).map(d => {
-              const data = diffCounts[d];
-              const pct = data.total > 0 ? Math.round(((data.total - data.wrong) / data.total) * 100) : 0;
-              return (
-                <div key={d} className="glass-panel p-3 text-center">
-                  <div className={`text-lg font-bold font-display ${
-                    d === "easy" ? "text-neon-cyan" : d === "medium" ? "text-neon-purple" : "text-neon-pink"
-                  }`}>{pct}%</div>
-                  <div className="text-[9px] font-bold tracking-widest text-muted-foreground">{d.toUpperCase()}</div>
-                  <div className="text-[9px] text-muted-foreground">{data.total - data.wrong}/{data.total}</div>
-                </div>
-              );
-            })}
+
+          {/* Math domain breakdown — shows exactly which skills were exercised */}
+          <div className="glass-panel p-4 mb-4 border border-border/40">
+            <p className="text-[9px] font-bold tracking-widest text-muted-foreground mb-3">MATH DOMAINS THIS BATTLE</p>
+            <div className="space-y-2">
+              {Object.entries(topicCounts)
+                .sort((a, b) => b[1].total - a[1].total)
+                .map(([topic, data]) => {
+                  const correct = data.total - data.wrong;
+                  const fillPct = Math.round((correct / data.total) * 100);
+                  const diffColor = data.wrong === 0
+                    ? "bg-neon-cyan"
+                    : data.wrong / data.total >= 0.5
+                    ? "bg-neon-pink"
+                    : "bg-neon-purple";
+                  return (
+                    <div key={topic}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-foreground">{topic}</span>
+                        <span className={`text-[10px] font-bold tabular-nums ${data.wrong === 0 ? "text-neon-cyan" : "text-muted-foreground"}`}>
+                          {correct}/{data.total}{data.wrong > 0 ? ` · ${data.wrong} missed` : " · perfect"}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-secondary/50 overflow-hidden">
+                        <motion.div
+                          className={`h-full ${diffColor}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${fillPct}%` }}
+                          transition={{ duration: 0.6, ease: "easeOut" }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
+
+          {/* Accelerator compounding insight — brief conceptual frame, Accelerator only */}
+          {stats.archetype === "accelerator" && stats.records.length >= 3 && (() => {
+            const n = stats.records.length;
+            const scalePct = Math.min(n / 10, 1);
+            const finalDmg = Math.round(13 + scalePct * 14);
+            const ratio = (finalDmg / 13).toFixed(1);
+            return (
+              <motion.div
+                className="mb-4 glass-panel p-4 border border-tier-platinum/30 flex items-start gap-3"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <TrendingUp className="w-4 h-4 text-tier-platinum shrink-0 mt-0.5" />
+                <p className="text-[11px] text-muted-foreground leading-snug">
+                  Your damage scaled from <span className="text-foreground font-bold">13 → {finalDmg}</span> over {n} turns — a <span className="text-tier-platinum font-bold">{ratio}× increase</span>. Small repeated gains compounding over time: this is how compound growth works in the real world.
+                </p>
+              </motion.div>
+            );
+          })()}
 
           {/* Archetype mastery panel — appears once the async upsert resolves */}
           {mastery && (() => {
