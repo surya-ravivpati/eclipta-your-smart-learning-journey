@@ -4,11 +4,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePlayerXp } from "@/hooks/use-player-xp";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, User, Menu, X, Zap, ChevronDown, Sun, Moon, Monitor } from "lucide-react";
+import { LogOut, User, Menu, X, Zap, ChevronDown, Sun, Moon, Monitor, Bell } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const NAV_GROUPS = [
   {
@@ -41,6 +42,7 @@ export function Navbar() {
   const { user, isAuthenticated } = useAuth();
   const { xp } = usePlayerXp();
   const { theme, setTheme } = useTheme();
+  const { unread } = useNotifications();
   const cycleTheme = () => {
     const next = theme === "dark" ? "light" : theme === "light" ? "system" : "dark";
     setTheme(next);
@@ -112,6 +114,19 @@ export function Navbar() {
           </button>
           {isAuthenticated ? (
             <>
+              <Link
+                to="/notifications"
+                className="relative p-2 text-muted-foreground hover:text-neon-purple transition-colors"
+                aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ""}`}
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-neon-pink text-[9px] font-bold text-foreground flex items-center justify-center tabular-nums">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+              </Link>
               <Link
                 to="/profile"
                 className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-secondary/30 border border-border hover:border-neon-purple/40 transition-colors"

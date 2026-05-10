@@ -106,9 +106,15 @@ function ThreadCard({ thread, userVote, onVote, canDelete, onDelete }: {
                 {thread.course}
               </span>
               {thread.tags.map((tag) => (
-                <span key={tag} className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5">
+                <Link
+                  key={tag}
+                  to="/tags/$tag"
+                  params={{ tag }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-[10px] text-muted-foreground hover:text-neon-purple inline-flex items-center gap-0.5"
+                >
                   <Tag className="w-2.5 h-2.5" />{tag}
-                </span>
+                </Link>
               ))}
             </div>
 
@@ -234,7 +240,7 @@ function NewThreadDialog({ open, onClose, onCreated, lockedCourse }: { open: boo
               onChange={(e) => setBody(e.target.value)}
               maxLength={4000}
               rows={6}
-              placeholder="Provide context, what you've tried, and where you got stuck."
+              placeholder="Provide context, what you've tried, and where you got stuck. Markdown supported — ```code```, $math$, and @username pings."
               className="w-full mt-1 bg-secondary/30 border border-input px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neon-purple resize-none"
             />
             <p className="text-[10px] text-muted-foreground mt-1">{body.length}/4000</p>

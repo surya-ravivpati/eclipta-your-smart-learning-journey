@@ -9,6 +9,7 @@ import { useOwnedEcliptars } from "@/hooks/use-player-xp";
 import { useTheme } from "@/hooks/use-theme";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { FollowingFeedCard } from "@/components/profile/FollowingFeedCard";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -149,7 +150,7 @@ function ProfilePage() {
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="grid w-full grid-cols-4 mb-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="companions">Companions</TabsTrigger>
+                <TabsTrigger value="companions">Ecliptars</TabsTrigger>
                 <TabsTrigger value="creator">Creator</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
@@ -208,13 +209,14 @@ function ProfilePage() {
                   </div>
                 </Card>
 
-                <Card title="Companions Claimed" icon={<Sparkles className="w-4 h-4 text-neon-purple" />} count={ecliptars.length}>
+                <Card title="Ecliptars Claimed" icon={<Sparkles className="w-4 h-4 text-neon-purple" />} count={ecliptars.length}>
                   {ecliptars.length === 0 ? (
-                    <EmptyState text="No companions yet." cta={<Link to="/progress" className="text-neon-purple hover:underline">Walk the trophy road →</Link>} />
+                    <EmptyState text="No Ecliptars yet." cta={<Link to="/progress" className="text-neon-purple hover:underline">Walk the trophy road →</Link>} />
                   ) : (
-                    <p className="text-xs text-muted-foreground">Open the Companions tab to equip one ↑</p>
+                    <p className="text-xs text-muted-foreground">Open the Ecliptars tab to equip one ↑</p>
                   )}
                 </Card>
+                <FollowingFeedCard userId={user.id} />
                 </div>
               </TabsContent>
 

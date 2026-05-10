@@ -6,10 +6,10 @@ import { StatsFooter } from "@/components/StatsFooter";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Eclipta - Learn Like You Play" },
-      { name: "description", content: "Adaptive learning arena. Luna AI tutor, certified courses, custom syllabi, adaptive tests, knowledge battles, trophy road, and a course-tagged forum - all in one place." },
-      { property: "og:title", content: "Eclipta - Learn Like You Play" },
-      { property: "og:description", content: "AI tutor, adaptive tests, 1v1 knowledge battles, trophy road, and collectible Ecliptars. Eight surfaces, one arena." },
+      { title: "Eclipta — Study is dead. Fight for it." },
+      { name: "description", content: "1v1 knowledge battles, 8 classes, 8 ranked tiers, and collectible Ecliptars. Eclipta turns learning into a competitive arena." },
+      { property: "og:title", content: "Eclipta — Study is dead. Fight for it." },
+      { property: "og:description", content: "Pick a class. Queue up. Land combos. Climb the ranks. Eclipta is the learning arena — battle-first, AI-tutored, fully gamified." },
     ],
   }),
   component: Index,

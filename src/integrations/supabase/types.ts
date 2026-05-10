@@ -453,6 +453,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          link: string | null
+          meta: Json
+          read: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          meta?: Json
+          read?: boolean
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          meta?: Json
+          read?: boolean
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_chest_claims: {
         Row: {
           bonus_xp: number
@@ -692,17 +725,95 @@ export type Database = {
         }
         Relationships: []
       }
+      xp_award_log: {
+        Row: {
+          amount: number
+          awarded_at: string
+          event: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          awarded_at?: string
+          event: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          awarded_at?: string
+          event?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          best_streak: number | null
+          bio: string | null
+          created_at: string | null
+          current_streak: number | null
+          equipped_ecliptar: string | null
+          user_id: string | null
+          username: string | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          best_streak?: number | null
+          bio?: string | null
+          created_at?: string | null
+          current_streak?: number | null
+          equipped_ecliptar?: string | null
+          user_id?: string | null
+          username?: string | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          best_streak?: number | null
+          bio?: string | null
+          created_at?: string | null
+          current_streak?: number | null
+          equipped_ecliptar?: string | null
+          user_id?: string | null
+          username?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      award_battle_xp: {
+        Args: { p_correct: number; p_total: number; p_won: boolean }
+        Returns: number
+      }
+      award_xp: { Args: { p_event: string }; Returns: number }
+      claim_chest: {
+        Args: { p_chest_label: string; p_node_id: number }
+        Returns: number
+      }
+      contains_profanity: { Args: { t: string }; Returns: boolean }
       get_forum_stats: {
         Args: never
         Returns: {
           answers: number
           contributors: number
           threads: number
+        }[]
+      }
+      get_leaderboard: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          user_id: string
+          username: string
+          xp: number
         }[]
       }
       get_platform_stats: {
@@ -719,6 +830,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      normalize_text: { Args: { t: string }; Returns: string }
+      notify_mentions: {
+        Args: {
+          p_actor_id: string
+          p_kind: string
+          p_link: string
+          p_meta: Json
+          p_text: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

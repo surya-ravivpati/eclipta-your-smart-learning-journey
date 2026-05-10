@@ -4,7 +4,7 @@ import { Crown, Skull, Target, Zap, Flame, AlertTriangle, BookOpen, RotateCcw, S
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ARCHETYPES } from "./archetypes";
 import type { BattleStats, Difficulty } from "./types";
-import { awardXp } from "@/lib/xp-service";
+import { awardBattleXp } from "@/lib/xp-service";
 import { recordBattleMastery, fetchMastery, getMasteryRank, getMasteryStats, emptyMastery, type ArchetypeMastery } from "@/lib/archetype-mastery";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,8 +46,9 @@ export function BattleReport({ stats, onRematch, onContinueWithEcliptar, onBack 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Award XP (handles milestones & toasts internally)
-        await awardXp(stats.xp);
+        // Award XP — server computes the amount from correct/total/won;
+        // client cannot inflate XP by tampering with stats.xp.
+        await awardBattleXp(stats.correctAnswers, stats.totalQuestions, stats.won);
 
         // Update battle stats on profile
         const { data: profile } = await supabase

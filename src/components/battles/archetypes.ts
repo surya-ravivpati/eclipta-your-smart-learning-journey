@@ -65,7 +65,7 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     borderColor: "border-tier-gold/40",
     description: "All stats randomized each battle. Could be godlike — could be garbage. Pure chaos.",
     passive: "Random stats · Chaos mode",
-    maxHp: 130,           // display placeholder — rolled at battle start
+    maxHp: 130,
     baseDamage: 18,
     multiplierStep: 0.175,
     healAmount: 15,
@@ -121,8 +121,8 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     description: "Scaling power over time. Damage (13→27) and multiplier (+15→40%) grow with every question answered.",
     passive: "DMG scales · MULT scales · Hard Qs",
     maxHp: 160,
-    baseDamage: 13,       // scales to 27 over 10 questions
-    multiplierStep: 0.15, // scales to 0.40 over 10 questions
+    baseDamage: 13,
+    multiplierStep: 0.15,
     healAmount: 18,
     timeMultiplier: 1.0,
     diffMin: 3,
