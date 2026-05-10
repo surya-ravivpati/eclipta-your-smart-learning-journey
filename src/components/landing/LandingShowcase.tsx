@@ -170,7 +170,7 @@ function LiveBattleHUD() {
         {/* Player */}
         <FighterRow
           name="YOU" sub="Speedster · Diamond II" hp={playerHp}
-          icon={Zap} colorClass="text-neon-cyan" barClass="bg-neon-cyan"
+          icon={Zap} colorClass="text-neon-cyan" borderClass="border-neon-cyan/40" barClass="bg-neon-cyan"
           alignRight={false}
         />
 
@@ -205,7 +205,7 @@ function LiveBattleHUD() {
         {/* Opponent */}
         <FighterRow
           name="@kazu_47" sub="Chud · Diamond I" hp={oppHp}
-          icon={Crown} colorClass="text-tier-champion" barClass="bg-tier-champion"
+          icon={Crown} colorClass="text-tier-champion" borderClass="border-tier-champion/40" barClass="bg-tier-champion"
           alignRight
         />
 
