@@ -749,7 +749,7 @@ function RankLadder() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.06, duration: 0.4 }}
               className={`glass-panel p-3 text-center group hover:-translate-y-1 transition-transform ${
-                t.featured ? "col-span-2 md:col-span-1 border-tier-god/30" : ""
+                t.name === "God" ? "col-span-2 md:col-span-1 border-tier-god/30" : ""
               }`}
             >
               <div
