@@ -182,9 +182,10 @@ function HpBar({ current, max, color, label }: { current: number; max: number; c
   );
 }
 
-function FocusBar({ current, max }: { current: number; max: number }) {
-  const isCharged = current >= 25;
-  const isWarm    = current >= 15;
+function FocusBar({ current, max, isPlayer = false }: { current: number; max: number; isPlayer?: boolean }) {
+  const chargeCost = ACTIONS.charge.focusCost;
+  const isCharged = current >= chargeCost;
+  const isWarm    = current >= chargeCost - 10;
   const fillRatio = max > 0 ? current / max : 0;
   const pulseSpeed = isCharged ? 0.55 : isWarm ? 0.95 : 1.6;
   return (
@@ -233,7 +234,7 @@ function FocusBar({ current, max }: { current: number; max: number }) {
         })}
       </div>
       <AnimatePresence>
-        {isCharged && (
+        {isCharged && isPlayer && (
           <motion.p
             className="text-[8px] font-bold tracking-widest text-neon-pink mt-0.5 text-right"
             initial={{ opacity: 0 }}
@@ -297,7 +298,7 @@ function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal }: 
           </div>
         </div>
         <HpBar current={fighter.hp} max={fighter.maxHp} color={side === "left" ? "bg-neon-cyan" : "bg-neon-pink"} label="HP" />
-        <div className="mt-2"><FocusBar current={fighter.focus} max={fighter.maxFocus} /></div>
+        <div className="mt-2"><FocusBar current={fighter.focus} max={fighter.maxFocus} isPlayer={side === "left"} /></div>
       </div>
       <AnimatePresence>
         {momentum > 0 && momentum % comboThreshold === 0 && (
@@ -356,7 +357,7 @@ function QuestionOverlay({ question, timeLeft, maxTime, onAnswer }: {
             <motion.div className={`h-full ${timeLeft <= 3 ? "bg-neon-pink" : "bg-neon-purple"}`} animate={{ width: `${pct}%` }} transition={{ duration: 0.3 }} />
           </div>
         </div>
-        <h3 className="text-3xl font-bold font-display text-center mb-8 text-foreground">{question.q} = ?</h3>
+        <h3 className="text-3xl font-bold font-display text-center mb-8 text-foreground">{question.q.trimEnd().endsWith("?") ? question.q : `${question.q} = ?`}</h3>
         <div className="grid grid-cols-2 gap-3">
           {question.options.map((opt, i) => {
             let style = "border-border hover:border-neon-purple/60 hover:bg-neon-purple/5";
