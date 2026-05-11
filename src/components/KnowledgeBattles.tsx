@@ -298,7 +298,7 @@ function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal }: 
           </div>
         </div>
         <HpBar current={fighter.hp} max={fighter.maxHp} color={side === "left" ? "bg-neon-cyan" : "bg-neon-pink"} label="HP" />
-        <div className="mt-2"><FocusBar current={fighter.focus} max={fighter.maxFocus} /></div>
+        <div className="mt-2"><FocusBar current={fighter.focus} max={fighter.maxFocus} isPlayer={side === "left"} /></div>
       </div>
       <AnimatePresence>
         {momentum > 0 && momentum % comboThreshold === 0 && (
