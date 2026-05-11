@@ -1,0 +1,594 @@
+# Eclipta
+
+> Learn. Compete. Progress.
+
+Eclipta is a competitive learning platform where solving problems directly affects gameplay, progression, and strategy.
+
+---
+
+# Overview
+
+Eclipta is built around a simple idea:
+
+> learning should feel interactive, skill-based, and rewarding.
+
+Instead of treating quizzes as something separate from gameplay, Eclipta turns knowledge into the gameplay itself.
+
+In battles, answers directly affect:
+
+* attacks
+* combos
+* momentum
+* progression
+* strategy
+
+The project combines:
+
+* strategy-game mechanics
+* adaptive learning
+* AI-assisted guidance
+* progression and ranking systems
+* social/community features
+* animated modern UI design
+
+At the center of the platform is **Knowledge Battles** — a real-time system where educational performance changes what players can actually do during combat.
+
+The current codebase already includes:
+
+* real-time battle systems
+* AI-assisted learning flows
+* progression/ranking systems
+* adaptive educational experiences
+* user profiles and progression tracking
+* forum/community systems
+* courses and learning paths
+* animated UI systems
+
+---
+
+# Why This Project Exists
+
+Most educational platforms follow the same pattern:
+
+1. read content
+2. answer questions
+3. move forward
+
+Eclipta experiments with a different approach:
+
+> what if learning felt closer to a competitive game?
+
+The goal is to make learning:
+
+* interactive instead of passive
+* skill-based instead of repetitive
+* competitive without losing educational value
+* rewarding beyond grades or completion percentages
+
+---
+
+# Features
+
+Eclipta is a competitive learning platform built around the idea that knowledge should directly affect gameplay.
+
+Instead of answering questions just to move forward, your performance changes what you can actually do inside battles, progression systems, and ranked experiences.
+
+The project mixes:
+
+* strategy-game mechanics
+* adaptive learning
+* AI-assisted guidance
+* progression systems
+* social/community features
+* modern animated UI design
+
+At the center of the platform is **Knowledge Battles** — a real-time system where solving problems powers attacks, momentum, combos, and strategic decisions.
+
+Current systems in the repository include:
+
+* Competitive knowledge-based battle systems
+* AI-assisted learning flows
+* Adaptive educational experiences
+* Trophy/progression systems
+* Social and community features
+* User profiles and progression tracking
+* Course and learning-path infrastructure
+* Animated modern UI/UX systems
+
+## Who It's For
+
+Eclipta is mainly designed for:
+
+* students who enjoy competitive or game-like learning
+* people who like progression/ranking systems
+* classrooms or communities experimenting with interactive learning
+* developers interested in educational gaming systems
+* anyone exploring alternatives to traditional quiz-based learning
+
+---
+
+# Features
+
+The project is still evolving, but a lot of the core systems are already functional.
+
+## Core Gameplay & Learning
+
+* Real-time knowledge battles
+* Strategic combat mechanics powered by educational performance
+* Combo, momentum, and focus systems
+* AI-driven opponents and battle logic
+* Adaptive learning experiences
+* Trophy road and progression tracking
+* Ranked and skill-based gameplay concepts
+
+## Learning Systems
+
+* Courses and learning paths
+* AI-assisted educational guidance
+* Knowledge collections and tracking
+* Personalized progression systems
+* Adaptive educational experiences
+
+## Social & Community
+
+* User profiles
+* Community/forum systems
+* Progress sharing
+* Achievement-oriented progression
+
+## User Experience
+
+* Modern animated UI
+* Responsive design
+* Framer Motion powered transitions
+* Component-driven architecture
+* Real-time interactive feedback
+
+---
+
+# Tech Stack
+
+## Frontend
+
+| Technology      | Purpose                      |
+| --------------- | ---------------------------- |
+| TypeScript      | Primary language             |
+| React 19        | UI framework                 |
+| Vite            | Build tooling and dev server |
+| TanStack Router | Client-side routing          |
+| Tailwind CSS    | Styling system               |
+| Framer Motion   | Animation and motion         |
+| Lucide React    | Icon system                  |
+
+## Backend & Services
+
+| Technology                | Purpose              |
+| ------------------------- | -------------------- |
+| Supabase                  | Backend-as-a-service |
+| PostgreSQL (via Supabase) | Database             |
+| Supabase Auth             | Authentication       |
+| Supabase Storage          | File/media storage   |
+
+## Tooling
+
+| Technology          | Purpose              |
+| ------------------- | -------------------- |
+| ESLint              | Linting              |
+| TypeScript Compiler | Static type checking |
+| npm                 | Package management   |
+
+---
+
+# Requirements
+
+Before running the project locally, ensure the following are installed:
+
+| Requirement | Minimum Version |
+| ----------- | --------------- |
+| Node.js     | 18+             |
+| npm         | 9+              |
+| Git         | Latest          |
+
+## External Services
+
+The application expects:
+
+* A configured Supabase project
+* Supabase database access
+* Supabase authentication configuration
+
+## Supported Operating Systems
+
+The project should work on:
+
+* macOS
+* Linux
+* Windows (WSL recommended)
+
+---
+
+# Getting Started
+
+## Quick Setup
+
+```bash
+git clone https://github.com/surya-ravivpati/eclipta-your-smart-learning-journey.git
+cd eclipta-your-smart-learning-journey
+npm install
+npm run dev
+```
+
+Then open:
+
+```txt
+http://localhost:5173
+```
+
+---
+
+# Installation
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/surya-ravivpati/eclipta-your-smart-learning-journey.git
+cd eclipta-your-smart-learning-journey
+```
+
+## 2. Install Dependencies
+
+```bash
+npm install
+```
+
+## 3. Configure Environment Variables
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+If the repository does not already contain one, create a `.env.example` file:
+
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+## 4. Configure Database / Supabase
+
+Create a Supabase project and configure:
+
+* Authentication providers
+* Database schema
+* Storage buckets (if applicable)
+* Row-level security policies
+
+> Note: No dedicated migration system or SQL migration directory was clearly present in the repository at the time of analysis. Database setup may currently be managed directly through Supabase.
+
+## 5. Start the Development Server
+
+```bash
+npm run dev
+```
+
+Once the server starts, the app should usually be available at:
+
+```txt
+http://localhost:5173
+```
+
+---
+
+# Environment Variables
+
+| Variable                 | Description                       | Required | Example                      |
+| ------------------------ | --------------------------------- | -------- | ---------------------------- |
+| `VITE_SUPABASE_URL`      | Supabase project URL              | Yes      | `https://abcxyz.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Supabase public anonymous API key | Yes      | `eyJhbGciOi...`              |
+
+> Additional variables may exist depending on deployment configuration or future integrations.
+
+---
+
+# Usage
+
+## Development
+
+Start the local development server:
+
+```bash
+npm run dev
+```
+
+## Production Build
+
+Generate an optimized production build:
+
+```bash
+npm run build
+```
+
+## Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Linting
+
+Run ESLint:
+
+```bash
+npm run lint
+```
+
+## Type Checking
+
+Depending on local setup:
+
+```bash
+npx tsc --noEmit
+```
+
+---
+
+# Scripts
+
+| Script            | Description                      |
+| ----------------- | -------------------------------- |
+| `npm run dev`     | Start Vite development server    |
+| `npm run build`   | Create production build          |
+| `npm run preview` | Preview production build locally |
+| `npm run lint`    | Run ESLint                       |
+
+> Exact scripts may evolve over time as the platform grows.
+
+---
+
+# Project Structure
+
+The codebase is mostly organized around feature systems.
+
+Most application logic lives inside `src/`.
+
+```txt
+src/
+├── components/        # Reusable UI components
+├── battles/           # Knowledge battle systems and gameplay
+├── forum/             # Community/forum functionality
+├── landing/           # Landing page and marketing pages
+├── profile/           # User profile systems
+├── luna/              # AI assistant related systems
+├── routes/            # Application routes
+├── lib/               # Utilities and shared logic
+├── hooks/             # Custom React hooks
+├── integrations/      # Third-party service integrations
+└── styles/            # Global styles and Tailwind configuration
+```
+
+## Important Areas
+
+### `KnowledgeBattles`
+
+One of the core systems in the application.
+
+Implements:
+
+* Knowledge-driven combat
+* Strategic gameplay mechanics
+* Combo and momentum systems
+* AI opponent logic
+* Real-time progression interactions
+
+### Routing
+
+The application uses TanStack Router for:
+
+* Nested routing
+* Route-based layouts
+* Authenticated flows
+* Public/private page separation
+
+---
+
+# Screenshots / Demo
+
+## Demo
+
+> ecliptalearning.lovable.app
+
+## Screenshots
+
+> we'll add this later ;)
+
+---
+
+# Backend / API
+
+Eclipta does not currently include a standalone backend server.
+
+Most backend functionality is handled through Supabase services and client-side integrations.
+
+The project primarily functions as a frontend application integrated with Supabase services.
+
+## Authentication
+
+Authentication is managed through Supabase Auth.
+
+Possible auth flows include:
+
+* Email/password
+* OAuth providers (if configured)
+* Session-based authentication
+
+## Backend Services
+
+The frontend communicates with:
+
+* Supabase database
+* Supabase authentication APIs
+* Supabase storage APIs
+
+> No standalone REST or Express API server was identified in the repository during analysis.
+
+---
+
+# Development
+
+## Recommended Workflow
+
+1. Create a feature branch
+2. Make isolated changes
+3. Run linting and type checks
+4. Test affected functionality
+5. Open a pull request
+
+## Local Development Tips
+
+### Use TypeScript Strictly
+
+Prefer explicit typing for:
+
+* Battle systems
+* Game state logic
+* API responses
+* Route data
+
+### Keep Components Modular
+
+Some gameplay systems are currently large and complex.
+
+As the project grows, consider splitting large gameplay components into:
+
+* Engine/state logic
+* Rendering layers
+* Animation systems
+* Matchmaking systems
+* AI systems
+
+#### Things That Would Improve the Project Long-Term
+
+* automated testing
+* proper database migrations
+* CI/CD workflows
+* replay/spectator systems
+* better separation of gameplay logic from UI
+
+---
+
+## Branching
+
+Suggested branching strategy:
+
+```txt
+main
+ ├── feature/*
+ ├── fix/*
+ └── experimental/*
+```
+
+
+## Reporting Issues
+
+When opening issues, include:
+
+* Environment details
+* Reproduction steps
+* Expected behavior
+* Screenshots/logs if applicable
+
+---
+
+# Troubleshooting
+
+## Common Issues
+
+### Environment Variables Missing
+
+If you see Supabase connection errors:
+
+```txt
+Missing Supabase environment variables
+```
+
+Ensure your `.env` file contains:
+
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+### Port Already In Use
+
+If Vite fails to start:
+
+```bash
+lsof -i :5173
+```
+
+Then stop the conflicting process or change the Vite port.
+
+### Dependency Installation Problems
+
+Try deleting:
+
+```txt
+node_modules/
+package-lock.json
+```
+
+Then reinstall:
+
+```bash
+npm install
+```
+
+___
+
+## Major Technologies
+
+* React
+* Vite
+* Supabase
+* Tailwind CSS
+* Framer Motion
+* TanStack Router
+
+## Inspiration
+
+The project blends concepts from:
+
+* Competitive gaming systems
+* Educational technology
+* Adaptive learning platforms
+* RPG progression systems
+* Social learning environments
+
+---
+
+# TL;DR
+
+Eclipta is an experimental learning platform where educational performance directly affects gameplay.
+
+The core system — Knowledge Battles — turns solving problems into real-time combat mechanics:
+
+* correct answers power attacks
+* momentum affects strategy
+* progression is skill-based
+* learning becomes interactive instead of passive
+
+The project currently uses:
+
+* React 19
+* TypeScript
+* Vite
+* Supabase
+* Tailwind CSS
+* Framer Motion
+
+The codebase is still evolving, but the main gameplay systems already show the direction of the project pretty clearly.
