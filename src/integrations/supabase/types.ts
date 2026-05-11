@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      archetype_mastery: {
+        Row: {
+          archetype: string
+          battles_played: number
+          best_streak: number
+          id: string
+          perfect_battles: number
+          total_correct: number
+          total_questions: number
+          updated_at: string
+          user_id: string
+          wins: number
+        }
+        Insert: {
+          archetype: string
+          battles_played?: number
+          best_streak?: number
+          id?: string
+          perfect_battles?: number
+          total_correct?: number
+          total_questions?: number
+          updated_at?: string
+          user_id: string
+          wins?: number
+        }
+        Update: {
+          archetype?: string
+          battles_played?: number
+          best_streak?: number
+          id?: string
+          perfect_battles?: number
+          total_correct?: number
+          total_questions?: number
+          updated_at?: string
+          user_id?: string
+          wins?: number
+        }
+        Relationships: []
+      }
       course_blocks: {
         Row: {
           created_at: string
@@ -839,6 +878,17 @@ export type Database = {
           p_link: string
           p_meta: Json
           p_text: string
+        }
+        Returns: undefined
+      }
+      record_battle_mastery: {
+        Args: {
+          p_archetype: string
+          p_best_streak: number
+          p_correct: number
+          p_perfect: boolean
+          p_total: number
+          p_won: boolean
         }
         Returns: undefined
       }

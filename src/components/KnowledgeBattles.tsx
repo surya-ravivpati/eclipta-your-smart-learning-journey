@@ -182,7 +182,7 @@ function HpBar({ current, max, color, label }: { current: number; max: number; c
   );
 }
 
-function FocusBar({ current, max, isPlayer = false }: { current: number; max: number; isPlayer?: boolean }) {
+function FocusBar({ current, max, isPlayer = false, canAct = false }: { current: number; max: number; isPlayer?: boolean; canAct?: boolean }) {
   const chargeCost = ACTIONS.charge.focusCost;
   const isCharged = current >= chargeCost;
   const isWarm    = current >= chargeCost - 10;
@@ -234,7 +234,7 @@ function FocusBar({ current, max, isPlayer = false }: { current: number; max: nu
         })}
       </div>
       <AnimatePresence>
-        {isCharged && isPlayer && (
+        {isCharged && isPlayer && canAct && (
           <motion.p
             className="text-[8px] font-bold tracking-widest text-neon-pink mt-0.5 text-right"
             initial={{ opacity: 0 }}
@@ -250,8 +250,8 @@ function FocusBar({ current, max, isPlayer = false }: { current: number; max: nu
   );
 }
 
-function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal }: {
-  fighter: Fighter; side: "left" | "right"; momentum: number; archetype?: ArchetypeId; showHit: boolean; showHeal: boolean;
+function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal, canAct = false }: {
+  fighter: Fighter; side: "left" | "right"; momentum: number; archetype?: ArchetypeId; showHit: boolean; showHeal: boolean; canAct?: boolean;
 }) {
   const arch = archetype ? ARCHETYPES[archetype] : null;
   const comboThreshold = archetype === "fulcrum" ? 2 : 3;
@@ -298,7 +298,7 @@ function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal }: 
           </div>
         </div>
         <HpBar current={fighter.hp} max={fighter.maxHp} color={side === "left" ? "bg-neon-cyan" : "bg-neon-pink"} label="HP" />
-        <div className="mt-2"><FocusBar current={fighter.focus} max={fighter.maxFocus} isPlayer={side === "left"} /></div>
+        <div className="mt-2"><FocusBar current={fighter.focus} max={fighter.maxFocus} isPlayer={side === "left"} canAct={canAct && side === "left"} /></div>
       </div>
       <AnimatePresence>
         {momentum > 0 && momentum % comboThreshold === 0 && (
@@ -1650,7 +1650,7 @@ function BattleArena() {
         {wildEvent && <WildEventOverlay event={wildEvent} />}
       </AnimatePresence>
       <div className="flex gap-4 mb-4">
-        <FighterCard fighter={player} side="left" momentum={momentum} archetype={archetype} showHit={showPlayerHit} showHeal={showPlayerHeal} />
+        <FighterCard fighter={player} side="left" momentum={momentum} archetype={archetype} showHit={showPlayerHit} showHeal={showPlayerHeal} canAct={phase === "select"} />
         <div className="flex flex-col items-center justify-center px-2 gap-1">
           <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
             <Swords className="w-6 h-6 text-neon-pink" />
@@ -1859,7 +1859,8 @@ function BattleArena() {
           {(Object.entries(ACTIONS) as [Action, ActionConfig][]).map(([key, act]) => {
             const Icon = act.icon;
             const cost = act.focusCost;
-            const disabled = phase !== "select" || (cost > 0 && player.focus < cost);
+            const cannotHeal = key === "defend" && getArch(archetype).healAmount === null;
+            const disabled = phase !== "select" || (cost > 0 && player.focus < cost) || cannotHeal;
             return (
               <motion.button key={key} onClick={() => selectAction(key)} disabled={disabled}
                 className={`glass-panel p-5 text-center transition-colors relative ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-neon-purple/5 hover:border-neon-purple/30"}`}
@@ -1867,7 +1868,9 @@ function BattleArena() {
               >
                 <Icon className={`w-7 h-7 mx-auto mb-1.5 ${key === "charge" ? "text-neon-pink" : key === "defend" ? "text-neon-cyan" : key === "wild" ? "text-neon-purple" : "text-foreground"}`} />
                 <div className="text-xs font-bold tracking-widest">{act.label.toUpperCase()}</div>
-                <div className="text-[10px] text-muted-foreground mt-1 leading-tight">{getActionDesc(key, getArch(archetype), records.length)}</div>
+                <div className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                  {cannotHeal ? "Tank cannot heal" : getActionDesc(key, getArch(archetype), records.length)}
+                </div>
                 {cost > 0 && (
                   <div className="absolute top-1.5 right-1.5 text-[9px] font-bold text-neon-purple bg-neon-purple/10 border border-neon-purple/30 px-1 rounded-sm">−{cost}</div>
                 )}
