@@ -238,11 +238,14 @@ function FocusBar({ current, max, isPlayer = false, canAct = false }: { current:
       <AnimatePresence>
         {isCharged && isPlayer && canAct && (
           <motion.p
+            key="charge-ready"
             className="text-[8px] font-bold tracking-widest text-neon-pink mt-0.5 text-right"
             initial={{ opacity: 0 }}
             animate={{ opacity: [0.6, 1, 0.6] }}
             exit={{ opacity: 0 }}
-            transition={{ repeat: Infinity, duration: 0.55 }}
+            transition={{
+              opacity: { repeat: Infinity, duration: 0.55, ease: "easeInOut" },
+            }}
           >
             CHARGE READY ⚡
           </motion.p>
