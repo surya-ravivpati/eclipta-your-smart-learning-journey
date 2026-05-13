@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { User, Trophy, Flame, Sparkles, MessageSquare, Loader2, Zap, Calendar } from "lucide-react";
+import { User, Trophy, Flame, Sparkles, MessageSquare, Loader2, Zap, Calendar, UserPlus, UserCheck } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { ECLIPTARS } from "@/lib/ecliptars";
 import { ARCHETYPES } from "@/components/battles/archetypes";
 import { cn } from "@/lib/utils";
 import type { MonsterArchetypeKey } from "@/lib/trophy-road-data";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/u/$username")({
   head: ({ params }) => ({
@@ -35,11 +37,15 @@ type Thread = { id: string; title: string; created_at: string; votes: number; an
 
 function PublicProfilePage() {
   const { username } = useParams({ from: "/u/$username" });
+  const { user } = useAuth();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [ecliptars, setEcliptars] = useState<Ecliptar[]>([]);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followBusy, setFollowBusy] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -53,15 +59,47 @@ function PublicProfilePage() {
       if (!p) { setNotFound(true); setLoading(false); return; }
       setProfile(p as PublicProfile);
 
-      const [{ data: e }, { data: t }] = await Promise.all([
+      const [{ data: e }, { data: t }, { count: fCount }, followRow] = await Promise.all([
         supabase.from("user_ecliptars").select("id,ecliptar_name,ecliptar_slug,archetype").eq("user_id", p.user_id),
         supabase.from("forum_threads").select("id,title,created_at,votes,answer_count").eq("user_id", p.user_id).order("created_at", { ascending: false }).limit(10),
+        supabase.from("user_follows").select("id", { count: "exact", head: true }).eq("following_id", p.user_id),
+        user
+          ? supabase.from("user_follows").select("id").eq("follower_id", user.id).eq("following_id", p.user_id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
       setEcliptars((e as Ecliptar[]) || []);
       setThreads((t as Thread[]) || []);
+      setFollowerCount(fCount ?? 0);
+      setIsFollowing(!!followRow?.data);
       setLoading(false);
     })();
-  }, [username]);
+  }, [username, user]);
+
+  const toggleFollow = async () => {
+    if (!user || !profile || followBusy) return;
+    if (user.id === profile.user_id) return;
+    setFollowBusy(true);
+    try {
+      if (isFollowing) {
+        const { error } = await supabase.from("user_follows")
+          .delete().eq("follower_id", user.id).eq("following_id", profile.user_id);
+        if (error) throw error;
+        setIsFollowing(false);
+        setFollowerCount((c) => Math.max(0, c - 1));
+      } else {
+        const { error } = await supabase.from("user_follows")
+          .insert({ follower_id: user.id, following_id: profile.user_id });
+        if (error) throw error;
+        setIsFollowing(true);
+        setFollowerCount((c) => c + 1);
+        toast.success(`Following ${profile.username}`);
+      }
+    } catch (e: unknown) {
+      toast.error((e as Error)?.message ?? "Couldn't update follow.");
+    } finally {
+      setFollowBusy(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -118,7 +156,23 @@ function PublicProfilePage() {
               <Stat icon={<Flame className="w-3.5 h-3.5" />} label="Streak" value={profile.current_streak} color="text-neon-pink" />
               <Stat icon={<Trophy className="w-3.5 h-3.5" />} label="Best" value={profile.best_streak} color="text-neon-cyan" />
               <Stat icon={<Sparkles className="w-3.5 h-3.5" />} label="Ecliptars" value={ecliptars.length} color="text-foreground" />
+              <Stat icon={<UserCheck className="w-3.5 h-3.5" />} label="Followers" value={followerCount} color="text-foreground" />
             </div>
+            {user && user.id !== profile.user_id && (
+              <button
+                onClick={toggleFollow}
+                disabled={followBusy}
+                className={cn(
+                  "mt-4 inline-flex items-center gap-2 px-4 py-2 text-xs font-bold tracking-widest uppercase border transition-colors disabled:opacity-50",
+                  isFollowing
+                    ? "border-border bg-secondary/40 text-foreground hover:bg-destructive/20 hover:border-destructive/50"
+                    : "border-neon-purple/60 bg-neon-purple/10 text-neon-purple hover:bg-neon-purple/20"
+                )}
+              >
+                {followBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isFollowing ? <UserCheck className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+                {isFollowing ? "Following" : "Follow"}
+              </button>
+            )}
           </div>
         </motion.div>
 
