@@ -17,6 +17,8 @@ import { createBattleMemory, updateBattleMemoryPlayerTurn, updateBattleMemoryAiT
 import { ARCHETYPES, rollGamblerStats } from "./battles/archetypes";
 import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDialog";
 import { BattleReport } from "./battles/BattleReport";
+import { UserSearchDialog } from "./battles/UserSearchDialog";
+import { ChallengeInbox } from "./battles/ChallengeInbox";
 import { ECLIPTARS, type Ecliptar } from "@/lib/ecliptars";
 import { supabase } from "@/integrations/supabase/client";
 import { getTodayChallenge } from "@/lib/daily-challenge";
@@ -2277,6 +2279,7 @@ function DailyChallengeCard() {
 // ─── Main Export ──────────────────────────────────────────────────────
 export function KnowledgeBattles() {
   const [howOpen, setHowOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   return (
     <section className="min-h-screen pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-6">
@@ -2295,8 +2298,16 @@ export function KnowledgeBattles() {
         </motion.div>
 
         <div className="space-y-6">
+          <ChallengeInbox />
           <div className="relative">
-            <div className="flex items-center justify-end mb-3">
+            <div className="flex items-center justify-end gap-2 mb-3">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-widest text-neon-cyan border border-neon-cyan/40 bg-neon-cyan/5 hover:bg-neon-cyan/10 transition-colors rounded-sm"
+                aria-label="Find player"
+              >
+                <Users className="w-3.5 h-3.5" /> FIND PLAYER
+              </button>
               <button
                 onClick={() => setHowOpen(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold tracking-widest text-neon-purple border border-neon-purple/40 bg-neon-purple/5 hover:bg-neon-purple/10 transition-colors rounded-sm"
@@ -2313,6 +2324,8 @@ export function KnowledgeBattles() {
           </div>
         </div>
       </div>
+
+      <UserSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* Floating "How to Play" button */}
       <motion.button
