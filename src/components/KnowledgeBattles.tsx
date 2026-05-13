@@ -1188,6 +1188,8 @@ function BattleArena() {
   }, [currentAction, momentum, player, totalScore, timeLeft, maxTime, question, archetype, longestStreak, fastestAnswer]);
 
   const finishBattle = useCallback((won: boolean) => {
+    if (battleFinishedRef.current) return;
+    battleFinishedRef.current = true;
     // Broadcast result to live opponent before tearing down
     if (opponentTypeRef.current === "live" && pvpChannelRef.current) {
       pvpChannelRef.current.send({
