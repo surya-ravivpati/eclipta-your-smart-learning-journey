@@ -1493,18 +1493,19 @@ function BattleArena() {
       // Resolve opponent from match result
       let oppArchetype: ArchetypeId;
       let oppName: string;
-      let oppIcon = Bot;
 
       if (match.opponentArchetype) {
         oppArchetype = match.opponentArchetype;
         oppName = match.opponentName;
       } else {
-        // Bot: pick a random ecliptar opponent
+        // Bot: pick a random ecliptar so the opponent has a real archetype identity
         const oppEclip = pickOpponent(cls);
         oppArchetype = oppEclip.archetype;
         oppName      = oppEclip.name;
-        oppIcon      = oppEclip.icon;
       }
+      // Always use the archetype's icon so ghost / bot / live opponents
+      // visually reflect their build instead of a generic robot.
+      const oppIcon = ARCHETYPES[oppArchetype].icon;
 
       // Ghost: prime the replay buffer
       if (match.type === "ghost" && match.ghostSession) {
@@ -1515,6 +1516,16 @@ function BattleArena() {
       // Live: store battle ID so the Realtime useEffect subscribes
       if (match.type === "live" && match.pvpBattleId) {
         setPvpBattleId(match.pvpBattleId);
+      }
+
+      // Round-based PvP: challenger acts first; the opponent waits.
+      if (match.type === "live") {
+        const iStart = match.iAmChallenger === true;
+        liveAwaitingRef.current = !iStart;
+        setLiveAwaitingOpponent(!iStart);
+      } else {
+        liveAwaitingRef.current = false;
+        setLiveAwaitingOpponent(false);
       }
 
       // Sync refs for async-safe use inside callbacks
@@ -1562,6 +1573,8 @@ function BattleArena() {
     ghostSessionRef.current   = null;
     pvpChannelRef.current     = null;
     battleFinishedRef.current = false;
+    liveAwaitingRef.current   = false;
+    setLiveAwaitingOpponent(false);
   };
 
   // Direct PvP challenge: bypass matchmaking and drop straight into a live
@@ -1573,6 +1586,7 @@ function BattleArena() {
     opponentArchetype: ArchetypeId;
     opponentName: string;
     opponentRating?: number;
+    iAmChallenger?: boolean;
   }) => {
     setArchetype(opts.myArchetype);
     setRatingChange(null);
@@ -1580,7 +1594,8 @@ function BattleArena() {
     ghostSessionRef.current   = null;
     ghostTurnIndexRef.current = 0;
     pvpChannelRef.current     = null;
-    setGamblerStats(opts.myArchetype === "gambler" ? rollGamblerStats() : null);
+    const rolledGambler = opts.myArchetype === "gambler" ? rollGamblerStats() : null;
+    setGamblerStats(rolledGambler);
 
     setOpponentType("live");
     opponentTypeRef.current   = "live";
@@ -1588,29 +1603,39 @@ function BattleArena() {
     opponentRatingRef.current = opts.opponentRating ?? 1000;
     setPvpBattleId(opts.battleId);
 
+    // Direct challenges: challenger acts first, defender waits.
+    const iStart = opts.iAmChallenger === true;
+    liveAwaitingRef.current = !iStart;
+    setLiveAwaitingOpponent(!iStart);
+
     const baseArch = ARCHETYPES[opts.myArchetype];
     const oppArch  = ARCHETYPES[opts.opponentArchetype];
     const playerName = ecliptar?.name ?? "You";
     const playerIcon = ecliptar?.icon ?? User;
+    const effectiveArch = rolledGambler ? { ...baseArch, ...rolledGambler } : baseArch;
 
     setPlayer({
-      name: playerName, hp: baseArch.maxHp, maxHp: baseArch.maxHp,
+      name: playerName, hp: effectiveArch.maxHp, maxHp: effectiveArch.maxHp,
       focus: baseArch.startFocus, maxFocus: baseArch.focusPool, icon: playerIcon,
     });
     setOpponent({
       name: opts.opponentName, hp: oppArch.maxHp, maxHp: oppArch.maxHp,
-      focus: oppArch.startFocus, maxFocus: oppArch.focusPool, icon: User,
+      focus: oppArch.startFocus, maxFocus: oppArch.focusPool, icon: oppArch.icon,
     });
     setOpponentArchetype(opts.opponentArchetype);
     battleMemoryRef.current = createBattleMemory();
     setMomentum(0); setOpponentMomentum(0); setLogs([]);
     setTotalScore(0); setRecords([]); setLongestStreak(0);
     setFastestAnswer(Infinity); setBattleStats(null);
-    setPhase("select");
-    addLog({
-      actor: "system", actionType: "info",
-      result: `⚔️ Direct challenge — ${playerName} (${baseArch.name}) vs ${opts.opponentName} (${oppArch.name}) · ⚡ LIVE`,
-    });
+    if (rolledGambler) {
+      setPhase("gamblerReveal");
+    } else {
+      setPhase("select");
+      addLog({
+        actor: "system", actionType: "info",
+        result: `⚔️ Direct challenge — ${playerName} (${baseArch.name}) vs ${opts.opponentName} (${oppArch.name}) · ⚡ LIVE`,
+      });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ecliptar]);
 
