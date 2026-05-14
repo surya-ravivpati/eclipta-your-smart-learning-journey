@@ -892,7 +892,7 @@ function BattleArena() {
   const [archetype, setArchetype] = useState<ArchetypeId>("speedster");
   const [opponentArchetype, setOpponentArchetype] = useState<ArchetypeId>("tank");
   const [player, setPlayer] = useState<Fighter>({ name: "You", hp: 100, maxHp: 100, focus: 20, maxFocus: 100, icon: User });
-  const [opponent, setOpponent] = useState<Fighter>({ name: "AI_Nemesis", hp: 100, maxHp: 100, focus: 20, maxFocus: 100, icon: Bot });
+  const [opponent, setOpponent] = useState<Fighter>({ name: "AI Nemesis", hp: 100, maxHp: 100, focus: 20, maxFocus: 100, icon: Bot });
   const [momentum, setMomentum] = useState(0);
   const [opponentMomentum, setOpponentMomentum] = useState(0);
   const [currentAction, setCurrentAction] = useState<Action | null>(null);
@@ -938,6 +938,9 @@ function BattleArena() {
   const [playerUsername, setPlayerUsername] = useState<string | null>(null);
   const [opponentRating, setOpponentRating] = useState(1000);
   const [ratingChange, setRatingChange]     = useState<number | null>(null);
+  // Live PvP turn-based lock: while true the local player has already played
+  // this round and must wait for the opponent's broadcast before acting again.
+  const [liveAwaitingOpponent, setLiveAwaitingOpponent] = useState(false);
 
   // Refs for async-safe access inside callbacks
   const pvpChannelRef     = useRef<any>(null);
@@ -946,6 +949,7 @@ function BattleArena() {
   const playerRatingRef   = useRef(1000);
   const opponentRatingRef = useRef(1000);
   const opponentTypeRef   = useRef<OpponentType>("bot");
+  const liveAwaitingRef   = useRef(false);
   // Idempotency guard so finishBattle runs exactly once per battle, even if
   // both the local HP-zero check and the opponent's broadcast battle_end
   // arrive. Without this, updateRating() runs twice and W/L double-counts.
