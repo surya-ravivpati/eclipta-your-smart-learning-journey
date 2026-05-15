@@ -1073,6 +1073,58 @@ function BattleArena() {
   useEffect(() => { fastestAnswerRef.current = fastestAnswer; }, [fastestAnswer]);
   useEffect(() => { totalScoreRef.current = totalScore; }, [totalScore]);
 
+  const resetLiveTurnLocks = useCallback((nextTurn: number) => {
+    liveTurnNumberRef.current = nextTurn;
+    setLiveTurnNumber(nextTurn);
+    liveActionLockedRef.current = false;
+    liveOpponentLockedRef.current = false;
+    liveResolvingRef.current = false;
+    livePendingActionRef.current = null;
+    setLiveActionLocked(false);
+    setLiveOpponentLocked(false);
+    setLiveResolvingTurn(false);
+  }, []);
+
+  const resolveLiveTurn = useCallback((actions: LiveTurnActionRow[], turnNumber: number) => {
+    if (liveResolvedTurnsRef.current.has(turnNumber) || liveResolvingRef.current) return;
+    const myId = myUserIdRef.current;
+    if (!myId) return;
+    const mine = actions.find(a => a.actor_id === myId);
+    const theirs = actions.find(a => a.actor_id !== myId);
+    if (!mine || !theirs) return;
+
+    liveResolvedTurnsRef.current.add(turnNumber);
+    liveResolvingRef.current = true;
+    setLiveResolvingTurn(true);
+    setPhase("animate");
+
+    const curPlayer = playerRef.current;
+    const curOpp = opponentRef.current;
+    const nextPlayerHp = Math.max(0, Math.min(curPlayer.maxHp, curPlayer.hp - theirs.damage - mine.self_damage + mine.heal));
+    const nextOppHp = Math.max(0, Math.min(curOpp.maxHp, curOpp.hp - mine.damage - theirs.self_damage + theirs.heal));
+
+    if (mine.damage > 0) { setShowOpponentHit(true); addLog({ actor: "player", actionType: mine.action as LogActionType, result: `${ACTIONS[mine.action].label}: ${mine.damage} DMG locked.`, value: mine.damage }); }
+    if (mine.heal > 0) { setShowPlayerHeal(true); addLog({ actor: "player", actionType: "heal", result: `Heal resolves: +${mine.heal} HP.`, value: mine.heal }); }
+    if (mine.self_damage > 0) { setShowPlayerHit(true); addLog({ actor: "player", actionType: "miss", result: `Your miss resolves: -${mine.self_damage} HP.`, value: mine.self_damage }); }
+    if (theirs.damage > 0) { setShowPlayerHit(true); addLog({ actor: "opponent", actionType: theirs.action as LogActionType, result: `${opponentRef.current.name}: ${theirs.damage} DMG.`, value: theirs.damage }); }
+    if (theirs.heal > 0) addLog({ actor: "opponent", actionType: "heal", result: `${opponentRef.current.name} heals +${theirs.heal} HP.`, value: theirs.heal });
+    if (theirs.self_damage > 0) addLog({ actor: "opponent", actionType: "miss", result: `${opponentRef.current.name} misses: -${theirs.self_damage} HP.`, value: theirs.self_damage });
+
+    setMomentum(mine.momentum);
+    setOpponentMomentum(theirs.momentum);
+    setPlayer(p => ({ ...p, hp: nextPlayerHp, focus: Math.max(0, Math.min(p.maxFocus, p.focus + mine.focus_delta)) }));
+    setOpponent(o => ({ ...o, hp: nextOppHp, focus: Math.max(0, Math.min(o.maxFocus, o.focus + theirs.focus_delta)) }));
+
+    setTimeout(() => {
+      setShowPlayerHit(false); setShowOpponentHit(false); setShowPlayerHeal(false);
+      if (nextOppHp <= 0 || nextPlayerHp <= 0) finishBattle(nextOppHp <= 0 && nextPlayerHp > 0 ? true : nextOppHp <= nextPlayerHp);
+      else { resetLiveTurnLocks(turnNumber + 1); setPhase("select"); }
+    }, 900);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addLog, resetLiveTurnLocks]);
+
+  useEffect(() => { liveResolutionRef.current = resolveLiveTurn; }, [resolveLiveTurn]);
+
   const getArch = useCallback((id: ArchetypeId): Archetype => {
     const base = ARCHETYPES[id];
     if (id === "gambler" && gamblerStats) return { ...base, ...gamblerStats };
