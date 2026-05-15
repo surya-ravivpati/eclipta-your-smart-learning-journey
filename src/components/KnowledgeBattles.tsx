@@ -969,6 +969,8 @@ function BattleArena() {
   const liveResolvingRef = useRef(false);
   const liveResolvedTurnsRef = useRef<Set<number>>(new Set());
   const livePendingActionRef = useRef<LiveTurnActionRow | null>(null);
+  const liveResolutionRef = useRef<(actions: LiveTurnActionRow[], turnNumber: number) => void>(() => {});
+  const rematchStartedRef = useRef(false);
   const myUserIdRef = useRef<string | null>(null);
   const opponentUserIdRef = useRef<string | null>(null);
   const iAmChallengerRef = useRef(false);
