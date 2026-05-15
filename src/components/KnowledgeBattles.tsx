@@ -1118,6 +1118,9 @@ function BattleArena() {
           setPlayer(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + arch.healAmount!), focus: Math.min(prev.maxFocus, prev.focus + gain) }));
           setShowPlayerHeal(true);
           addLog({ actor: "player", actionType: "heal", result: `Defend: +${heal} HP, +${gain} Focus.`, value: heal });
+          if (heal > 0 && opponentTypeRef.current === "live" && pvpChannelRef.current) {
+            pvpChannelRef.current.send({ type: "broadcast", event: "self_heal", payload: { amount: heal } });
+          }
         } else {
           setPlayer(prev => ({ ...prev, focus: Math.min(prev.maxFocus, prev.focus + gain) }));
           addLog({ actor: "player", actionType: "heal", result: `Defend: +${gain} Focus (Tank cannot heal).`, value: gain });
