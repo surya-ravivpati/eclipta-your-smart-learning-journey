@@ -104,6 +104,19 @@ interface ChatItem {
 
 type LeaderboardEntry = { rank: number; name: string; xp: number; tier: string };
 
+type LiveTurnActionRow = {
+  actor_id: string;
+  action: Action;
+  correct: boolean;
+  damage: number;
+  self_damage: number;
+  heal: number;
+  focus_delta: number;
+  momentum: number;
+  time_spent: number;
+  question?: unknown;
+};
+
 // Aligned with Trophy Road tier thresholds in src/lib/trophy-road-data.ts
 function xpToTier(xp: number): string {
   if (xp >= 460000) return "God Tier";
