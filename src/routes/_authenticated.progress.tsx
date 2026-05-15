@@ -14,9 +14,5 @@ export const Route = createFileRoute("/_authenticated/progress")({
 });
 
 function ProgressPage() {
-  return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <ProgressDashboard />
-    </div>
-  );
+  return <ProgressDashboard />;
 }

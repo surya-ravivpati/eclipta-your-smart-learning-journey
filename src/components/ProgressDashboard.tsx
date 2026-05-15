@@ -1,26 +1,21 @@
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import {
-  BookOpen, Target, TrendingUp, Users, Award, Clock, ChevronRight,
-  Zap, Lock, CheckCircle, Star, BarChart3, Brain, Route as RouteIcon,
-  Coffee, Flame, GitBranch, Layers
+  BookOpen, Target, Flame, Award, Clock, ChevronRight,
+  Lock, Users, Brain, GitBranch, Layers
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { TrophyRoad } from "@/components/TrophyRoad";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import "./Progress.css";
 
 /* ── Mock Data ─────────────────────────────────────────────── */
 
 const enrolledCourses = [
-  { id: 1, title: "Linear Algebra Foundations", progress: 78, totalLessons: 24, completed: 19, category: "Mathematics", streak: 5, nextMilestone: "Chapter Quiz" },
-  { id: 2, title: "FAANG Interview Prep", progress: 42, totalLessons: 60, completed: 25, category: "Computer Science", streak: 12, nextMilestone: "Mock Interview #3" },
-  { id: 3, title: "Organic Chemistry", progress: 15, totalLessons: 32, completed: 5, category: "Science", streak: 2, nextMilestone: "Lab Simulation" },
-  { id: 4, title: "Data Structures & Algorithms", progress: 91, totalLessons: 40, completed: 36, category: "Computer Science", streak: 8, nextMilestone: "Final Assessment" },
+  { id: 1, title: "Linear Algebra Foundations",    progress: 78, totalLessons: 24, completed: 19, category: "Mathematics",     streak: 5,  nextMilestone: "Chapter Quiz",      color: "oklch(0.80 0.16 240)" },
+  { id: 2, title: "FAANG Interview Prep",          progress: 42, totalLessons: 60, completed: 25, category: "Computer Science", streak: 12, nextMilestone: "Mock Interview #3", color: "oklch(0.72 0.22 0)"   },
+  { id: 3, title: "Organic Chemistry",             progress: 15, totalLessons: 32, completed: 5,  category: "Science",          streak: 2,  nextMilestone: "Lab Simulation",     color: "oklch(0.82 0.14 165)" },
+  { id: 4, title: "Data Structures & Algorithms",  progress: 91, totalLessons: 40, completed: 36, category: "Computer Science", streak: 8,  nextMilestone: "Final Assessment",   color: "oklch(0.80 0.16 240)" },
 ];
 
 const learningPaths = [
@@ -29,12 +24,12 @@ const learningPaths = [
     description: "A structured path from fundamentals to deployment, covering frontend, backend, databases, and DevOps.",
     prerequisites: ["Basic Programming", "HTML/CSS Basics"],
     milestones: [
-      { label: "Web Fundamentals", done: true },
-      { label: "JavaScript Deep Dive", done: true },
-      { label: "React Mastery", done: true },
-      { label: "Backend & APIs", done: false, current: true },
-      { label: "Databases", done: false },
-      { label: "DevOps & Deploy", done: false },
+      { label: "Web Fundamentals",    done: true  },
+      { label: "JavaScript Deep Dive", done: true  },
+      { label: "React Mastery",        done: true  },
+      { label: "Backend & APIs",       done: false, current: true  },
+      { label: "Databases",            done: false },
+      { label: "DevOps & Deploy",      done: false },
     ],
   },
   {
@@ -42,9 +37,9 @@ const learningPaths = [
     description: "A short path to brush up on probability, distributions, and hypothesis testing.",
     prerequisites: ["Algebra"],
     milestones: [
-      { label: "Probability Basics", done: true },
-      { label: "Distributions", done: false, current: true },
-      { label: "Hypothesis Testing", done: false },
+      { label: "Probability Basics",   done: true  },
+      { label: "Distributions",        done: false, current: true  },
+      { label: "Hypothesis Testing",   done: false },
     ],
   },
   {
@@ -52,147 +47,224 @@ const learningPaths = [
     description: "From linear algebra through neural networks to production ML systems.",
     prerequisites: ["Linear Algebra", "Python", "Statistics"],
     milestones: [
-      { label: "Math Foundations", done: false, current: true },
-      { label: "Classical ML", done: false },
-      { label: "Deep Learning", done: false },
-      { label: "NLP & Vision", done: false },
-      { label: "MLOps", done: false },
+      { label: "Math Foundations", done: false, current: true  },
+      { label: "Classical ML",     done: false },
+      { label: "Deep Learning",    done: false },
+      { label: "NLP & Vision",     done: false },
+      { label: "MLOps",            done: false },
     ],
   },
 ];
 
 const recommendations = [
-  { title: "Discrete Mathematics", reason: "Complements your Data Structures course", match: 94 },
-  { title: "System Design", reason: "Next step after FAANG Interview Prep", match: 89 },
-  { title: "Probability & Statistics", reason: "Prerequisite for Machine Learning path", match: 85 },
-  { title: "Graph Theory", reason: "You excelled at tree-based problems", match: 78 },
+  { title: "Discrete Mathematics",    reason: "Complements your Data Structures course",  match: 94 },
+  { title: "System Design",           reason: "Next step after FAANG Interview Prep",      match: 89 },
+  { title: "Probability & Statistics", reason: "Prerequisite for Machine Learning path",  match: 85 },
+  { title: "Graph Theory",            reason: "You excelled at tree-based problems",       match: 78 },
 ];
 
 const collaborationGroups = [
-  { name: "FAANG Study Group", members: 12, active: true, topic: "Interview Prep" },
-  { name: "Linear Algebra Gang", members: 5, active: true, topic: "Mathematics" },
-  { name: "Organic Chem Lab Partners", members: 3, active: false, topic: "Science" },
+  { name: "FAANG Study Group",          members: 12, active: true,  topic: "Interview Prep" },
+  { name: "Linear Algebra Gang",        members: 5,  active: true,  topic: "Mathematics"    },
+  { name: "Organic Chem Lab Partners",  members: 3,  active: false, topic: "Science"        },
 ];
 
-const trophyMilestones = [
-  { label: "First Course Enrolled", earned: true, xp: 100 },
-  { label: "7-Day Streak", earned: true, xp: 500 },
-  { label: "First Perfect Score", earned: true, xp: 750 },
-  { label: "30-Day Streak", earned: false, xp: 2000, progress: 40 },
-  { label: "Complete a Learning Path", earned: false, xp: 5000, progress: 60 },
-  { label: "Win 50 Battles", earned: false, xp: 3000, progress: 24 },
-  { label: "Mentor 10 Users", earned: false, xp: 4000, progress: 0 },
-];
+const TABS = [
+  { id: "overview",  label: "Continue Learning" },
+  { id: "paths",     label: "Paths"             },
+  { id: "trophies",  label: "Trophy Road"       },
+  { id: "discover",  label: "Discover"          },
+] as const;
+type TabId = typeof TABS[number]["id"];
 
-/* ── Sub-components ────────────────────────────────────────── */
+/* ── Helpers ───────────────────────────────────────────────── */
 
-function CourseProgressCard({ course }: { course: typeof enrolledCourses[0] }) {
+function useReveal<T extends Element = HTMLDivElement>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        (el as HTMLElement).classList.add("in");
+        obs.disconnect();
+      }
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
+function AnimatedCounter({ to, suffix = "" }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const mv = useMotionValue(0);
+  const rounded = useTransform(mv, v => Math.round(v).toString());
+  const fired = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !fired.current) {
+        fired.current = true;
+        animate(mv, to, { duration: 1.4, ease: [0.16, 1, 0.3, 1] });
+      }
+    }, { threshold: 0.5 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [mv, to]);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-    >
-      <Card className="bg-card/60 border-border hover:border-neon-purple/30 transition-colors group">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h4 className="font-bold font-display text-sm">{course.title}</h4>
-              <Badge variant="secondary" className="mt-1 text-[10px]">{course.category}</Badge>
-            </div>
-            <div className="flex items-center gap-1 text-neon-pink">
-              <Flame className="w-3.5 h-3.5" />
-              <span className="text-xs font-mono font-bold">{course.streak}d</span>
-            </div>
-          </div>
-          <Progress value={course.progress} className="h-2 mb-2" />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{course.completed}/{course.totalLessons} lessons</span>
-            <span className="text-neon-purple font-mono font-bold">{course.progress}%</span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">Next: {course.nextMilestone}</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-neon-purple transition-colors" />
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <span ref={ref}>
+      <motion.span>{rounded}</motion.span>
+      {suffix && <span className="pg-stat-suffix">{suffix}</span>}
+    </span>
   );
 }
 
-function PathCard({ path }: { path: typeof learningPaths[0] }) {
-  const completionPct = Math.round((path.completed / path.courses) * 100);
+/* ── Sub-components ────────────────────────────────────────── */
+
+function CourseProgressCard({ course, delay = 0 }: { course: typeof enrolledCourses[0]; delay?: number }) {
+  const ref = useReveal();
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+    <div
+      ref={ref}
+      className="pg-reveal pg-course-card"
+      style={{ "--cc": course.color, "--rd": `${delay}ms` } as React.CSSProperties}
     >
-      <Card className="bg-card/60 border-border hover:border-neon-cyan/30 transition-colors">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-display">{path.title}</CardTitle>
-            <Badge variant={path.type === "intensive" ? "default" : "secondary"} className="text-[10px] uppercase tracking-wider">
-              {path.type}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">{path.description}</p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{path.duration}</span>
-            <span className="flex items-center gap-1"><Layers className="w-3 h-3" />{path.courses} courses</span>
-          </div>
+      <div className="pg-course-cat">{course.category}</div>
+      <div className="pg-course-title">{course.title}</div>
+      <div className="pg-bar-wrap">
+        <motion.div
+          className="pg-bar"
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: course.progress / 100 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: delay / 1000 + 0.2 }}
+        />
+      </div>
+      <div className="pg-course-meta">
+        <span>{course.completed}/{course.totalLessons} lessons</span>
+        <span className="pg-course-pct">{course.progress}%</span>
+      </div>
+      <div className="pg-course-foot">
+        <span className="pg-course-next">Next — {course.nextMilestone}</span>
+        <span className="pg-course-streak">
+          <Flame size={12} />
+          {course.streak}d
+        </span>
+      </div>
+    </div>
+  );
+}
 
-          {/* Prerequisites */}
-          <div>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Prerequisites</span>
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {path.prerequisites.map(p => (
-                <Badge key={p} variant="outline" className="text-[10px] border-neon-cyan/30 text-neon-cyan">{p}</Badge>
-              ))}
+function PathCard({ path, delay = 0 }: { path: typeof learningPaths[0]; delay?: number }) {
+  const ref = useReveal();
+  const pct = Math.round((path.completed / path.courses) * 100);
+  return (
+    <div
+      ref={ref}
+      className="pg-reveal pg-path-card"
+      style={{ "--rd": `${delay}ms` } as React.CSSProperties}
+    >
+      <div>
+        <span className={`pg-path-type pg-path-type--${path.type}`}>{path.type}</span>
+      </div>
+      <div className="pg-path-title">{path.title}</div>
+      <div className="pg-path-desc">{path.description}</div>
+      <div className="pg-path-meta">
+        <span><Clock size={11} />{path.duration}</span>
+        <span><Layers size={11} />{path.courses} courses</span>
+      </div>
+      <div className="pg-prereq-row">
+        {path.prerequisites.map(p => (
+          <span key={p} className="pg-prereq-tag">{p}</span>
+        ))}
+      </div>
+      <div className="pg-ms-row">
+        {path.milestones.map((m, i) => (
+          <React.Fragment key={m.label}>
+            <div
+              className={`pg-ms-dot ${m.done ? "pg-ms-dot--done" : (m as typeof m & { current?: boolean }).current ? "pg-ms-dot--now" : "pg-ms-dot--lock"}`}
+              title={m.label}
+            >
+              {m.done ? "✓" : (m as typeof m & { current?: boolean }).current ? "●" : <Lock size={8} />}
             </div>
-          </div>
+            {i < path.milestones.length - 1 && (
+              <div className={`pg-ms-line ${m.done ? "pg-ms-line--done" : "pg-ms-line--pend"}`} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+      <div>
+        <div className="pg-path-bar-wrap">
+          <motion.div
+            className="pg-path-bar"
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: pct / 100 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1], delay: delay / 1000 + 0.2 }}
+          />
+        </div>
+        <div className="pg-path-pct">{pct}% complete</div>
+      </div>
+    </div>
+  );
+}
 
-          {/* Mini Trophy Road */}
-          <div className="flex items-center gap-1">
-            {path.milestones.map((m, i) => (
-              <div key={m.label} className="flex items-center gap-1">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold ${
-                    m.done
-                      ? "bg-neon-purple text-primary-foreground"
-                      : m.current
-                      ? "bg-neon-pink text-foreground ring-2 ring-neon-pink/30"
-                      : "bg-secondary text-muted-foreground"
-                  }`}
-                  title={m.label}
-                >
-                  {m.done ? "✓" : i + 1}
-                </div>
-                {i < path.milestones.length - 1 && (
-                  <div className={`w-4 h-0.5 ${m.done ? "bg-neon-purple" : "bg-border"}`} />
-                )}
-              </div>
-            ))}
-          </div>
+function RecCard({ rec, delay = 0 }: { rec: typeof recommendations[0]; delay?: number }) {
+  const ref = useReveal();
+  return (
+    <div
+      ref={ref}
+      className="pg-reveal pg-rec-card"
+      style={{ "--rd": `${delay}ms` } as React.CSSProperties}
+    >
+      <div className="pg-rec-icon"><Brain size={20} /></div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="pg-rec-title">{rec.title}</div>
+        <div className="pg-rec-reason">{rec.reason}</div>
+      </div>
+      <div className="pg-rec-match-col">
+        <div className="pg-rec-match-num">{rec.match}</div>
+        <div className="pg-rec-match-lbl">match</div>
+      </div>
+    </div>
+  );
+}
 
-          <Progress value={completionPct} className="h-1.5" />
-          <div className="text-[11px] text-muted-foreground text-right font-mono">{completionPct}% complete</div>
-        </CardContent>
-      </Card>
-    </motion.div>
+function GroupCard({ group, delay = 0 }: { group: typeof collaborationGroups[0]; delay?: number }) {
+  const ref = useReveal();
+  return (
+    <div
+      ref={ref}
+      className="pg-reveal pg-group-card"
+      style={{ "--rd": `${delay}ms` } as React.CSSProperties}
+    >
+      <div className="pg-group-header">
+        <div className="pg-group-name">{group.name}</div>
+        <div className={`pg-group-dot ${group.active ? "pg-group-dot--on" : "pg-group-dot--off"}`} />
+      </div>
+      <div className="pg-group-topic">{group.topic}</div>
+      <div className="pg-group-footer">
+        <span><Users size={11} />{group.members} members</span>
+        <button className="pg-group-open">Open <ChevronRight size={11} /></button>
+      </div>
+    </div>
   );
 }
 
 /* ── Main Component ────────────────────────────────────────── */
 
 export function ProgressDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
   const { user } = useAuth();
-  const [profile, setProfile] = useState<{ best_streak: number; total_correct: number; total_questions: number; xp: number } | null>(null);
-  const [enrollCount, setEnrollCount] = useState<number>(0);
-  const [trophiesEarned, setTrophiesEarned] = useState<number>(0);
+  const [profile, setProfile] = useState<{
+    best_streak: number; total_correct: number; total_questions: number; xp: number;
+  } | null>(null);
+  const [enrollCount, setEnrollCount] = useState(0);
+  const [trophiesEarned, setTrophiesEarned] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -216,181 +288,170 @@ export function ProgressDashboard() {
     : 0;
   const totalTrophies = 7;
 
+  const stats = [
+    { label: "Enrolled",    value: enrollCount,              suffix: enrollCount === 1 ? " Course" : " Courses", color: "oklch(0.80 0.16 240)", Icon: BookOpen },
+    { label: "Best Streak", value: profile?.best_streak ?? 0, suffix: " Days",                                  color: "oklch(0.72 0.22 0)",    Icon: Flame   },
+    { label: "Accuracy",    value: accuracy,                  suffix: "%",                                       color: "oklch(0.82 0.14 165)",  Icon: Target  },
+    { label: "Trophies",    value: trophiesEarned,            suffix: ` / ${totalTrophies}`,                     color: "oklch(0.92 0.06 90)",   Icon: Award   },
+  ];
+
+  const tabVariants = {
+    initial: { opacity: 0, y: 16 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as number[] } },
+    exit:    { opacity: 0, y: -12, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] as number[] } },
+  };
+
   return (
-    <section className="pt-24 pb-16">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Header */}
+    <div className="pg-shell">
+      <div className="pg-bg" aria-hidden="true">
+        <div className="pg-aurora" />
+        <div className="pg-grid" />
+        <div className="pg-noise" />
+      </div>
+
+      <div className="pg-wrap">
+        {/* Hero */}
         <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: -20 }}
+          className="pg-hero"
+          initial={{ opacity: 0, y: -18 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-5xl font-bold font-display mb-4">
-            Your <span className="text-neon-purple text-glow-purple">Learning</span>
+          <div className="pg-label">Learning Arc</div>
+          <h1 className="pg-headline">
+            Your<br /><em>Progress</em>
           </h1>
-          <p className="text-muted-foreground max-w-2xl leading-relaxed">
+          <p className="pg-hero-sub">
             Pick up where you left off. Everything you're learning, your structured paths,
             and your rank — all in one place.
           </p>
         </motion.div>
 
-        {/* Quick Stats */}
+        {/* Stats */}
         <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10"
-          initial={{ opacity: 0, y: 12 }}
+          className="pg-stats"
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.12 }}
         >
-          {[
-            { icon: BookOpen, label: "Enrolled", value: `${enrollCount} ${enrollCount === 1 ? "Course" : "Courses"}`, color: "text-neon-purple" },
-            { icon: Flame, label: "Best Streak", value: `${profile?.best_streak ?? 0} Days`, color: "text-neon-pink" },
-            { icon: Target, label: "Accuracy", value: `${accuracy}%`, color: "text-neon-cyan" },
-            { icon: Award, label: "Trophies", value: `${trophiesEarned} / ${totalTrophies}`, color: "text-neon-purple" },
-          ].map(stat => (
-            <Card key={stat.label} className="bg-card/60 border-border">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className={`${stat.color} bg-secondary p-2 rounded-lg`}>
-                  <stat.icon className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-                  <p className="font-bold font-display text-sm">{stat.value}</p>
-                </div>
-              </CardContent>
-            </Card>
+          {stats.map(({ label, value, suffix, color, Icon }) => (
+            <div key={label} className="pg-stat" style={{ "--sc": color } as React.CSSProperties}>
+              <div className="pg-stat-lbl">{label}</div>
+              <div className="pg-stat-num">
+                <AnimatedCounter to={value} suffix={suffix} />
+              </div>
+              <div className="pg-stat-bg-icon"><Icon size={56} /></div>
+            </div>
           ))}
         </motion.div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-secondary/60 mb-8">
-            <TabsTrigger value="overview">Continue Learning</TabsTrigger>
-            <TabsTrigger value="paths">Paths</TabsTrigger>
-            <TabsTrigger value="trophies">Trophy Road</TabsTrigger>
-            <TabsTrigger value="discover">Discover</TabsTrigger>
-          </TabsList>
+        {/* Tab nav */}
+        <motion.div
+          className="pg-tabs"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.22 }}
+        >
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              className={`pg-tab${activeTab === tab.id ? " pg-tab--active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <motion.div className="pg-tab-bar" layoutId="pg-tab-bar" />
+              )}
+            </button>
+          ))}
+        </motion.div>
 
-          {/* ── Courses ────────────────────────── */}
-          <TabsContent value="overview">
-            <p className="text-sm text-muted-foreground mb-4">
-              Your active courses — jump back in where you left off.
-            </p>
-            <div className="grid md:grid-cols-2 gap-4">
-              {enrolledCourses.map(c => <CourseProgressCard key={c.id} course={c} />)}
-            </div>
-          </TabsContent>
+        {/* Tab panels */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            className="pg-tab-panel"
+            variants={tabVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
 
-          {/* ── Learning Paths ─────────────────── */}
-          <TabsContent value="paths">
-            <div className="mb-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                Follow structured intensive programs or pick casual refreshers — mix and match freely.
-              </p>
-              <div className="flex gap-2 mb-6">
-                <Badge variant="outline" className="border-neon-purple/40 text-neon-purple">All</Badge>
-                <Badge variant="outline" className="border-border text-muted-foreground">Intensive</Badge>
-                <Badge variant="outline" className="border-border text-muted-foreground">Casual</Badge>
+            {activeTab === "overview" && (
+              <div>
+                <div className="pg-sec-head">
+                  <div className="pg-sec-title">Active <em>courses</em></div>
+                  <div className="pg-sec-desc">Jump back in where you left off.</div>
+                </div>
+                <div className="pg-course-grid">
+                  {enrolledCourses.map((c, i) => (
+                    <CourseProgressCard key={c.id} course={c} delay={i * 60} />
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {learningPaths.map(p => <PathCard key={p.id} path={p} />)}
-              {/* Add path CTA */}
-              <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-                <Card className="bg-card/30 border-dashed border-border hover:border-neon-purple/40 transition-colors h-full flex items-center justify-center min-h-[280px] cursor-pointer group">
-                  <CardContent className="text-center p-6">
-                    <GitBranch className="w-8 h-8 text-muted-foreground mx-auto mb-3 group-hover:text-neon-purple transition-colors" />
-                    <p className="font-display font-bold text-sm mb-1">Build Custom Path</p>
-                    <p className="text-xs text-muted-foreground">Mix courses from any topic into your own learning journey</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </TabsContent>
+            )}
 
-          {/* ── Trophy Road ────────────────────── */}
-          <TabsContent value="trophies">
-            <TrophyRoad />
-          </TabsContent>
-
-          {/* ── Discover (recs + collab merged) ── */}
-          <TabsContent value="discover">
-            <div className="mb-8">
-              <h3 className="font-display font-bold text-lg mb-1">Recommended for you</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Based on your goals and performance — Luna's next-step picks.
-              </p>
-              <div className="grid md:grid-cols-2 gap-4">
-                {recommendations.map((r, i) => (
-                  <motion.div
-                    key={r.title}
-                    initial={{ opacity: 0, y: 12 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <Card className="bg-card/60 border-border hover:border-neon-purple/30 transition-colors group cursor-pointer">
-                      <CardContent className="p-5 flex items-center gap-4">
-                        <div className="bg-secondary p-2.5 rounded-xl">
-                          <Brain className="w-5 h-5 text-neon-cyan" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold font-display text-sm">{r.title}</h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">{r.reason}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="text-neon-purple font-mono font-bold text-sm">{r.match}%</span>
-                          <p className="text-[10px] text-muted-foreground">match</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+            {activeTab === "paths" && (
+              <div>
+                <div className="pg-sec-head">
+                  <div className="pg-sec-title">Learning <em>paths</em></div>
+                  <div className="pg-sec-desc">Follow structured intensive programs or pick casual refreshers.</div>
+                </div>
+                <div className="pg-pill-row">
+                  <button className="pg-pill pg-pill--active">All</button>
+                  <button className="pg-pill">Intensive</button>
+                  <button className="pg-pill">Casual</button>
+                </div>
+                <div className="pg-path-grid">
+                  {learningPaths.map((p, i) => (
+                    <PathCard key={p.id} path={p} delay={i * 60} />
+                  ))}
+                  <div className="pg-add-card">
+                    <span className="pg-add-card-icon"><GitBranch size={28} /></span>
+                    <span className="pg-add-card-lbl">Build Custom Path</span>
+                    <span className="pg-add-card-sub">Mix courses from any topic into your own learning journey</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <h3 className="font-display font-bold text-lg mb-1">Study groups</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Learn together — join a group or start your own.
-              </p>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {collaborationGroups.map((g, i) => (
-                <motion.div
-                  key={g.name}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Card className="bg-card/60 border-border hover:border-neon-pink/30 transition-colors">
-                    <CardContent className="p-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-bold font-display text-sm">{g.name}</h4>
-                        <div className={`w-2 h-2 rounded-full ${g.active ? "bg-neon-cyan" : "bg-muted-foreground"}`} />
-                      </div>
-                      <Badge variant="secondary" className="text-[10px] mb-3">{g.topic}</Badge>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><Users className="w-3 h-3" />{g.members} members</span>
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px] text-neon-purple hover:text-neon-pink">
-                          Open <ChevronRight className="w-3 h-3 ml-0.5" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-                ))}
-                {/* Create group CTA */}
-                <Card className="bg-card/30 border-dashed border-border hover:border-neon-pink/40 transition-colors cursor-pointer group flex items-center justify-center min-h-[160px]">
-                  <CardContent className="text-center p-6">
-                    <Users className="w-6 h-6 text-muted-foreground mx-auto mb-2 group-hover:text-neon-pink transition-colors" />
-                    <p className="font-display font-bold text-sm">Create Study Group</p>
-                  </CardContent>
-                </Card>
+            {activeTab === "trophies" && (
+              <div className="pg-trophy-wrap">
+                <TrophyRoad />
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            )}
+
+            {activeTab === "discover" && (
+              <div>
+                <div className="pg-sec-head">
+                  <div className="pg-sec-title">Recommended <em>for you</em></div>
+                  <div className="pg-sec-desc">Based on your goals and performance — Luna's next-step picks.</div>
+                </div>
+                <div className="pg-recs-grid">
+                  {recommendations.map((r, i) => (
+                    <RecCard key={r.title} rec={r} delay={i * 60} />
+                  ))}
+                </div>
+
+                <div className="pg-sec-head" style={{ marginTop: 52 }}>
+                  <div className="pg-sec-title">Study <em>groups</em></div>
+                  <div className="pg-sec-desc">Learn together — join a group or start your own.</div>
+                </div>
+                <div className="pg-groups-grid">
+                  {collaborationGroups.map((g, i) => (
+                    <GroupCard key={g.name} group={g} delay={i * 60} />
+                  ))}
+                  <div className="pg-add-card" style={{ minHeight: "160px" }}>
+                    <span className="pg-add-card-icon"><Users size={24} /></span>
+                    <span className="pg-add-card-lbl">Create Study Group</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </motion.div>
+        </AnimatePresence>
       </div>
-    </section>
+    </div>
   );
 }
