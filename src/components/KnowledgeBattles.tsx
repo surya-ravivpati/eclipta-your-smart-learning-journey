@@ -936,6 +936,10 @@ function BattleArena() {
   // calling setState inside another setState's updater function.
   const playerRef   = useRef(player);
   const opponentRef = useRef(opponent);
+  const recordsRef = useRef<QuestionRecord[]>([]);
+  const longestStreakRef = useRef(0);
+  const fastestAnswerRef = useRef(Infinity);
+  const totalScoreRef = useRef(0);
 
   // Issue 2: incoming chat items populated by the PvP channel subscription.
   const [incomingChats, setIncomingChats]   = useState<ChatItem[]>([]);
@@ -1064,6 +1068,10 @@ function BattleArena() {
   // read the latest HP without nesting setState inside another updater.
   useEffect(() => { playerRef.current   = player;   }, [player]);
   useEffect(() => { opponentRef.current = opponent; }, [opponent]);
+  useEffect(() => { recordsRef.current = records; }, [records]);
+  useEffect(() => { longestStreakRef.current = longestStreak; }, [longestStreak]);
+  useEffect(() => { fastestAnswerRef.current = fastestAnswer; }, [fastestAnswer]);
+  useEffect(() => { totalScoreRef.current = totalScore; }, [totalScore]);
 
   const getArch = useCallback((id: ArchetypeId): Archetype => {
     const base = ARCHETYPES[id];
