@@ -1033,7 +1033,7 @@ function BattleArena() {
       }, async (payload) => {
         const row = payload.new as any;
         if (row.status === "completed" && row.winner_id && !battleFinishedRef.current) {
-          finishBattle(row.winner_id === myUserIdRef.current, row);
+          finishBattle(row.winner_id === myUserIdRef.current);
         }
         if (row.rematch_battle_id && !rematchStartedRef.current) {
           rematchStartedRef.current = true;
@@ -1085,45 +1085,6 @@ function BattleArena() {
     setLiveResolvingTurn(false);
   }, []);
 
-  const resolveLiveTurn = useCallback((actions: LiveTurnActionRow[], turnNumber: number) => {
-    if (liveResolvedTurnsRef.current.has(turnNumber) || liveResolvingRef.current) return;
-    const myId = myUserIdRef.current;
-    if (!myId) return;
-    const mine = actions.find(a => a.actor_id === myId);
-    const theirs = actions.find(a => a.actor_id !== myId);
-    if (!mine || !theirs) return;
-
-    liveResolvedTurnsRef.current.add(turnNumber);
-    liveResolvingRef.current = true;
-    setLiveResolvingTurn(true);
-    setPhase("animate");
-
-    const curPlayer = playerRef.current;
-    const curOpp = opponentRef.current;
-    const nextPlayerHp = Math.max(0, Math.min(curPlayer.maxHp, curPlayer.hp - theirs.damage - mine.self_damage + mine.heal));
-    const nextOppHp = Math.max(0, Math.min(curOpp.maxHp, curOpp.hp - mine.damage - theirs.self_damage + theirs.heal));
-
-    if (mine.damage > 0) { setShowOpponentHit(true); addLog({ actor: "player", actionType: mine.action as LogActionType, result: `${ACTIONS[mine.action].label}: ${mine.damage} DMG locked.`, value: mine.damage }); }
-    if (mine.heal > 0) { setShowPlayerHeal(true); addLog({ actor: "player", actionType: "heal", result: `Heal resolves: +${mine.heal} HP.`, value: mine.heal }); }
-    if (mine.self_damage > 0) { setShowPlayerHit(true); addLog({ actor: "player", actionType: "miss", result: `Your miss resolves: -${mine.self_damage} HP.`, value: mine.self_damage }); }
-    if (theirs.damage > 0) { setShowPlayerHit(true); addLog({ actor: "opponent", actionType: theirs.action as LogActionType, result: `${opponentRef.current.name}: ${theirs.damage} DMG.`, value: theirs.damage }); }
-    if (theirs.heal > 0) addLog({ actor: "opponent", actionType: "heal", result: `${opponentRef.current.name} heals +${theirs.heal} HP.`, value: theirs.heal });
-    if (theirs.self_damage > 0) addLog({ actor: "opponent", actionType: "miss", result: `${opponentRef.current.name} misses: -${theirs.self_damage} HP.`, value: theirs.self_damage });
-
-    setMomentum(mine.momentum);
-    setOpponentMomentum(theirs.momentum);
-    setPlayer(p => ({ ...p, hp: nextPlayerHp, focus: Math.max(0, Math.min(p.maxFocus, p.focus + mine.focus_delta)) }));
-    setOpponent(o => ({ ...o, hp: nextOppHp, focus: Math.max(0, Math.min(o.maxFocus, o.focus + theirs.focus_delta)) }));
-
-    setTimeout(() => {
-      setShowPlayerHit(false); setShowOpponentHit(false); setShowPlayerHeal(false);
-      if (nextOppHp <= 0 || nextPlayerHp <= 0) finishBattle(nextOppHp <= 0 && nextPlayerHp > 0 ? true : nextOppHp <= nextPlayerHp);
-      else { resetLiveTurnLocks(turnNumber + 1); setPhase("select"); }
-    }, 900);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addLog, resetLiveTurnLocks]);
-
-  useEffect(() => { liveResolutionRef.current = resolveLiveTurn; }, [resolveLiveTurn]);
 
   const getArch = useCallback((id: ArchetypeId): Archetype => {
     const base = ARCHETYPES[id];
@@ -1156,6 +1117,46 @@ function BattleArena() {
       });
     });
   }, []);
+
+  const resolveLiveTurn = useCallback((actions: LiveTurnActionRow[], turnNumber: number) => {
+    if (liveResolvedTurnsRef.current.has(turnNumber) || liveResolvingRef.current) return;
+    const myId = myUserIdRef.current;
+    if (!myId) return;
+    const mine = actions.find(a => a.actor_id === myId);
+    const theirs = actions.find(a => a.actor_id !== myId);
+    if (!mine || !theirs) return;
+
+    liveResolvedTurnsRef.current.add(turnNumber);
+    liveResolvingRef.current = true;
+    setLiveResolvingTurn(true);
+    setPhase("animate");
+
+    const curPlayer = playerRef.current;
+    const curOpp = opponentRef.current;
+    const nextPlayerHp = Math.max(0, Math.min(curPlayer.maxHp, curPlayer.hp - theirs.damage - mine.self_damage + mine.heal));
+    const nextOppHp = Math.max(0, Math.min(curOpp.maxHp, curOpp.hp - mine.damage - theirs.self_damage + theirs.heal));
+
+    if (mine.damage > 0) { setShowOpponentHit(true); addLog({ actor: "player", actionType: mine.action as LogActionType, result: `${ACTIONS[mine.action].label}: ${mine.damage} DMG.`, value: mine.damage }); }
+    if (mine.heal > 0) { setShowPlayerHeal(true); addLog({ actor: "player", actionType: "heal", result: `Heal resolves: +${mine.heal} HP.`, value: mine.heal }); }
+    if (mine.self_damage > 0) { setShowPlayerHit(true); addLog({ actor: "player", actionType: "miss", result: `Your miss resolves: -${mine.self_damage} HP.`, value: mine.self_damage }); }
+    if (theirs.damage > 0) { setShowPlayerHit(true); addLog({ actor: "opponent", actionType: theirs.action as LogActionType, result: `${opponentRef.current.name}: ${theirs.damage} DMG.`, value: theirs.damage }); }
+    if (theirs.heal > 0) addLog({ actor: "opponent", actionType: "heal", result: `${opponentRef.current.name} heals +${theirs.heal} HP.`, value: theirs.heal });
+    if (theirs.self_damage > 0) addLog({ actor: "opponent", actionType: "miss", result: `${opponentRef.current.name} misses: -${theirs.self_damage} HP.`, value: theirs.self_damage });
+
+    setMomentum(mine.momentum);
+    setOpponentMomentum(theirs.momentum);
+    setPlayer(p => ({ ...p, hp: nextPlayerHp, focus: Math.max(0, Math.min(p.maxFocus, p.focus + mine.focus_delta)) }));
+    setOpponent(o => ({ ...o, hp: nextOppHp, focus: Math.max(0, Math.min(o.maxFocus, o.focus + theirs.focus_delta)) }));
+
+    setTimeout(() => {
+      setShowPlayerHit(false); setShowOpponentHit(false); setShowPlayerHeal(false);
+      if (nextOppHp <= 0 || nextPlayerHp <= 0) finishBattle(nextOppHp <= 0 && nextPlayerHp > 0 ? true : nextOppHp <= nextPlayerHp);
+      else { resetLiveTurnLocks(turnNumber + 1); setPhase("select"); }
+    }, 900);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addLog, resetLiveTurnLocks]);
+
+  useEffect(() => { liveResolutionRef.current = resolveLiveTurn; }, [resolveLiveTurn]);
 
   async function startLiveBattleFromId(battleId: string) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -1568,9 +1569,8 @@ function BattleArena() {
   }, [addLog, aiTurn, finishBattle, opponentArchetype, getArch]);
 
   const selectAction = (action: Action) => {
-    // Hard block in live PvP while it's the opponent's round.
-    if (opponentTypeRef.current === "live" && liveAwaitingRef.current) {
-      addLog({ actor: "system", actionType: "info", result: `⏳ Waiting for opponent's move…` });
+    if (opponentTypeRef.current === "live" && liveActionLockedRef.current) {
+      addLog({ actor: "system", actionType: "info", result: `Action already locked for this turn.` });
       return;
     }
     const cost = ACTIONS[action].focusCost;
@@ -1702,8 +1702,7 @@ function BattleArena() {
     ghostSessionRef.current   = null;
     pvpChannelRef.current     = null;
     battleFinishedRef.current = false;
-    liveAwaitingRef.current   = false;
-    setLiveAwaitingOpponent(false);
+    resetLiveTurnLocks(1);
   };
 
   // Direct PvP challenge: bypass matchmaking and drop straight into a live
@@ -1716,6 +1715,7 @@ function BattleArena() {
     opponentName: string;
     opponentRating?: number;
     iAmChallenger?: boolean;
+    opponentUserId?: string;
   }) => {
     setArchetype(opts.myArchetype);
     setRatingChange(null);
@@ -1732,10 +1732,10 @@ function BattleArena() {
     opponentRatingRef.current = opts.opponentRating ?? 1000;
     setPvpBattleId(opts.battleId);
 
-    // Direct challenges: challenger acts first, defender waits.
-    const iStart = opts.iAmChallenger === true;
-    liveAwaitingRef.current = !iStart;
-    setLiveAwaitingOpponent(!iStart);
+    iAmChallengerRef.current = opts.iAmChallenger === true;
+    opponentUserIdRef.current = opts.opponentUserId ?? null;
+    liveResolvedTurnsRef.current = new Set();
+    resetLiveTurnLocks(1);
 
     const baseArch = ARCHETYPES[opts.myArchetype];
     const oppArch  = ARCHETYPES[opts.opponentArchetype];
@@ -2118,7 +2118,7 @@ function BattleArena() {
           );
         })()}
 
-        {liveAwaitingOpponent && phase === "select" && (
+        {liveActionLocked && phase === "select" && (
           <motion.div
             className="glass-panel p-3 border border-neon-cyan/40 bg-neon-cyan/5 text-center"
             initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
@@ -2137,7 +2137,7 @@ function BattleArena() {
             const Icon = act.icon;
             const cost = act.focusCost;
             const cannotHeal = key === "defend" && getArch(archetype).healAmount === null;
-            const disabled = phase !== "select" || (cost > 0 && player.focus < cost) || cannotHeal || liveAwaitingOpponent;
+            const disabled = phase !== "select" || (cost > 0 && player.focus < cost) || cannotHeal || liveActionLocked;
             return (
               <motion.button key={key} onClick={() => selectAction(key)} disabled={disabled}
                 className={`glass-panel p-5 text-center transition-colors relative ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-neon-purple/5 hover:border-neon-purple/30"}`}
