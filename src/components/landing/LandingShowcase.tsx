@@ -349,11 +349,19 @@ export function LandingShowcase() {
           <span className="v11-brand-mark" />
           <span>Eclipta</span>
         </Link>
-        <div className="v11-nav-meta">
-          <span className="v11-live-dot" />
-          <span>{liveCount.toLocaleString("en-US")}</span> in arena
+        <div className="v11-nav-links">
+          <a href="#loop"     className="v11-nav-link">Loop</a>
+          <a href="#climb"    className="v11-nav-link">Ranked</a>
+          <a href="#training" className="v11-nav-link">Training</a>
+          <Link to="/luna"    className="v11-nav-link">Luna</Link>
         </div>
-        <Link to={ctaTo} className="v11-nav-cta">Battle now</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <div className="v11-nav-meta">
+            <span className="v11-live-dot" />
+            <span>{liveCount.toLocaleString("en-US")}</span> in arena
+          </div>
+          <Link to={ctaTo} className="v11-nav-cta">Battle now</Link>
+        </div>
       </nav>
 
       {/* ── ACT 1 — Hero ─────────────────────────────────────────── */}
