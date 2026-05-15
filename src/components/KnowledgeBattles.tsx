@@ -1105,6 +1105,32 @@ function BattleArena() {
     });
   }, []);
 
+  async function startLiveBattleFromId(battleId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    myUserIdRef.current = user.id;
+    const { data: battle } = await supabase
+      .from("pvp_battles" as any)
+      .select("challenger_id, opponent_id, challenger_archetype, opponent_archetype")
+      .eq("id", battleId)
+      .maybeSingle();
+    const b = battle as any;
+    if (!b) return;
+    const iAmChallenger = b.challenger_id === user.id;
+    const oppId = iAmChallenger ? b.opponent_id : b.challenger_id;
+    const { data: prof } = await supabase.from("user_profiles" as any).select("username").eq("user_id", oppId).maybeSingle();
+    const { data: rating } = await supabase.from("player_ratings" as any).select("rating").eq("user_id", oppId).maybeSingle();
+    startDirectBattle({
+      battleId,
+      myArchetype: (iAmChallenger ? b.challenger_archetype : b.opponent_archetype) as ArchetypeId,
+      opponentArchetype: (iAmChallenger ? b.opponent_archetype : b.challenger_archetype) as ArchetypeId,
+      opponentName: (prof as any)?.username ?? `Player_${String(oppId).slice(0, 6)}`,
+      opponentRating: (rating as any)?.rating ?? 1000,
+      iAmChallenger,
+      opponentUserId: oppId,
+    });
+  }
+
   useEffect(() => {
     if (phase === "question" && timeLeft > 0) {
       timerRef.current = setInterval(() => {
