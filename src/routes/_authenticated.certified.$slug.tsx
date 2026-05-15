@@ -2,7 +2,6 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { ShieldCheck, Star, Clock, Users, BookOpen, ArrowLeft, Check, Layers, PlayCircle, MessagesSquare } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { getCourseBySlug } from "@/lib/certified-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -65,7 +64,6 @@ function CourseDetail() {
 
   return (
     <>
-      <Navbar />
       <div className="pt-24 pb-16 px-6 min-h-screen">
         <div className="max-w-4xl mx-auto">
           <Link to="/certified" className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest text-muted-foreground hover:text-neon-purple mb-6">

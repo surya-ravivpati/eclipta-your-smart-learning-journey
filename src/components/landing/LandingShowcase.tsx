@@ -103,7 +103,6 @@ export function LandingShowcase() {
   const bgGridRef     = useRef<HTMLDivElement>(null);
   const bgVigRef      = useRef<HTMLDivElement>(null);
   const progressRef   = useRef<HTMLDivElement>(null);
-  const navRef        = useRef<HTMLElement>(null);
 
   const act1Ref       = useRef<HTMLElement>(null);
   const ch0Ref        = useRef<HTMLDivElement>(null);
@@ -160,7 +159,6 @@ export function LandingShowcase() {
       if (progressRef.current) {
         progressRef.current.style.setProperty("--p", (100 * sY / h).toFixed(2) + "%");
       }
-      navRef.current?.classList.toggle("v11-scrolled", sY > 16);
       if (bgGridRef.current) {
         bgGridRef.current.style.transform = `translate3d(0,${(sY * 0.04).toFixed(1)}px,0)`;
       }
@@ -342,27 +340,6 @@ export function LandingShowcase() {
       </div>
 
       <div className="v11-progress" ref={progressRef} aria-hidden="true" />
-
-      {/* ── Nav ──────────────────────────────────────────────────── */}
-      <nav className="v11-nav" ref={navRef} id="top">
-        <Link to="/" className="v11-brand">
-          <span className="v11-brand-mark" />
-          <span>Eclipta</span>
-        </Link>
-        <div className="v11-nav-links">
-          <a href="#loop"     className="v11-nav-link">Loop</a>
-          <a href="#climb"    className="v11-nav-link">Ranked</a>
-          <a href="#training" className="v11-nav-link">Training</a>
-          <Link to="/luna"    className="v11-nav-link">Luna</Link>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <div className="v11-nav-meta">
-            <span className="v11-live-dot" />
-            <span>{liveCount.toLocaleString("en-US")}</span> in arena
-          </div>
-          <Link to={ctaTo} className="v11-nav-cta">Battle now</Link>
-        </div>
-      </nav>
 
       {/* ── ACT 1 — Hero ─────────────────────────────────────────── */}
       <section className="v11-act1" ref={act1Ref} id="hero">

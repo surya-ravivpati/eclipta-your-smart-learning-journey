@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { CourseBuilder } from "@/components/CourseBuilder";
 
 export const Route = createFileRoute("/_authenticated/build-course")({
@@ -17,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/build-course")({
 function BuildCoursePage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <CourseBuilder />
     </div>
   );

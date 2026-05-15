@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ShieldCheck, Loader2, ExternalLink, Check, X, Trash2 } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useModerator } from "@/hooks/use-moderator";
 import { toast } from "sonner";
@@ -88,7 +87,7 @@ function AdminForumPage() {
 
   if (roleLoading) {
     return (
-      <div className="min-h-screen bg-background"><Navbar />
+      <div className="min-h-screen bg-background">
         <div className="flex justify-center pt-32"><Loader2 className="w-6 h-6 animate-spin text-neon-purple" /></div>
       </div>
     );
@@ -96,7 +95,7 @@ function AdminForumPage() {
 
   if (!isModerator) {
     return (
-      <div className="min-h-screen bg-background text-foreground"><Navbar />
+      <div className="min-h-screen bg-background text-foreground">
         <div className="max-w-xl mx-auto px-6 pt-32 text-center">
           <ShieldCheck className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <h1 className="font-display text-2xl font-bold mb-2">Moderator access required</h1>
@@ -111,7 +110,6 @@ function AdminForumPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <section className="pt-24 pb-16 max-w-4xl mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 border border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan text-[10px] font-bold tracking-widest mb-3">

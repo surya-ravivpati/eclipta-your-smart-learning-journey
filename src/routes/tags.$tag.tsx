@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { Tag, Loader2, MessageCircle, ArrowLeft, Clock } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/tags/$tag")({
@@ -51,7 +50,6 @@ function TagPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
       <section className="pt-24 pb-16 max-w-4xl mx-auto px-6">
         <Link to="/forum" className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-muted-foreground hover:text-neon-purple mb-6">
           <ArrowLeft className="w-3 h-3" /> BACK TO FORUM

@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { ProgressDashboard } from "@/components/ProgressDashboard";
 
 export const Route = createFileRoute("/_authenticated/progress")({
@@ -17,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/progress")({
 function ProgressPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <ProgressDashboard />
     </div>
   );

@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, GripVertical, Trash2, Type, Youtube, Image as ImageIcon, ListChecks, Loader2, Eye, Globe, EyeOff, Save, AlertTriangle, Check } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -94,7 +93,7 @@ function CourseEditor() {
 
   if (!user || loading || !course) {
     return (
-      <div className="min-h-screen bg-background"><Navbar />
+      <div className="min-h-screen bg-background">
         <div className="pt-32 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-neon-purple" /></div>
       </div>
     );
@@ -187,7 +186,6 @@ function CourseEditor() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <div className="pt-24 pb-16 px-6">
         <div className="max-w-6xl mx-auto">
           <Link to="/profile" className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest text-muted-foreground hover:text-neon-purple mb-6">

@@ -2,7 +2,6 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, Check, Layers, User as UserIcon, Loader2, Play } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -90,9 +89,9 @@ function CommunityCoursePage() {
     toast.success(`Enrolled in ${course.title}`);
   };
 
-  if (loading) return <div className="min-h-screen bg-background"><Navbar /><div className="pt-32 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-neon-purple" /></div></div>;
+  if (loading) return <div className="min-h-screen bg-background"><div className="pt-32 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-neon-purple" /></div></div>;
   if (!course || course.status !== "published") return (
-    <div className="min-h-screen bg-background"><Navbar />
+    <div className="min-h-screen bg-background">
       <div className="pt-32 text-center px-6">
         <h1 className="font-display font-bold text-2xl mb-2">Course not found</h1>
         <p className="text-muted-foreground mb-4">This course isn't published yet, or the link is wrong.</p>
@@ -105,7 +104,6 @@ function CommunityCoursePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <div className="pt-24 pb-16 px-6">
         <div className="max-w-5xl mx-auto">
           <Link to="/courses" className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest text-muted-foreground hover:text-neon-purple mb-6">

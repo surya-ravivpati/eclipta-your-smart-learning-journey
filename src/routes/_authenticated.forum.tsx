@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { Forum } from "@/components/Forum";
 
 export const Route = createFileRoute("/_authenticated/forum")({
@@ -17,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/forum")({
 function ForumPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <Forum />
     </div>
   );

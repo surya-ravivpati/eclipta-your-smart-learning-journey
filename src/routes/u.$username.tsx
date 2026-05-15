@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { User, Trophy, Flame, Sparkles, MessageSquare, Loader2, Zap, Calendar, UserPlus, UserCheck, Swords } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { ECLIPTARS } from "@/lib/ecliptars";
 import { ARCHETYPES } from "@/components/battles/archetypes";
@@ -124,7 +123,7 @@ function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background"><Navbar />
+      <div className="min-h-screen bg-background">
         <div className="flex justify-center pt-32"><Loader2 className="w-6 h-6 animate-spin text-neon-purple" /></div>
       </div>
     );
@@ -132,7 +131,7 @@ function PublicProfilePage() {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-background"><Navbar />
+      <div className="min-h-screen bg-background">
         <div className="text-center pt-32 px-6">
           <h1 className="font-display text-3xl font-bold mb-2">User not found</h1>
           <p className="text-muted-foreground mb-6">No learner with the username "{username}".</p>
@@ -150,7 +149,6 @@ function PublicProfilePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <section className="pt-24 pb-16 max-w-4xl mx-auto px-6">
         <motion.div
           className="glass-panel p-8 mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-6"

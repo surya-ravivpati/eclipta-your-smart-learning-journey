@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { AdaptiveTests } from "@/components/AdaptiveTests";
 
 export const Route = createFileRoute("/_authenticated/adaptive-tests")({
@@ -17,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/adaptive-tests")({
 function AdaptiveTestsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <AdaptiveTests />
     </div>
   );

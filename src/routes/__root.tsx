@@ -1,13 +1,15 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts, useRouterState } from "@tanstack/react-router";
 import { Luna } from "@/components/Luna";
+import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/SiteFooter";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 
-const HIDE_LUNA_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna", "/"];
+const HIDE_LUNA_ON   = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna", "/"];
 const HIDE_FOOTER_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna"];
+const HIDE_NAVBAR_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/onboarding"];
 
 // The landing page (/) manages its own footer, so exclude it
 const isLanding = (p: string) => p === "/";
@@ -82,11 +84,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const showLuna = !HIDE_LUNA_ON.some((p) => pathname.startsWith(p));
+  const showLuna   = !HIDE_LUNA_ON.some((p) => pathname.startsWith(p));
   const showFooter = !isLanding(pathname) && !HIDE_FOOTER_ON.some((p) => pathname.startsWith(p));
+  const showNavbar = !HIDE_NAVBAR_ON.some((p) => pathname.startsWith(p));
   return (
     <ThemeProvider>
       <AuthProvider>
+        {showNavbar && <Navbar />}
         <Outlet />
         {showFooter && <SiteFooter />}
         {showLuna && <Luna />}

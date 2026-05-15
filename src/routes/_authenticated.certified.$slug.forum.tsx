@@ -1,6 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { Forum } from "@/components/Forum";
 import { getCourseBySlug } from "@/lib/certified-courses";
 
@@ -31,7 +30,6 @@ function CourseForumPage() {
   const { course } = Route.useLoaderData();
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <div className="pt-24 px-6 max-w-5xl mx-auto">
         <Link
           to="/certified/$slug"

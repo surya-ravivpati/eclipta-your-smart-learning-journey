@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, Loader2, Sparkles, Users } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/courses")({
@@ -47,7 +46,6 @@ function CoursesIndexPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <section className="pt-24 pb-16">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div

@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { KnowledgeBattles } from "@/components/KnowledgeBattles";
 
 export const Route = createFileRoute("/_authenticated/battles")({
@@ -17,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/battles")({
 function BattlesPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <KnowledgeBattles />
     </div>
   );

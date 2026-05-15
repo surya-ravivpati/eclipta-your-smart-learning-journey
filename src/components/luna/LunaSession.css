@@ -5,6 +5,8 @@
 .luna-shell {
   min-height: 100vh;
   height: 100vh;
+  /* offset for global fixed Navbar (h-16 = 64px) */
+  padding-top: 64px;
   background: #05060A;
   color: #F5F6F8;
   font-family: "Helvetica Neue", "Helvetica", "Arial", system-ui, sans-serif;

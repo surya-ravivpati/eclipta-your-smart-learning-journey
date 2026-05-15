@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ChevronUp, ChevronDown, ArrowLeft, Loader2, Check, Tag, Clock, MessageCircle, Flag, Trash2, ShieldCheck } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useModerator } from "@/hooks/use-moderator";
@@ -166,7 +165,6 @@ function ThreadPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <section className="pt-24 pb-16">
         <div className="max-w-3xl mx-auto px-6">
           <Link to="/forum" className="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-muted-foreground hover:text-neon-purple mb-6 transition-colors">

@@ -5,7 +5,6 @@ import {
   ArrowLeft, ArrowRight, Check, CircleDot, Menu, X, BookOpen,
   PlayCircle, MessagesSquare, Trophy, Lightbulb,
 } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { getCourseBySlug, type CertifiedCourse } from "@/lib/certified-courses";
 import { z } from "zod";
 
@@ -155,7 +154,6 @@ function CoursePlayer() {
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
 
       {/* Mobile sidebar trigger */}
       <button

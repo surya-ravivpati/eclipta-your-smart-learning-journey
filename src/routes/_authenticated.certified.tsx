@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { CertifiedCourses } from "@/components/CertifiedCourses";
 
 export const Route = createFileRoute("/_authenticated/certified")({
@@ -17,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/certified")({
 function CertifiedPage() {
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
       <CertifiedCourses />
     </div>
   );

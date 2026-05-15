@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { useNotifications, type Notification } from "@/hooks/use-notifications";
 import { Bell, Check, Trash2, MessageSquare, UserPlus, AtSign, MessageCircle, Award, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,7 +53,6 @@ function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
       <section className="pt-24 pb-16 max-w-3xl mx-auto px-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold font-display tracking-tight inline-flex items-center gap-2">
