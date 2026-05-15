@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Navbar } from "@/components/Navbar";
 import { LandingShowcase } from "@/components/landing/LandingShowcase";
-import { StatsFooter } from "@/components/StatsFooter";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,11 +14,5 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <Navbar />
-      <LandingShowcase />
-      <StatsFooter />
-    </div>
-  );
+  return <LandingShowcase />;
 }

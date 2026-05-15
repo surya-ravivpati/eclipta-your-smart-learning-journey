@@ -6,8 +6,11 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 
-const HIDE_LUNA_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna"];
+const HIDE_LUNA_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna", "/"];
 const HIDE_FOOTER_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna"];
+
+// The landing page (/) manages its own footer, so exclude it
+const isLanding = (p: string) => p === "/";
 
 function NotFoundComponent() {
   return (
@@ -80,7 +83,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const showLuna = !HIDE_LUNA_ON.some((p) => pathname.startsWith(p));
-  const showFooter = !HIDE_FOOTER_ON.some((p) => pathname.startsWith(p));
+  const showFooter = !isLanding(pathname) && !HIDE_FOOTER_ON.some((p) => pathname.startsWith(p));
   return (
     <ThemeProvider>
       <AuthProvider>
