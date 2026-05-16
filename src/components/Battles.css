@@ -1,8 +1,10 @@
 /* ──────────────────────────────────────────────────────────────
-   Battles — cinematic atmospheric shell
+   Battles — cinematic atmospheric shell  (v11)
    Mirrors the homepage (LandingShowcase / CinematicLanding.css)
    technique: fixed layered bg, blurred aurora, grid, vignette, noise.
    ────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ─── Fixed atmospheric background ─────────────────────────── */
 /* z-index: 0 sits above the body paint but below z-index: 1 content */
@@ -68,6 +70,16 @@
 .btt-shell {
   position: relative;
   z-index: 1;
+
+  /* ── Design tokens ── */
+  --btt-pink:    oklch(0.60 0.24 350);
+  --btt-cyan:    oklch(0.75 0.15 180);
+  --btt-purple:  oklch(0.55 0.25 290);
+  --btt-gold:    oklch(0.80 0.14 85);
+  --btt-line:    rgba(255, 255, 255, 0.07);
+  --btt-line-s:  rgba(255, 255, 255, 0.13);
+  --btt-display: 'Bebas Neue', 'RobotHeroes', sans-serif;
+  --btt-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 /* ─── Enhanced glassmorphism in battles context ───────────────── */
@@ -91,4 +103,186 @@
 .btt-pill {
   letter-spacing: 0.16em;
   box-shadow: 0 0 14px oklch(0.60 0.24 350 / 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Typography ─────────────────────────────────────────────── */
+.btt-shout {
+  font-family: var(--btt-display);
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+}
+
+.btt-mono-text {
+  font-family: var(--btt-mono);
+  letter-spacing: 0.06em;
+}
+
+/* ─── Arena label (with leading line) ──────────────────────────── */
+.btt-arena-label {
+  font-family: var(--btt-mono);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  color: rgba(255, 255, 255, 0.40);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btt-arena-label::before {
+  content: '';
+  display: inline-block;
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+}
+
+/* ─── Card variants ─────────────────────────────────────────── */
+.btt-card {
+  background: rgba(5, 6, 10, 0.72);
+  border: 1px solid var(--btt-line);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.btt-card--cyan {
+  border-left: 2px solid var(--btt-cyan);
+}
+
+.btt-card--pink {
+  border-right: 2px solid var(--btt-pink);
+}
+
+.btt-card--purple {
+  border: 1px solid oklch(0.55 0.25 290 / 0.25);
+}
+
+/* ─── HP bar ─────────────────────────────────────────────────── */
+.btt-hp-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.btt-hp-fill {
+  height: 100%;
+  transition: width 0.6s ease-out;
+}
+
+.btt-hp-fill--cyan {
+  background: var(--btt-cyan);
+  box-shadow: 0 0 8px var(--btt-cyan);
+}
+
+.btt-hp-fill--pink {
+  background: var(--btt-pink);
+  box-shadow: 0 0 8px var(--btt-pink);
+}
+
+.btt-hp-fill--critical {
+  background: var(--btt-pink);
+  box-shadow: 0 0 16px var(--btt-pink);
+  animation: btt-crit 0.42s ease-in-out infinite;
+}
+
+@keyframes btt-crit {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ─── Focus pips ─────────────────────────────────────────────── */
+.btt-focus-pip {
+  flex: 1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 0.3s;
+}
+
+.btt-focus-pip--on {
+  background: var(--btt-purple);
+}
+
+.btt-focus-pip--charged {
+  background: var(--btt-pink);
+  box-shadow: 0 0 5px var(--btt-pink);
+}
+
+/* ─── Action buttons ─────────────────────────────────────────── */
+.btt-action {
+  background: rgba(5, 6, 10, 0.55);
+  border: 1px solid var(--btt-line);
+  padding: 22px 12px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  backdrop-filter: blur(10px);
+}
+
+.btt-action:hover:not(:disabled) {
+  border-color: var(--btt-line-s);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.btt-action:disabled {
+  opacity: 0.30;
+  cursor: not-allowed;
+}
+
+.btt-action--defend:hover:not(:disabled) {
+  border-color: var(--btt-cyan);
+  box-shadow: 0 0 18px oklch(0.75 0.15 180 / 0.12);
+}
+
+.btt-action--charge:hover:not(:disabled) {
+  border-color: var(--btt-pink);
+  box-shadow: 0 0 18px oklch(0.60 0.24 350 / 0.14);
+}
+
+.btt-action--wild:hover:not(:disabled) {
+  border-color: var(--btt-purple);
+  box-shadow: 0 0 18px oklch(0.55 0.25 290 / 0.14);
+}
+
+/* ─── Question overlay ──────────────────────────────────────── */
+.btt-q-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 6, 10, 0.90);
+  backdrop-filter: blur(18px);
+}
+
+.btt-q-card {
+  background: rgba(8, 10, 16, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 40px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 16px;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7);
+}
+
+/* ─── Battle log ─────────────────────────────────────────────── */
+.btt-log {
+  background: rgba(0, 0, 0, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.btt-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.btt-log-body {
+  padding: 10px 12px;
+  height: 192px;
+  overflow-y: auto;
 }

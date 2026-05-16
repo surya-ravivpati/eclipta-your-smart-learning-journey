@@ -184,18 +184,13 @@ function HpBar({ current, max, color, label }: { current: number; max: number; c
           <span className={`text-xs font-bold font-display transition-colors ${isCritical ? "text-neon-pink" : ""}`}>{current}/{max}</span>
         </div>
       </div>
-      <motion.div
-        className={`h-3 bg-secondary/60 overflow-hidden border transition-colors ${isCritical ? "border-neon-pink/60" : "border-border/50"}`}
-        animate={isCritical ? { x: [0, -1.5, 1.5, -1, 0] } : {}}
-        transition={isCritical ? { repeat: Infinity, duration: 0.42, ease: "easeInOut" } : {}}
-        style={isCritical ? { boxShadow: "0 0 10px oklch(0.6 0.24 350 / 0.45)" } : {}}
-      >
+      <div className="btt-hp-track">
         <motion.div
-          className={`h-full transition-colors ${isCritical ? "bg-neon-pink" : color}`}
+          className={`btt-hp-fill ${isCritical ? "btt-hp-fill--critical" : color === "bg-neon-cyan" ? "btt-hp-fill--cyan" : "btt-hp-fill--pink"}`}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         />
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -232,26 +227,12 @@ function FocusBar({ current, max, isPlayer = false, canCharge = false }: { curre
       <div className="flex gap-0.5">
         {Array.from({ length: max / 10 }).map((_, i) => {
           const filled = i < current / 10;
-          const glowAmt = filled ? Math.min(fillRatio * 1.4, 0.85) : 0;
           return (
             <motion.div
               key={i}
-              className={`h-2 flex-1 transition-colors duration-300 ${
-                filled
-                  ? isCharged  ? "bg-neon-pink"
-                  : isWarm     ? "bg-neon-purple"
-                  :              "bg-neon-purple/60"
-                  : "bg-secondary/40"
-              }`}
-              animate={filled && isCharged ? { opacity: [1, 0.65, 1] } : {}}
+              className={`btt-focus-pip ${filled ? (isCharged ? "btt-focus-pip--charged" : "btt-focus-pip--on") : ""}`}
+              animate={filled && isCharged ? { opacity: [1, 0.55, 1] } : {}}
               transition={{ repeat: Infinity, duration: pulseSpeed, delay: i * 0.04 }}
-              style={filled ? {
-                boxShadow: isCharged
-                  ? `0 0 5px oklch(0.6 0.24 350 / ${glowAmt})`
-                  : isWarm
-                  ? `0 0 3px oklch(0.55 0.25 290 / ${glowAmt * 0.6})`
-                  : "none",
-              } : {}}
             />
           );
         })}
@@ -283,7 +264,7 @@ function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal, ca
   const comboThreshold = archetype === "fulcrum" ? 2 : 3;
   return (
     <motion.div
-      className="glass-panel p-5 flex-1 relative overflow-hidden"
+      className={`btt-card ${side === "left" ? "btt-card--cyan" : "btt-card--pink"} flex-1 relative overflow-hidden`}
       animate={showHit ? { x: side === "left" ? [-8, 8, -4, 0] : [8, -8, 4, 0] } : {}}
       transition={{ duration: 0.4 }}
     >
@@ -293,11 +274,11 @@ function FighterCard({ fighter, side, momentum, archetype, showHit, showHeal, ca
       </AnimatePresence>
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-12 h-12 border-2 flex items-center justify-center ${side === "left" ? "border-neon-cyan/50 bg-neon-cyan/5 text-neon-cyan" : "border-neon-pink/50 bg-neon-pink/5 text-neon-pink"}`}>
+          <div className={`w-11 h-11 border flex items-center justify-center ${side === "left" ? "border-neon-cyan/40 text-neon-cyan" : "border-neon-pink/40 text-neon-pink"}`}>
             <fighter.icon className="w-6 h-6" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold font-display text-sm truncate">{fighter.name}</h4>
+            <h4 className="btt-shout text-xl truncate">{fighter.name}</h4>
             {arch && (
               <span className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-widest ${arch.color}`}>
                 <arch.icon className="w-3 h-3" /> {arch.name.toUpperCase()}
@@ -367,8 +348,8 @@ function QuestionOverlay({ question, timeLeft, maxTime, onAnswer }: {
   };
 
   return (
-    <motion.div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <motion.div className="glass-panel p-8 max-w-lg w-full mx-4" initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
+    <motion.div className="btt-q-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <motion.div className="btt-q-card" initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
         <div className="mb-5">
           <div className="flex items-center justify-between mb-1.5">
             <span className={`text-[10px] font-bold tracking-widest ${question.difficulty === "hard" ? "text-neon-pink" : question.difficulty === "medium" ? "text-neon-purple" : "text-neon-cyan"}`}>
@@ -383,7 +364,7 @@ function QuestionOverlay({ question, timeLeft, maxTime, onAnswer }: {
             <motion.div className={`h-full ${timeLeft <= 3 ? "bg-neon-pink" : "bg-neon-purple"}`} animate={{ width: `${pct}%` }} transition={{ duration: 0.3 }} />
           </div>
         </div>
-        <h3 className="text-3xl font-bold font-display text-center mb-8 text-foreground">{question.q.trimEnd().endsWith("?") ? question.q : `${question.q} = ?`}</h3>
+        <h3 className="btt-shout text-5xl text-center mb-8 text-foreground">{question.q.trimEnd().endsWith("?") ? question.q : `${question.q} = ?`}</h3>
         <div className="grid grid-cols-2 gap-3">
           {question.options.map((opt, i) => {
             let style = "border-border hover:border-neon-purple/60 hover:bg-neon-purple/5";
@@ -455,10 +436,10 @@ function BattleLog({ logs }: { logs: LogEntry[] }) {
   const turn = logs.filter(e => e.actionType === "separator").length || 1;
 
   return (
-    <div className="glass-panel p-0 overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40 bg-secondary/20">
-        <span className="text-[10px] font-bold tracking-widest text-muted-foreground">BATTLE LOG</span>
-        <span className="text-[10px] tabular-nums text-muted-foreground">Turn {turn}</span>
+    <div className="btt-log overflow-hidden">
+      <div className="btt-log-head">
+        <span className="btt-mono-text text-[10px] tracking-widest text-muted-foreground">BATTLE LOG</span>
+        <span className="btt-mono-text text-[10px] tabular-nums text-muted-foreground">T-{String(turn).padStart(2,"0")}</span>
       </div>
       <div ref={ref} className="p-3 h-48 overflow-y-auto space-y-1">
         {logs.length === 0 && (
@@ -467,7 +448,7 @@ function BattleLog({ logs }: { logs: LogEntry[] }) {
         {logs.map((e) => (
           <motion.p
             key={e.id}
-            className={`text-[11px] leading-snug ${colorFor(e)}`}
+            className={`btt-mono-text text-[10px] leading-snug ${colorFor(e)}`}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
           >
