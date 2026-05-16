@@ -86,7 +86,7 @@ function useReveal<T extends Element = HTMLDivElement>() {
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        (el as HTMLElement).classList.add("in");
+        (el as unknown as HTMLElement).classList.add("in");
         obs.disconnect();
       }
     }, { threshold: 0.1 });
@@ -297,8 +297,8 @@ export function ProgressDashboard() {
 
   const tabVariants = {
     initial: { opacity: 0, y: 16 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as number[] } },
-    exit:    { opacity: 0, y: -12, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] as number[] } },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
+    exit:    { opacity: 0, y: -12, transition: { duration: 0.25, ease: "easeIn" } },
   };
 
   return (
