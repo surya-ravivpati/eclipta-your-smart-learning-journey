@@ -10,6 +10,8 @@ import { AnswerComments } from "@/components/forum/AnswerComments";
 import { ForumMarkdown } from "@/components/ForumMarkdown";
 import { toast } from "sonner";
 import { containsProfanity } from "@/lib/profanity";
+import { moderateContent, moderateAfterInsert, REMOVED_PLACEHOLDER, isContentVisible, setModerationStatus } from "@/lib/moderation";
+import { EyeOff, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/forum_/$threadId")({
   head: () => ({
@@ -21,14 +23,17 @@ export const Route = createFileRoute("/_authenticated/forum_/$threadId")({
   component: ThreadPage,
 });
 
+type ModerationStatus = "visible" | "pending" | "hidden" | "removed" | null;
 type Thread = {
   id: string; user_id: string; author_name: string; title: string; body: string;
   course: string; tags: string[]; solved: boolean; votes: number; answer_count: number;
   view_count: number; created_at: string;
+  moderation_status?: ModerationStatus; moderation_reason?: string | null;
 };
 type Answer = {
   id: string; thread_id: string; user_id: string; author_name: string; body: string;
   votes: number; accepted: boolean; created_at: string;
+  moderation_status?: ModerationStatus; moderation_reason?: string | null;
 };
 
 function timeAgo(iso: string): string {
@@ -126,15 +131,40 @@ function ThreadPage() {
     if (reply.trim().length < 10) return toast.error("Answer must be at least 10 characters");
     if (containsProfanity(reply)) return toast.error("Please rephrase — your answer contains language we don't allow.");
     setSubmitting(true);
+
+    const body = reply.trim().slice(0, 4000);
+    const verdict = await moderateContent(body, "answer");
+    if (verdict.verdict === "block") {
+      setSubmitting(false);
+      return toast.error(`Answer rejected: ${verdict.reason || "content violates guidelines"}.`);
+    }
+
     const { data: prof } = await supabase.from("user_profiles").select("username").eq("user_id", user.id).maybeSingle();
     const author_name = prof?.username || user.email?.split("@")[0] || "Learner";
-    const { error } = await supabase.from("forum_answers").insert({
-      thread_id: thread.id, user_id: user.id, author_name, body: reply.trim().slice(0, 4000),
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: inserted, error } = await (supabase.from("forum_answers") as any).insert({
+      thread_id: thread.id, user_id: user.id, author_name, body,
+      moderation_status: verdict.verdict === "hide" ? "hidden" : "visible",
+      moderation_category: verdict.category,
+      moderation_score: verdict.score,
+      moderation_reason: verdict.verdict === "hide" ? verdict.reason : null,
+    }).select("id").maybeSingle();
     setSubmitting(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = /check_violation|moderation/i.test(error.message)
+        ? "Answer rejected by moderation — please rephrase."
+        : error.message;
+      return toast.error(msg);
+    }
     setReply("");
-    toast.success("Answer posted");
+    if (verdict.verdict === "hide") {
+      toast.message("Posted — held for review", {
+        description: "Your answer will appear once a moderator clears it.",
+      });
+    } else {
+      toast.success("Answer posted");
+      if (inserted?.id) void moderateAfterInsert(body, "answer", inserted.id);
+    }
     load();
   };
 
@@ -187,11 +217,41 @@ function ThreadPage() {
                   <div className="flex-1 min-w-0">
                     <h1 className="text-2xl font-bold font-display tracking-tight mb-3 leading-snug">
                       {thread.solved && <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/30 px-2 py-0.5 mr-2 align-middle">SOLVED</span>}
-                      {thread.title}
+                      {thread.moderation_status && thread.moderation_status !== "visible" && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-neon-pink/10 text-neon-pink border border-neon-pink/30 px-2 py-0.5 mr-2 align-middle">
+                          <EyeOff className="w-3 h-3" />{(thread.moderation_status ?? "").toUpperCase()}
+                        </span>
+                      )}
+                      {isContentVisible(thread.moderation_status, user?.id === thread.user_id, isModerator)
+                        ? thread.title
+                        : REMOVED_PLACEHOLDER}
                     </h1>
                     <div className="text-sm text-foreground/90 leading-relaxed mb-4">
-                      <ForumMarkdown>{thread.body}</ForumMarkdown>
+                      {isContentVisible(thread.moderation_status, user?.id === thread.user_id, isModerator) ? (
+                        <ForumMarkdown>{thread.body}</ForumMarkdown>
+                      ) : (
+                        <p className="italic text-muted-foreground">{REMOVED_PLACEHOLDER}</p>
+                      )}
                     </div>
+                    {thread.moderation_status && thread.moderation_status !== "visible"
+                      && (user?.id === thread.user_id || isModerator)
+                      && thread.moderation_reason && (
+                        <div className="mb-3 p-2 border border-neon-pink/30 bg-neon-pink/5 text-[11px] text-neon-pink/90">
+                          {thread.moderation_reason}
+                          {isModerator && (
+                            <button
+                              onClick={async () => {
+                                const r = await setModerationStatus("thread", thread.id, "visible", "Mod restore");
+                                if (r.ok) { toast.success("Restored"); load(); }
+                                else toast.error(r.error);
+                              }}
+                              className="ml-3 inline-flex items-center gap-1 underline hover:text-neon-cyan"
+                            >
+                              <RotateCcw className="w-3 h-3" />Restore
+                            </button>
+                          )}
+                        </div>
+                      )}
                     <div className="flex items-center gap-2 flex-wrap mb-3">
                       <span className="text-[10px] font-bold tracking-widest text-muted-foreground bg-secondary/50 px-2 py-0.5 border border-border">{thread.course}</span>
                       {thread.tags.map((t) => (
@@ -238,9 +298,37 @@ function ThreadPage() {
                             <Check className="w-3 h-3" />ACCEPTED
                           </div>
                         )}
+                        {a.moderation_status && a.moderation_status !== "visible" && (
+                          <div className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest text-neon-pink border border-neon-pink/30 bg-neon-pink/10 px-2 py-0.5 mb-2">
+                            <EyeOff className="w-3 h-3" />{(a.moderation_status ?? "").toUpperCase()}
+                          </div>
+                        )}
                         <div className="text-sm text-foreground/90 leading-relaxed mb-3">
-                          <ForumMarkdown>{a.body}</ForumMarkdown>
+                          {isContentVisible(a.moderation_status, user?.id === a.user_id, isModerator) ? (
+                            <ForumMarkdown>{a.body}</ForumMarkdown>
+                          ) : (
+                            <p className="italic text-muted-foreground">{REMOVED_PLACEHOLDER}</p>
+                          )}
                         </div>
+                        {a.moderation_status && a.moderation_status !== "visible"
+                          && (user?.id === a.user_id || isModerator)
+                          && a.moderation_reason && (
+                            <div className="mb-2 p-2 border border-neon-pink/30 bg-neon-pink/5 text-[11px] text-neon-pink/90">
+                              {a.moderation_reason}
+                              {isModerator && (
+                                <button
+                                  onClick={async () => {
+                                    const r = await setModerationStatus("answer", a.id, "visible", "Mod restore");
+                                    if (r.ok) { toast.success("Restored"); load(); }
+                                    else toast.error(r.error);
+                                  }}
+                                  className="ml-3 inline-flex items-center gap-1 underline hover:text-neon-cyan"
+                                >
+                                  <RotateCcw className="w-3 h-3" />Restore
+                                </button>
+                              )}
+                            </div>
+                          )}
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
                             <span><AuthorLink name={a.author_name} /> · {timeAgo(a.created_at)}</span>

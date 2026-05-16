@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { ReportDialog } from "./ReportDialog";
 import { containsProfanity } from "@/lib/profanity";
+import { moderateContent, moderateAfterInsert, REMOVED_PLACEHOLDER, isContentVisible } from "@/lib/moderation";
 import { ForumMarkdown } from "@/components/ForumMarkdown";
 
 type Comment = {
@@ -14,6 +15,8 @@ type Comment = {
   author_name: string;
   body: string;
   created_at: string;
+  moderation_status?: "visible" | "pending" | "hidden" | "removed" | null;
+  moderation_reason?: string | null;
 };
 
 function timeAgo(iso: string): string {
@@ -45,8 +48,9 @@ export function AnswerComments({ answerId, isModerator }: { answerId: string; is
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("forum_comments")
-      .select("id,user_id,author_name,body,created_at")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase.from("forum_comments") as any)
+      .select("id,user_id,author_name,body,created_at,moderation_status,moderation_reason")
       .eq("answer_id", answerId)
       .order("created_at", { ascending: true });
     setComments((data as Comment[]) || []);
@@ -61,14 +65,37 @@ export function AnswerComments({ answerId, isModerator }: { answerId: string; is
     if (reply.trim().length < 2) return toast.error("Comment too short");
     if (containsProfanity(reply)) return toast.error("Please rephrase — your comment contains language we don't allow.");
     setSubmitting(true);
+
+    const body = reply.trim().slice(0, 1000);
+    const verdict = await moderateContent(body, "comment");
+    if (verdict.verdict === "block") {
+      setSubmitting(false);
+      return toast.error(`Comment rejected: ${verdict.reason || "content violates guidelines"}.`);
+    }
+
     const { data: prof } = await supabase.from("user_profiles").select("username").eq("user_id", user.id).maybeSingle();
     const author_name = prof?.username || user.email?.split("@")[0] || "Learner";
-    const { error } = await supabase.from("forum_comments").insert({
-      answer_id: answerId, user_id: user.id, author_name, body: reply.trim().slice(0, 1000),
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: inserted, error } = await (supabase.from("forum_comments") as any).insert({
+      answer_id: answerId, user_id: user.id, author_name, body,
+      moderation_status: verdict.verdict === "hide" ? "hidden" : "visible",
+      moderation_category: verdict.category,
+      moderation_score: verdict.score,
+      moderation_reason: verdict.verdict === "hide" ? verdict.reason : null,
+    }).select("id").maybeSingle();
     setSubmitting(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = /check_violation|moderation/i.test(error.message)
+        ? "Comment rejected by moderation — please rephrase."
+        : error.message;
+      return toast.error(msg);
+    }
     setReply("");
+    if (verdict.verdict === "hide") {
+      toast.message("Posted — held for review");
+    } else if (inserted?.id) {
+      void moderateAfterInsert(body, "comment", inserted.id);
+    }
     load();
   };
 
@@ -93,7 +120,11 @@ export function AnswerComments({ answerId, isModerator }: { answerId: string; is
           comments.map((c) => (
             <div key={c.id} className="text-xs py-1.5 border-b border-border/30 last:border-0">
               <div className="text-foreground/90 leading-snug">
-                <ForumMarkdown>{c.body}</ForumMarkdown>
+                {isContentVisible(c.moderation_status, user?.id === c.user_id, isModerator) ? (
+                  <ForumMarkdown>{c.body}</ForumMarkdown>
+                ) : (
+                  <span className="italic text-muted-foreground">{REMOVED_PLACEHOLDER}</span>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
                 <AuthorLink name={c.author_name} />

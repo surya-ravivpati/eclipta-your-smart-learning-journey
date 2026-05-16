@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { X, Flag, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { submitForumReport } from "@/lib/moderation";
 
-const REASONS = ["Spam", "Harassment", "Off-topic", "Misinformation", "Other"];
+const REASONS = ["Spam", "Harassment", "Hate speech", "Sexual content", "Self-harm", "Off-topic", "Misinformation", "Other"];
 
 export function ReportDialog({
   open, onClose, targetType, targetId,
@@ -26,15 +26,16 @@ export function ReportDialog({
     if (!user) return toast.error("Sign in to report");
     setSubmitting(true);
     const fullReason = details.trim() ? `${reason} — ${details.trim().slice(0, 500)}` : reason;
-    const { error } = await supabase.from("forum_reports").insert({
-      reporter_id: user.id,
-      target_type: targetType,
-      target_id: targetId,
-      reason: fullReason,
-    });
+    const result = await submitForumReport(targetType, targetId, fullReason);
     setSubmitting(false);
-    if (error) return toast.error(error.message);
-    toast.success("Report submitted — moderators will review");
+    if (!result.ok) return toast.error(result.error);
+    if (result.autoHidden) {
+      toast.success("Report submitted — content hidden pending review");
+    } else if (result.deduplicated) {
+      toast.message("Report updated");
+    } else {
+      toast.success("Report submitted — moderators will review");
+    }
     setDetails("");
     onClose();
   };

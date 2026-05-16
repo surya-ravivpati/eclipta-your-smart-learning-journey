@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useModerator } from "@/hooks/use-moderator";
 import { toast } from "sonner";
 import { findProfanity } from "@/lib/profanity";
+import { moderateContent, moderateAfterInsert, REMOVED_PLACEHOLDER, isContentVisible } from "@/lib/moderation";
 
 type Thread = {
   id: string;
@@ -21,6 +22,8 @@ type Thread = {
   answer_count: number;
   view_count: number;
   created_at: string;
+  moderation_status?: "visible" | "pending" | "hidden" | "removed" | null;
+  moderation_reason?: string | null;
 };
 
 const COURSES = ["General", "FAANG Interview Prep", "Machine Learning Foundations", "Cybersecurity Fundamentals", "System Design", "Mathematics", "Other"];
@@ -38,13 +41,18 @@ function timeAgo(iso: string): string {
 }
 
 
-function ThreadCard({ thread, userVote, onVote, canDelete, onDelete }: {
+function ThreadCard({ thread, userVote, onVote, canDelete, onDelete, currentUserId, isModerator }: {
   thread: Thread;
   userVote: number | null;
   onVote: (dir: 1 | -1) => void;
   canDelete: boolean;
   onDelete: () => void;
+  currentUserId: string | null;
+  isModerator: boolean;
 }) {
+  const isOwn = currentUserId === thread.user_id;
+  const hidden = thread.moderation_status && thread.moderation_status !== "visible";
+  const showBody = isContentVisible(thread.moderation_status, isOwn, isModerator);
   const handleVote = (e: React.MouseEvent, dir: 1 | -1) => {
     e.preventDefault();
     e.stopPropagation();
@@ -95,11 +103,19 @@ function ThreadCard({ thread, userVote, onVote, canDelete, onDelete }: {
                   SOLVED
                 </span>
               )}
-              {thread.title}
+              {hidden && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-widest bg-neon-pink/10 text-neon-pink border border-neon-pink/30 px-2 py-0.5 mr-2 align-middle">
+                  {thread.moderation_status === "removed" ? "REMOVED" : "HIDDEN"}
+                </span>
+              )}
+              {showBody ? thread.title : "Removed by moderator"}
             </h3>
             <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-2">
-              {thread.body}
+              {showBody ? thread.body : REMOVED_PLACEHOLDER}
             </p>
+            {hidden && (isOwn || isModerator) && thread.moderation_reason && (
+              <p className="text-[10px] text-neon-pink/80 italic mb-2">Reason: {thread.moderation_reason}</p>
+            )}
 
             <div className="flex items-center gap-2 flex-wrap mb-3">
               <span className="text-[10px] font-bold tracking-widest text-muted-foreground bg-secondary/50 px-2 py-0.5 border border-border">
@@ -155,10 +171,25 @@ function NewThreadDialog({ open, onClose, onCreated, lockedCourse }: { open: boo
     if (!user) return;
     if (title.trim().length < 8) return toast.error("Title must be at least 8 characters");
     if (body.trim().length < 20) return toast.error("Body must be at least 20 characters");
+
+    // 1. Local instant-feedback profanity check — same dictionary the server
+    //    trigger uses, so users don't even pay for a round trip on the
+    //    obvious cases.
     const dirty = findProfanity(title) || findProfanity(body) || findProfanity(tagsInput);
     if (dirty) return toast.error("Please rephrase — your post contains language we don't allow.");
 
     setSubmitting(true);
+
+    // 2. Pre-insert AI moderation. Combines title + body so the model sees
+    //    the full context. If verdict is 'block' we never write the row.
+    const fullText = `${title.trim()}\n\n${body.trim()}\n\nTags: ${tagsInput}`;
+    const verdict = await moderateContent(fullText, "thread");
+    if (verdict.verdict === "block") {
+      setSubmitting(false);
+      toast.error(`Post rejected: ${verdict.reason || "content violates guidelines"}.`);
+      return;
+    }
+
     const tags = tagsInput
       .split(",")
       .map((t) => t.trim().toLowerCase().replace(/[^a-z0-9-]/g, ""))
@@ -168,21 +199,47 @@ function NewThreadDialog({ open, onClose, onCreated, lockedCourse }: { open: boo
     const { data: prof } = await supabase.from("user_profiles").select("username").eq("user_id", user.id).maybeSingle();
     const author_name = prof?.username || user.email?.split("@")[0] || "Learner";
 
-    const { error } = await supabase.from("forum_threads").insert({
+    // 3. Insert. The DB trigger is a final safety net for anything the
+    //    edge function missed (or skipped, e.g. AI gateway outage).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: inserted, error } = await (supabase.from("forum_threads") as any).insert({
       user_id: user.id,
       author_name,
       title: title.trim().slice(0, 200),
       body: body.trim().slice(0, 4000),
       course,
       tags,
-    });
+      // If the AI said "hide", insert directly into the hidden state so the
+      // post is never publicly visible. The trigger may upgrade this; never
+      // downgrades.
+      moderation_status: verdict.verdict === "hide" ? "hidden" : "visible",
+      moderation_category: verdict.category,
+      moderation_score: verdict.score,
+      moderation_reason: verdict.verdict === "hide" ? verdict.reason : null,
+    }).select("id").maybeSingle();
 
     setSubmitting(false);
     if (error) {
-      toast.error(error.message);
+      // Trigger rejection comes through as a check_violation error.
+      const msg = /check_violation|moderation/i.test(error.message)
+        ? "Post rejected by moderation — please rephrase."
+        : error.message;
+      toast.error(msg);
       return;
     }
-    toast.success("Thread posted");
+
+    if (verdict.verdict === "hide") {
+      toast.message("Posted — held for review", {
+        description: "Your post will appear publicly once a moderator clears it.",
+      });
+    } else {
+      toast.success("Thread posted");
+      // 4. Best-effort async second pass so the AI verdict can promote the
+      //    final visibility even after the user has moved on.
+      if (inserted?.id) {
+        void moderateAfterInsert(fullText, "thread", inserted.id);
+      }
+    }
     setTitle(""); setBody(""); setTagsInput(""); setCourse(lockedCourse ?? "General");
     onCreated();
     onClose();
@@ -469,6 +526,8 @@ export function Forum({ defaultCourse, lockCourse = false, heading, subheading }
                     onVote={(dir) => handleVote(thread.id, dir)}
                     canDelete={!!user && (user.id === thread.user_id || isModerator)}
                     onDelete={() => handleDeleteThread(thread.id)}
+                    currentUserId={user?.id ?? null}
+                    isModerator={isModerator}
                   />
                 ))}
               </AnimatePresence>
