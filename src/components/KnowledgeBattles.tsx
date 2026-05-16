@@ -24,7 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTodayChallenge } from "@/lib/daily-challenge";
 import { findMatch, leaveQueue, type MatchResult, type OpponentType } from "@/lib/matchmaking";
 import { recordBattleSession, type GhostSession } from "@/lib/battle-replay";
-import { fetchPlayerRating, updateRating, ratingToTier, formatRatingDelta } from "@/lib/rating";
+import { completeGhostBattle, fetchPlayerRating, ratingToTier } from "@/lib/rating";
 import { awardXp } from "@/lib/xp-service";
 import { toast } from "sonner";
 
@@ -980,7 +980,7 @@ function BattleArena() {
   const iAmChallengerRef = useRef(false);
   // Idempotency guard so finishBattle runs exactly once per battle, even if
   // both the local HP-zero check and the opponent's broadcast battle_end
-  // arrive. Without this, updateRating() runs twice and W/L double-counts.
+  // arrive. Rating is completed through idempotent backend RPCs.
   const battleFinishedRef = useRef(false);
 
   // Fetch player profile (XP + rating + username)
