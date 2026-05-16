@@ -1423,19 +1423,24 @@ function BattleArena() {
     // Mirror the server-side formula in award_battle_xp so the number we
     // animate up to in the report matches what actually lands on the profile:
     //   xp = min(1000, correct*15 + (won ? 50 : 0))
-    const totalQuestions = records.length + 1; // +1 for the final answer
-    const correctAnswers = records.filter(r => r.correct).length + (won ? 1 : 0);
+    const finalRecords = recordsRef.current;
+    const finalStreak = longestStreakRef.current;
+    const finalFastest = fastestAnswerRef.current;
+    const finalScore = totalScoreRef.current;
+    const totalQuestions = finalRecords.length;
+    const correctAnswers = finalRecords.filter(r => r.correct).length;
     const xp = Math.min(1000, correctAnswers * 15 + (won ? 50 : 0));
     setBattleStats({
       totalQuestions,
       correctAnswers,
-      longestStreak,
-      fastestAnswer,
-      records: [...records],
+      longestStreak: finalStreak,
+      fastestAnswer: finalFastest,
+      records: [...finalRecords],
       archetype,
       won,
-      score: Math.floor(totalScore),
+      score: Math.floor(finalScore),
       xp,
+      opponentType: opponentTypeRef.current,
     });
     setPhase("result");
 
@@ -1448,7 +1453,7 @@ function BattleArena() {
         session_type: "battle",
         was_correct: won,
         topic: ARCHETYPES[archetype].name,
-        luna_summary: `${won ? "Victory" : "Defeat"} as ${ARCHETYPES[archetype].name} · score ${Math.floor(totalScore)} · streak ${longestStreak}`,
+        luna_summary: `${won ? "Victory" : "Defeat"} as ${ARCHETYPES[archetype].name} · score ${Math.floor(finalScore)} · streak ${finalStreak}`,
       });
       if (won) {
         const today = new Date().toISOString().slice(0, 10);
@@ -1477,18 +1482,19 @@ function BattleArena() {
       }
 
       // Record session as ghost replay data for future opponents
-      void recordBattleSession({
+      const sessionId = await recordBattleSession({
         archetype,
         won,
         rating: playerRatingRef.current,
-        records,
-        bestStreak: longestStreak,
+        records: finalRecords,
+        bestStreak: finalStreak,
+        opponentType: opponentTypeRef.current,
       });
 
       // Update competitive rating. Live PvP completes on the server once per battle; ghosts use local ELO.
-      if (opponentTypeRef.current === "live" && pvpBattleId && winnerId) {
+      if (opponentTypeRef.current === "live" && pvpBattleIdRef.current && winnerId) {
         const { data } = await supabase.rpc("complete_pvp_battle" as any, {
-          p_battle_id: pvpBattleId,
+          p_battle_id: pvpBattleIdRef.current,
           p_winner_id: winnerId,
         });
         const d = data as any;
@@ -1498,14 +1504,14 @@ function BattleArena() {
           setPlayerRating(nextRating);
           playerRatingRef.current = nextRating;
         }
-      } else if (opponentTypeRef.current === "ghost") {
-        const newRating = await updateRating(opponentRatingRef.current, won);
-        setRatingChange(newRating - playerRatingRef.current);
-        setPlayerRating(newRating);
-        playerRatingRef.current = newRating;
+      } else if (opponentTypeRef.current === "ghost" && sessionId) {
+        const result = await completeGhostBattle(sessionId, opponentRatingRef.current);
+        setRatingChange(result.ratingDelta);
+        setPlayerRating(result.ratingAfter);
+        playerRatingRef.current = result.ratingAfter;
       }
     })();
-  }, [totalScore, records, longestStreak, fastestAnswer, archetype]);
+  }, [archetype]);
 
   const aiTurn = useCallback(() => {
     const oppArch    = getArch(opponentArchetype);
