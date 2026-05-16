@@ -2660,7 +2660,12 @@ export function KnowledgeBattles() {
   const [searchOpen, setSearchOpen] = useState(false);
   return (
     <section className="btt-shell min-h-screen pt-24 pb-16">
-      <div className="btt-bg" aria-hidden />
+      <div className="btt-bg" aria-hidden>
+        <div className="btt-aurora" />
+        <div className="btt-grid" />
+        <div className="btt-vignette" />
+        <div className="btt-noise" />
+      </div>
       <div className="max-w-7xl mx-auto px-6">
         <motion.div className="text-center mb-14" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}>
           <div className="btt-pill inline-flex items-center gap-2 px-4 py-1.5 border border-neon-pink/30 bg-neon-pink/10 text-neon-pink text-xs font-bold tracking-widest mb-6">
