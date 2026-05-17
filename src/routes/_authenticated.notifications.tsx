@@ -173,6 +173,31 @@ function NotificationRow({
   const Icon = meta.icon;
   const link = notification.link ?? meta.fallbackLink?.(notification.meta ?? {}) ?? null;
 
+  // Navigation needs to handle three things that broke the old click handler:
+  //   * Links with query strings like /battles?challenge=<id> — TanStack
+  //     navigate() rejects the cast-as-never `to` string when search
+  //     params are bundled in.
+  //   * Param routes like /u/<username> that don't match the typed
+  //     `/u/$username` pattern unless we pass params separately.
+  //   * Stale or future link shapes the typed router doesn't know about.
+  // The wrapper tries the typed navigate path first; on any throw, it
+  // falls back to a plain location assign so the click always goes
+  // somewhere instead of surfacing a "Could not find route" toast.
+  const go = (href: string) => {
+    try {
+      const url = new URL(href, window.location.origin);
+      const search = url.search ? Object.fromEntries(new URLSearchParams(url.search)) : undefined;
+      navigate({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        to: url.pathname as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(search ? { search: search as any } : {}),
+      });
+    } catch {
+      window.location.assign(href);
+    }
+  };
+
   const body = (
     <div
       className={cn(
@@ -226,11 +251,11 @@ function NotificationRow({
         <a
           href={link}
           onClick={(e) => {
+            // Let the browser handle modifier-clicks (open in new tab etc.)
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
             e.preventDefault();
             if (!notification.read) onRead();
-            // Stored as plain paths (e.g. "/forum/<uuid>"). Cast bypasses
-            // TanStack's typed-route check.
-            navigate({ to: link as never });
+            go(link);
           }}
           className="block"
         >
