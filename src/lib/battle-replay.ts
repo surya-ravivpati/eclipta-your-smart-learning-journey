@@ -57,14 +57,33 @@ export async function recordBattleSession(params: {
   return (data as { id?: string } | null)?.id ?? null;
 }
 
-/** Fetch a real player ghost session within ±150 rating of the player. */
+/**
+ * Fetch a real-player ghost session within ±200 rating of the player.
+ * Returns null if no usable session exists OR if the row's question_records
+ * is empty — we'd rather drop to the bot tier than fake a "ghost" with no
+ * actual recorded behaviour to replay.
+ */
 export async function fetchGhostSession(playerRating: number): Promise<GhostSession | null> {
-  const { data } = await supabase.rpc("get_ghost_session" as any, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await supabase.rpc("get_ghost_session" as any, {
     p_player_rating: playerRating,
   });
+  if (error) {
+    console.warn("fetchGhostSession failed", error);
+    return null;
+  }
   if (!data) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = data as any;
+  const records = (d.question_records ?? []) as GhostSession["questionRecords"];
+  if (!Array.isArray(records) || records.length === 0) {
+    // Authenticity guard: an empty record set isn't a ghost, it's a stub.
+    // Refusing it here drops us cleanly through the matchmaker to the bot
+    // tier instead of silently substituting AI moves under a ghost label.
+    return null;
+  }
+
   return {
     id:              d.id,
     archetype:       d.archetype as ArchetypeId,
@@ -74,6 +93,6 @@ export async function fetchGhostSession(playerRating: number): Promise<GhostSess
     correctAnswers:  d.correct_answers,
     bestStreak:      d.best_streak,
     username:        d.username ?? null,
-    questionRecords: (d.question_records ?? []) as GhostSession["questionRecords"],
+    questionRecords: records,
   };
 }

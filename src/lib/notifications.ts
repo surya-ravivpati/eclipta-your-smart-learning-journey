@@ -1,0 +1,137 @@
+/**
+ * Single source of truth for how each notification type is presented.
+ *
+ * Before this lived inline in the notifications page, which meant any new
+ * type was silently dropped to a "default" label. Adding a type here once
+ * makes it render correctly in every consumer (the page, the unread bell,
+ * the realtime toast).
+ */
+import type { ComponentType } from "react";
+import {
+  Bell, MessageSquare, MessageCircle, UserPlus, AtSign, Award,
+  Swords, Check, X, Sparkles,
+} from "lucide-react";
+
+export type NotificationCategory = "forum" | "social" | "battle" | "system";
+
+export interface NotificationTypeMeta {
+  /** Icon rendered next to the row. */
+  icon: ComponentType<{ className?: string }>;
+  /** Category drives the accent colour & filter group. */
+  category: NotificationCategory;
+  /** Tailwind text-color class for the icon. */
+  color: string;
+  /** Human-readable label rendered as the row's primary text. */
+  describe: (meta: Record<string, unknown>) => string;
+  /** Optional fallback link when the row was stored without one. */
+  fallbackLink?: (meta: Record<string, unknown>) => string | null;
+}
+
+function actor(meta: Record<string, unknown>): string {
+  return (
+    (meta.author as string | undefined)
+    ?? (meta.username as string | undefined)
+    ?? (meta.challenger_username as string | undefined)
+    ?? (meta.opponent_username as string | undefined)
+    ?? "Someone"
+  );
+}
+
+function title(meta: Record<string, unknown>, fallback = "your thread"): string {
+  return (meta.title as string | undefined) ?? fallback;
+}
+
+export const NOTIFICATION_TYPES: Record<string, NotificationTypeMeta> = {
+  follow: {
+    icon: UserPlus, category: "social", color: "text-neon-cyan",
+    describe: (m) => `${actor(m)} started following you`,
+  },
+  reply: {
+    icon: MessageSquare, category: "forum", color: "text-neon-purple",
+    describe: (m) => `${actor(m)} replied to "${title(m)}"`,
+  },
+  comment: {
+    icon: MessageCircle, category: "forum", color: "text-neon-purple",
+    describe: (m) => `${actor(m)} commented on your answer in "${title(m)}"`,
+  },
+  accepted: {
+    icon: Award, category: "forum", color: "text-neon-cyan",
+    describe: (m) => `Your answer was accepted on "${title(m)}"`,
+  },
+  mention_thread: {
+    icon: AtSign, category: "forum", color: "text-neon-pink",
+    describe: (m) => `${actor(m)} mentioned you in "${title(m)}"`,
+  },
+  mention_answer: {
+    icon: AtSign, category: "forum", color: "text-neon-pink",
+    describe: (m) => `${actor(m)} mentioned you in an answer on "${title(m)}"`,
+  },
+  mention_comment: {
+    icon: AtSign, category: "forum", color: "text-neon-pink",
+    describe: (m) => `${actor(m)} mentioned you in a comment on "${title(m)}"`,
+  },
+  challenge: {
+    icon: Swords, category: "battle", color: "text-neon-pink",
+    describe: (m) =>
+      `${actor(m)} challenged you to a battle${m.archetype ? ` as ${m.archetype}` : ""}`,
+    fallbackLink: (m) =>
+      m.challenge_id ? `/battles?challenge=${m.challenge_id}` : "/battles",
+  },
+  challenge_accepted: {
+    icon: Check, category: "battle", color: "text-neon-cyan",
+    describe: (m) => `${actor(m)} accepted your challenge — battle starting`,
+    fallbackLink: (m) => (m.battle_id ? `/battles?battle=${m.battle_id}` : "/battles"),
+  },
+  challenge_rejected: {
+    icon: X, category: "battle", color: "text-muted-foreground",
+    describe: (m) => `${actor(m)} declined your challenge`,
+    fallbackLink: () => "/battles",
+  },
+};
+
+const UNKNOWN: NotificationTypeMeta = {
+  icon: Bell,
+  category: "system",
+  color: "text-muted-foreground",
+  describe: (_m) => "New notification",
+};
+
+export function notificationMeta(type: string): NotificationTypeMeta {
+  return NOTIFICATION_TYPES[type] ?? UNKNOWN;
+}
+
+export const CATEGORY_LABEL: Record<NotificationCategory, string> = {
+  forum:  "Forum",
+  social: "Social",
+  battle: "Battles",
+  system: "System",
+};
+
+export const CATEGORY_ICON: Record<NotificationCategory, ComponentType<{ className?: string }>> = {
+  forum:  MessageSquare,
+  social: UserPlus,
+  battle: Swords,
+  system: Sparkles,
+};
+
+/** Bucket notifications into Today / Yesterday / Earlier for visual grouping. */
+export function dateBucket(iso: string): "Today" | "Yesterday" | "Earlier" {
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if (sameDay) return "Today";
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return "Yesterday";
+  return "Earlier";
+}
+
+export function timeAgo(iso: string): string {
+  const m = Math.floor((Date.now() - +new Date(iso)) / 60_000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d`;
+  return new Date(iso).toLocaleDateString();
+}

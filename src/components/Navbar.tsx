@@ -179,16 +179,32 @@ export function Navbar() {
         <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-4">
             {isAuthenticated && (
-              <Link
-                to="/profile"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-between px-3 py-3 border border-border rounded-md"
-              >
-                <span className="text-sm font-medium">{user?.email?.split("@")[0]}</span>
-                <span className="flex items-center gap-1 text-xs font-bold text-neon-purple tabular-nums">
-                  <Zap className="w-3 h-3" />{xp.toLocaleString()} XP
-                </span>
-              </Link>
+              <>
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-between px-3 py-3 border border-border rounded-md"
+                >
+                  <span className="text-sm font-medium">{user?.email?.split("@")[0]}</span>
+                  <span className="flex items-center gap-1 text-xs font-bold text-neon-purple tabular-nums">
+                    <Zap className="w-3 h-3" />{xp.toLocaleString()} XP
+                  </span>
+                </Link>
+                <Link
+                  to="/notifications"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-between px-3 py-3 border border-border rounded-md hover:border-neon-purple/40 transition-colors"
+                >
+                  <span className="inline-flex items-center gap-2 text-sm font-medium">
+                    <Bell className="w-4 h-4 text-neon-purple" />Notifications
+                  </span>
+                  {unread > 0 && (
+                    <span className="min-w-[20px] h-[20px] px-1.5 rounded-full bg-neon-pink text-[10px] font-bold text-foreground flex items-center justify-center tabular-nums">
+                      {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
+                </Link>
+              </>
             )}
             <Link
               to="/"
