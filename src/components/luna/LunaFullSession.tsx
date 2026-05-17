@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { Send, Coffee, ArrowLeft, RotateCcw, Zap, Monitor, Loader2, X, Mic, MicOff, Volume2, VolumeX, ImagePlus } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { LUNA_TAG_CONFIG } from "@/lib/luna-api";
-import { getAccuracy, getSessionDuration, detectFatigue } from "@/lib/luna-context";
+import { getAccuracy, detectFatigue, resetSession as resetLunaSessionContext } from "@/lib/luna-context";
+import { useLunaSessionTimer } from "@/hooks/use-luna-session-timer";
 import { LunaMarkdown } from "./LunaMarkdown";
 import { useXpMilestones } from "@/hooks/use-xp-milestones";
 import { useLunaHistory } from "@/hooks/use-luna-history";
@@ -79,10 +80,20 @@ export function LunaFullSession() {
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const resetSession = () => { abort(); clearHistory(); };
+  // Reset clears chat history AND the timer/streak/accuracy context. Before,
+  // the old session's startTime would persist into the new one, so a fresh
+  // "session" would immediately display a multi-hour duration.
+  const resetSession = () => {
+    abort();
+    clearHistory();
+    resetLunaSessionContext();
+  };
 
   const accuracy = getAccuracy();
-  const duration = Math.round(getSessionDuration());
+  // Live timer — re-renders every second, pauses when the tab is hidden,
+  // and stays paused during streaming so partial assistant replies don't
+  // inflate the user's effective study time.
+  const { label: durationLabel } = useLunaSessionTimer();
   const fatigue  = detectFatigue();
 
   return (
@@ -111,7 +122,7 @@ export function LunaFullSession() {
             </div>
             <div className={`luna-stat${fatigue !== "none" ? " luna-stat--warn" : ""}`}>
               <Coffee size={12} />
-              <span>{duration}m session</span>
+              <span>{durationLabel} session</span>
             </div>
           </div>
           <button onClick={resetSession} className="luna-reset-btn">

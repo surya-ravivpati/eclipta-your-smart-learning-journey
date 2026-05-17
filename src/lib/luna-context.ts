@@ -12,26 +12,42 @@ export interface LunaLearningContext {
   avgResponseTime: number;
   totalQuestions: number;
   correctAnswers: number;
+  /** Epoch ms when the current active period started. Resets whenever the
+   * session is paused (paused → activeStartTime = null) so accumulatedMs +
+   * (now - activeStartTime) is always the true elapsed time. */
   sessionStartTime: number;
+  /** Time accumulated across previous active periods, in ms. Stays put
+   * while the timer is paused; the live tick adds (now - activeStartTime)
+   * on top whenever activeStartTime is non-null. */
+  accumulatedMs: number;
+  /** Null when the timer is paused. When non-null, the timer is running. */
+  activeStartTime: number | null;
   lastActivityTime: number;
   hintLevel: number; // 0 = no hint yet, 1 = conceptual, 2 = direct, 3 = full explain
   consecutiveErrors: number;
   rapidGuessCount: number;
 }
 
-const DEFAULT_CONTEXT: LunaLearningContext = {
-  weakAreas: [],
-  streak: 0,
-  incorrectCount: 0,
-  avgResponseTime: 0,
-  totalQuestions: 0,
-  correctAnswers: 0,
-  sessionStartTime: Date.now(),
-  lastActivityTime: Date.now(),
-  hintLevel: 0,
-  consecutiveErrors: 0,
-  rapidGuessCount: 0,
-};
+function freshContext(): LunaLearningContext {
+  const now = Date.now();
+  return {
+    weakAreas: [],
+    streak: 0,
+    incorrectCount: 0,
+    avgResponseTime: 0,
+    totalQuestions: 0,
+    correctAnswers: 0,
+    sessionStartTime: now,
+    accumulatedMs: 0,
+    activeStartTime: now,
+    lastActivityTime: now,
+    hintLevel: 0,
+    consecutiveErrors: 0,
+    rapidGuessCount: 0,
+  };
+}
+
+const DEFAULT_CONTEXT: LunaLearningContext = freshContext();
 
 let context: LunaLearningContext = { ...DEFAULT_CONTEXT };
 let currentOwnerId: string | null = null;
@@ -65,7 +81,7 @@ function emitFatigueIfChanged() {
 export function bindLunaContextToUser(userId: string | null) {
   if (currentOwnerId === userId) return;
   currentOwnerId = userId;
-  context = { ...DEFAULT_CONTEXT, sessionStartTime: Date.now() };
+  context = freshContext();
   lastEmittedFatigue = "none";
 }
 
@@ -117,9 +133,41 @@ export function detectFatigue(): "none" | "mild" | "severe" {
   return "none";
 }
 
-// Session duration in minutes
+// ── Session duration ───────────────────────────────────────────────────
+//
+// We measure elapsed time as
+//     accumulatedMs + (activeStartTime ? now - activeStartTime : 0)
+// rather than (now - sessionStartTime) so that pause/resume actually pause
+// the wall clock. The page also pauses automatically when the tab is
+// hidden so a Luna session left in a background tab overnight doesn't
+// come back claiming a 9-hour run.
+
+/** Elapsed session time in milliseconds, honouring pause/resume. */
+export function getSessionElapsedMs(): number {
+  return context.accumulatedMs + (context.activeStartTime ? Date.now() - context.activeStartTime : 0);
+}
+
+/** Elapsed session time in minutes (fractional). */
 export function getSessionDuration(): number {
-  return (Date.now() - context.sessionStartTime) / 60000;
+  return getSessionElapsedMs() / 60_000;
+}
+
+/** Pause the session timer. Safe to call repeatedly. */
+export function pauseSession(): void {
+  if (context.activeStartTime === null) return;
+  context.accumulatedMs += Date.now() - context.activeStartTime;
+  context.activeStartTime = null;
+}
+
+/** Resume the session timer. Safe to call repeatedly. */
+export function resumeSession(): void {
+  if (context.activeStartTime !== null) return;
+  context.activeStartTime = Date.now();
+}
+
+/** True when the session is currently accumulating time. */
+export function isSessionActive(): boolean {
+  return context.activeStartTime !== null;
 }
 
 // Accuracy percentage
@@ -128,7 +176,8 @@ export function getAccuracy(): number {
   return Math.round((context.correctAnswers / context.totalQuestions) * 100);
 }
 
+/** Clear session signals and start a brand-new timer. */
 export function resetSession() {
-  context = { ...DEFAULT_CONTEXT, sessionStartTime: Date.now() };
+  context = freshContext();
   lastEmittedFatigue = "none";
 }
