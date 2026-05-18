@@ -26,7 +26,6 @@ const NAV_GROUPS = [
     items: [
       { to: "/adaptive-tests", label: "Adaptive Tests", desc: "Tests that evolve with you" },
       { to: "/battles", label: "Knowledge Battles", desc: "1v1 duels" },
-      { to: "/archetypes", label: "Archetypes", desc: "Tour the compass of fighters" },
       { to: "/progress", label: "Trophy Road", desc: "Your progression map" },
     ],
   },
