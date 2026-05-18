@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { ArchetypesCompass } from "@/components/archetypes/ArchetypesCompass";
 import "./CinematicLanding.css";
 
 /* ─── helpers ─────────────────────────────────────────────────────── */
@@ -513,6 +514,13 @@ export function LandingShowcase() {
           </div>
         </div>
       </section>
+
+      {/* ── ARCHETYPES — Cinematic compass tour ──────────────────── */}
+      {/* Sits between the hero (which teases "eight ways to fight") and
+          the Loop act (which shows how battles play). The compass is the
+          visual realisation of those eight archetypes, so this is the
+          natural pause point between "what" and "how". */}
+      <ArchetypesCompass />
 
       {/* ── ACT 2 — Loop ─────────────────────────────────────────── */}
       <section className="v11-act2" id="loop" ref={act2Ref}>
