@@ -342,22 +342,33 @@ function ArchetypePanel({
   reduce: boolean;
 }) {
   const N = ORDER.length;
+  // Strictly clamp ranges to [0, 1] and sort. WAAPI rejects offsets outside
+  // that interval, and framer-motion forwards useTransform input arrays as
+  // keyframe offsets when it composes the underlying animation — so the
+  // first archetype (center − span × 1.2 = −0.0125) and the last archetype
+  // (center + span × 1.2 = 1.0125) used to crash the page on mount.
   const ranges = useMemo(() => {
     const center = (i + 0.5) / N;
     const span   = 0.5 / N;
-    return [
+    const raw = [
       center - span * 1.2,
       center - span * 0.4,
       center + span * 0.4,
       center + span * 1.2,
     ];
+    const clamped = raw.map((v) => Math.min(1, Math.max(0, v)));
+    // Keep strict monotonic ordering even after clamp collisions (e.g. the
+    // first two stops both clamp to 0 for i=0). A tiny epsilon between
+    // duplicate adjacent stops keeps useTransform happy.
+    for (let k = 1; k < clamped.length; k++) {
+      if (clamped[k] <= clamped[k - 1]) clamped[k] = clamped[k - 1] + 1e-6;
+    }
+    return clamped;
   }, [i, N]);
 
   const opacity = useTransform(scrollYProgress, ranges, [0, 1, 1, 0]);
   const y       = useTransform(scrollYProgress, ranges, [40, 0, 0, -40]);
   const scale   = useTransform(scrollYProgress, ranges, [0.92, 1, 1, 0.92]);
-  const blur    = useTransform(scrollYProgress, ranges, [10, 0, 0, 10]);
-  const filter  = useTransform(blur, (b) => `blur(${b}px)`);
 
   const arch = ARCHETYPES[id];
   const Icon = arch.icon;
@@ -370,7 +381,6 @@ function ArchetypePanel({
         opacity: reduce ? 1 : opacity,
         y:       reduce ? 0 : y,
         scale:   reduce ? 1 : scale,
-        filter:  reduce ? "none" : filter,
         pointerEvents: "none",
       }}
     >
