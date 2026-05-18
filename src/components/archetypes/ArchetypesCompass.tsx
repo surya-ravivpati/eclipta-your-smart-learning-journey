@@ -37,9 +37,16 @@ const ORDER: ArchetypeId[] = [
 //   (N + 2) * SLOT_VH
 // where one extra SLOT_VH sits at the top as an intro buffer and one at
 // the bottom as an outro buffer. Everything maps cleanly inside [0, 1]
-// of scrollYProgress, so no out-of-range stop ever needs to be clamped
-// (which was breaking pacing for the first/last archetypes).
-const SLOT_VH = 70;
+// of scrollYProgress, so no out-of-range stop ever needs to be clamped.
+//
+// SLOT_VH controls how much scroll each archetype owns. Previously this
+// was 70vh — when sandwiched between the existing v11 hero (240vh) and
+// the v11 Loop section (380vh) the compass alone needed 600vh of pinned
+// scrolling, and users were giving up at gambler (≈ 0.45 of progress)
+// before reaching healer, fulcrum, accelerator, god. 40vh makes the
+// whole tour traversable in ~3 page heights — fast enough that nobody
+// bails halfway, slow enough that each archetype still gets a real beat.
+const SLOT_VH = 40;
 
 // Window for archetype i, expressed in scroll progress (0..1).
 // Each archetype's slot is 1/(N+2) wide and is centred at
@@ -115,9 +122,9 @@ export function ArchetypesCompass() {
   // always in lockstep.
   const wheelTarget = useTransform(activeIndex, (i) => -(i + 0.5) * (360 / N));
   const wheelRotate = useSpring(wheelTarget, {
-    stiffness: 60,
-    damping: 18,
-    mass: 0.9,
+    stiffness: 110,
+    damping: 22,
+    mass: 0.7,
   });
 
   // segIndex stays continuous for the glyph scale-up effect — we want the
