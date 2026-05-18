@@ -22,9 +22,10 @@
  *   * Respects prefers-reduced-motion. When set, the compass holds still
  *     and every archetype panel renders fully visible.
  */
-import { useRef, useMemo } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
-  motion, useScroll, useTransform, useSpring, useReducedMotion, type MotionValue,
+  motion, AnimatePresence, useScroll, useTransform, useSpring,
+  useReducedMotion, useMotionValueEvent, type MotionValue,
 } from "framer-motion";
 import { ARCHETYPES } from "@/components/battles/archetypes";
 import type { ArchetypeId } from "@/components/battles/types";
@@ -47,24 +48,6 @@ const ORDER: ArchetypeId[] = [
 // whole tour traversable in ~3 page heights — fast enough that nobody
 // bails halfway, slow enough that each archetype still gets a real beat.
 const SLOT_VH = 40;
-
-// Window for archetype i, expressed in scroll progress (0..1).
-// Each archetype's slot is 1/(N+2) wide and is centred at
-//   center = (i + 1.5) / (N + 2)
-// The fade-in / fade-out half-width is tuned so neighbouring archetypes
-// crossfade through each other instead of momentarily showing nothing.
-function archetypeRanges(i: number): [number, number, number, number] {
-  const total = ORDER.length + 2;
-  const center = (i + 1.5) / total;
-  const half   = 1   / total;        // 0.10 when N=8
-  const fade   = half * 0.7;         // 0.07 — wide enough for crossfade
-  return [
-    center - fade,
-    center - half * 0.3,
-    center + half * 0.3,
-    center + fade,
-  ];
-}
 
 // Per-archetype aura colour. Kept as rgba hex so framer-motion can use
 // them safely in style props (no oklch interpolation gotchas) and the
@@ -149,7 +132,7 @@ export function ArchetypesCompass() {
           auraColour={auraColour}
           reduce={!!reduce}
         />
-        <ForegroundLayer scrollYProgress={scrollYProgress} reduce={!!reduce} />
+        <ForegroundLayer activeIndex={activeIndex} reduce={!!reduce} />
         <ProgressTrack scrollYProgress={scrollYProgress} />
       </div>
     </section>
@@ -362,47 +345,53 @@ function CompassGlyph({
 }
 
 // ─── Foreground ──────────────────────────────────────────────────────
+//
+// Earlier this layer rendered one motion.div per archetype with opacity
+// transforms driven directly by scrollYProgress. That worked fine on the
+// standalone /archetypes page but on the homepage — where the compass is
+// sandwiched between the v11 hero (with its own RAF-driven animations)
+// and the Loop section — users perceived the text as "extremely delayed"
+// after the speedster→tank transition. The wheel and the text were
+// reading scroll updates through different mechanisms (spring vs raw
+// transforms), and any tiny RAF stutter from the surrounding sections
+// made them drift out of phase.
+//
+// Now both wheel and text snap on the same discrete activeIndex change.
+// AnimatePresence handles the visible fade so the transition still
+// feels cinematic, but there's no way for the text to lag the wheel
+// (or vice versa) — they're literally driven by the same event.
 
 function ForegroundLayer({
-  scrollYProgress, reduce,
-}: { scrollYProgress: MotionValue<number>; reduce: boolean }) {
+  activeIndex, reduce,
+}: { activeIndex: MotionValue<number>; reduce: boolean }) {
+  // Mirror the MotionValue into React state so we can use AnimatePresence
+  // (which is keyed on React state changes, not motion values).
+  const [active, setActive] = useState(0);
+  useMotionValueEvent(activeIndex, "change", (i) => setActive(Math.round(i)));
+  // Initial sync in case the section is already part-way scrolled when
+  // we mount (e.g. when navigating back to the page).
+  useEffect(() => {
+    setActive(Math.round(activeIndex.get()));
+  }, [activeIndex]);
+
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div className="relative w-full max-w-3xl mx-auto px-6">
-        {ORDER.map((id, i) => (
-          <ArchetypePanel
-            key={id}
-            id={id}
-            i={i}
-            scrollYProgress={scrollYProgress}
-            reduce={reduce}
-          />
-        ))}
+      <div className="relative w-full max-w-3xl mx-auto px-6 h-[60vh]">
+        <AnimatePresence mode="wait" initial={false}>
+          <ArchetypePanel key={ORDER[active]} id={ORDER[active]} i={active} reduce={reduce} />
+        </AnimatePresence>
       </div>
     </div>
   );
 }
 
 function ArchetypePanel({
-  id, i, scrollYProgress, reduce,
+  id, i, reduce,
 }: {
   id: ArchetypeId;
   i: number;
-  scrollYProgress: MotionValue<number>;
   reduce: boolean;
 }) {
-  // Per-archetype windows live entirely inside the [0.1, 0.9] active band
-  // by construction (see archetypeRanges), so we never need to clamp here.
-  // That fixes the original first/last archetype pacing bug where the
-  // clamped windows for i=0 and i=N-1 collapsed their fade-in / fade-out
-  // intervals, making speedster invisible at the top of the section and
-  // god never reaching full opacity.
-  const ranges = useMemo(() => archetypeRanges(i), [i]);
-
-  const opacity = useTransform(scrollYProgress, ranges, [0, 1, 1, 0]);
-  const y       = useTransform(scrollYProgress, ranges, [40, 0, 0, -40]);
-  const scale   = useTransform(scrollYProgress, ranges, [0.92, 1, 1, 0.92]);
-
   const arch = ARCHETYPES[id];
   const Icon = arch.icon;
   const aura = AURA[id];
@@ -410,12 +399,11 @@ function ArchetypePanel({
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center"
-      style={{
-        opacity: reduce ? 1 : opacity,
-        y:       reduce ? 0 : y,
-        scale:   reduce ? 1 : scale,
-        pointerEvents: "none",
-      }}
+      initial={reduce ? false : { opacity: 0, y: 24, scale: 0.96 }}
+      animate={reduce ? undefined : { opacity: 1, y: 0,  scale: 1    }}
+      exit={reduce ? undefined : { opacity: 0, y: -24, scale: 0.96 }}
+      transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+      style={{ pointerEvents: "none" }}
     >
       <div className="relative w-28 h-28 mb-6">
         <div
