@@ -124,6 +124,7 @@ export function LandingShowcase() {
   const act3Ref       = useRef<HTMLElement>(null);
   const climbElRef    = useRef<HTMLDivElement>(null);
   const climbPinRef   = useRef<HTMLSpanElement>(null);
+  const tierRefs      = useRef<(HTMLDivElement | null)[]>([]);
 
   const revealsRef    = useRef<Element[]>([]);
 
@@ -272,8 +273,20 @@ export function LandingShowcase() {
         const rect  = act3Ref.current.getBoundingClientRect();
         const total = act3Ref.current.offsetHeight - vh;
         const p     = clamp01(-rect.top / total);
-        const maxY  = climbElRef.current.offsetHeight - (climbPinRef.current.offsetHeight || 26);
-        climbPinRef.current.style.transform = `translateY(${(clamp01(p * 1.05) * maxY).toFixed(1)}px)`;
+        const maxY  = climbElRef.current.offsetHeight - (climbPinRef.current.offsetHeight || 36);
+        const pinY  = clamp01(p * 1.05) * maxY;
+        climbPinRef.current.style.transform = `translateY(${pinY.toFixed(1)}px)`;
+
+        /* Highlight the tier the pin is currently on */
+        const tiers = tierRefs.current.filter(Boolean) as HTMLDivElement[];
+        if (tiers.length > 0 && climbElRef.current) {
+          const climbTop = climbElRef.current.getBoundingClientRect().top;
+          tiers.forEach(tier => {
+            const tierTop = tier.getBoundingClientRect().top - climbTop;
+            const tierBot = tierTop + tier.offsetHeight;
+            tier.classList.toggle("v11-tier--on", pinY >= tierTop && pinY < tierBot);
+          });
+        }
       }
 
       raf = requestAnimationFrame(tick);
@@ -333,10 +346,11 @@ export function LandingShowcase() {
 
       {/* ── Fixed background ─────────────────────────────────────── */}
       <div className="v11-bg" aria-hidden="true">
-        <div className="v11-aurora"   ref={bgAuroraRef} />
-        <div className="v11-grid"     ref={bgGridRef} />
-        <div className="v11-vignette" ref={bgVigRef} />
+        <div className="v11-aurora"    ref={bgAuroraRef} />
+        <div className="v11-grid"      ref={bgGridRef} />
+        <div className="v11-vignette"  ref={bgVigRef} />
         <div className="v11-noise" />
+        <div className="v11-scanlines" />
       </div>
 
       <div className="v11-progress" ref={progressRef} aria-hidden="true" />
@@ -559,11 +573,12 @@ export function LandingShowcase() {
 
             <div className="v11-climb" ref={climbElRef}>
               <span className="v11-climb-pin" ref={climbPinRef} />
-              {TIERS.map((tier) => (
+              {TIERS.map((tier, ti) => (
                 <div
                   key={tier.id}
                   className={`v11-tier${"god" in tier && tier.god ? " v11-god" : ""}`}
                   style={{ "--tier-c": tier.c } as React.CSSProperties}
+                  ref={el => { tierRefs.current[ti] = el; }}
                 >
                   <div className="v11-tnm">
                     <span className="v11-tnum">{tier.id.toUpperCase()}</span>
