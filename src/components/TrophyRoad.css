@@ -87,6 +87,51 @@
   margin-top: 6px;
 }
 
+/* Competitive standing — second progression spine, shown under the Ascent tier */
+.tr-ov-standing {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--tr-line);
+}
+.tr-ov-standing-eyebrow {
+  font-family: var(--tr-mono); font-size: 10px;
+  letter-spacing: 0.30em; text-transform: uppercase;
+  color: var(--tr-fog); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+}
+.tr-ov-standing-eyebrow::before {
+  content: ""; width: 18px; height: 1px; background: var(--tc, var(--tr-fog));
+}
+.tr-ov-standing-row {
+  display: flex; align-items: baseline; gap: 12px;
+}
+.tr-ov-standing-league {
+  font-family: var(--tr-shout);
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: 0.03em; text-transform: uppercase;
+  color: var(--tc, var(--tr-ink)); line-height: 1;
+}
+.tr-ov-standing-rating {
+  margin-left: auto;
+  font-family: var(--tr-shout); font-size: 20px;
+  letter-spacing: 0.04em; color: var(--tr-ink);
+}
+.tr-ov-standing-rating-lbl {
+  font-family: var(--tr-mono); font-size: 9px;
+  letter-spacing: 0.22em; color: var(--tr-fog);
+}
+.tr-ov-standing-meta {
+  display: flex; justify-content: space-between; gap: 12px;
+  margin-top: 8px;
+  font-family: var(--tr-mono); font-size: 10px;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--tr-fog);
+}
+.tr-ov-standing-empty {
+  font-family: var(--tr-serif); font-style: italic;
+  font-size: 13px; color: var(--tr-ink-dim);
+}
+
 .tr-ov-right { position: relative; }
 .tr-ov-bar-head {
   display: flex; align-items: baseline; justify-content: space-between;

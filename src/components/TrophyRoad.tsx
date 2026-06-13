@@ -16,6 +16,8 @@ import {
   type RoadNode as BaseRoadNode,
 } from "@/lib/trophy-road-data";
 import { usePlayerXp, useOwnedEcliptars } from "@/hooks/use-player-xp";
+import { usePlayerRating } from "@/hooks/use-player-rating";
+import { ratingLeague, leagueProgress } from "@/lib/rating";
 import { claimArchetypeReward, claimEcliptarBySlug, getEcliptarsByArchetype } from "@/lib/ecliptars";
 import { claimChest, fetchClaimedChestNodeIds, CHEST_BONUS_XP } from "@/lib/xp-service";
 import "./TrophyRoad.css";
@@ -563,13 +565,27 @@ function CinemaRoad({ allNodes, ownedSlugs, claimedChestIds, onClaimed, onChestC
 
 /* ── Overview ──────────────────────────────────────────────── */
 
-function Overview({ playerXp }: { playerXp: number }) {
+interface StandingProps {
+  rating: number;
+  peakRating: number;
+  wins: number;
+  losses: number;
+  ranked: boolean;
+  loading: boolean;
+}
+
+function Overview({ playerXp, standing }: { playerXp: number; standing: StandingProps }) {
   const tiers = TIER_ORDER.map(id => TIERS[id]);
   const currentTier = [...tiers].reverse().find(t => playerXp >= t.xpRequired) ?? TIERS.bronze;
   const nextTier = tiers.find(t => t.xpRequired > playerXp);
   const pct = nextTier
     ? Math.max(0, Math.min(100, ((playerXp - currentTier.xpRequired) / (nextTier.xpRequired - currentTier.xpRequired)) * 100))
     : 100;
+
+  const league = ratingLeague(standing.rating);
+  const { toNext, next } = leagueProgress(standing.rating);
+  const games = standing.wins + standing.losses;
+  const winRate = games > 0 ? Math.round((standing.wins / games) * 100) : 0;
 
   return (
     <motion.div
@@ -579,9 +595,38 @@ function Overview({ playerXp }: { playerXp: number }) {
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="tr-ov-left">
-        <div className="tr-ov-eyebrow">Current Rank</div>
+        <div className="tr-ov-eyebrow">The Ascent · Mastery</div>
         <div className="tr-ov-tier-name">{currentTier.name}</div>
         <div className="tr-ov-tier-label">{currentTier.label}</div>
+
+        {/* Competitive standing — the *other* progression spine. The Ascent
+            above is permanent and only climbs; this is the seasonal,
+            gain-and-loss rating that drives PvP and the leaderboard. */}
+        <div className={`tr-ov-standing tr-tier--${league.id}`}>
+          <div className="tr-ov-standing-eyebrow">Competitive · League</div>
+          {standing.loading ? (
+            <div className="tr-ov-standing-row">
+              <span className="tr-ov-standing-league">—</span>
+            </div>
+          ) : standing.ranked ? (
+            <>
+              <div className="tr-ov-standing-row">
+                <span className="tr-ov-standing-league">{league.name}</span>
+                <span className="tr-ov-standing-rating">{standing.rating}<span className="tr-ov-standing-rating-lbl"> RTG</span></span>
+              </div>
+              <div className="tr-ov-standing-meta">
+                <span>{standing.wins}W · {standing.losses}L · {winRate}%</span>
+                <span>
+                  {next ? <>Peak {standing.peakRating} · {toNext} to {next.name}</> : <>Peak {standing.peakRating} · top league</>}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="tr-ov-standing-empty">
+              Unranked — win a battle to claim a league.
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="tr-ov-right">
@@ -738,6 +783,7 @@ function ArchetypeLegend() {
 
 export function TrophyRoad({ compact = false }: { compact?: boolean }) {
   const { xp: playerXp } = usePlayerXp();
+  const { rating, peakRating, wins, losses, ranked, loading: ratingLoading } = usePlayerRating();
   const { slugs: ownedSlugs, refresh: refreshOwned } = useOwnedEcliptars();
   const [claimedChestIds, setClaimedChestIds] = useState<Set<number>>(new Set());
   const refreshChests = async () => setClaimedChestIds(await fetchClaimedChestNodeIds());
@@ -840,7 +886,10 @@ export function TrophyRoad({ compact = false }: { compact?: boolean }) {
   // Full version
   return (
     <div className="tr-shell">
-      <Overview playerXp={playerXp} />
+      <Overview
+        playerXp={playerXp}
+        standing={{ rating, peakRating, wins, losses, ranked, loading: ratingLoading }}
+      />
 
       <CinemaRoad
         allNodes={allNodes}
