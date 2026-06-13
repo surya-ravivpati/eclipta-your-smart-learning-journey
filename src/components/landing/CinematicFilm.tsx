@@ -100,7 +100,7 @@ export function CinematicFilm() {
   const starsRef     = useRef<HTMLDivElement>(null);
   const coreRef      = useRef<HTMLDivElement>(null);
   const titleRef     = useRef<HTMLDivElement>(null);
-  const stepRef      = useRef<HTMLDivElement>(null);
+  const stepRefs     = useRef<(HTMLParagraphElement | null)[]>([]);
   const hintRef      = useRef<HTMLDivElement>(null);
 
   const s2Ref        = useRef<HTMLElement>(null);
@@ -186,11 +186,16 @@ export function CinematicFilm() {
       const flash =
         smooth(clamp01((p1 - 0.55) / 0.28)) * (1 - smooth(clamp01(p2 / 0.10)));
       if (flashRef.current) flashRef.current.style.opacity = flash.toFixed(3);
-      if (stepRef.current) {
-        const v = win(p1, 0.52, 0.97, 0.13);
-        stepRef.current.style.opacity = v.toFixed(3);
-        stepRef.current.style.transform = `scale(${(0.97 + v * 0.03).toFixed(3)})`;
-      }
+      /* Inside the light — a sequence of dark-ink beats, one per stretch
+         of scroll, each dissolving before the next arrives */
+      const STEP_WINDOWS: [number, number][] = [[0.54, 0.71], [0.73, 0.87], [0.89, 1.04]];
+      stepRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const v = win(p1, STEP_WINDOWS[i][0], STEP_WINDOWS[i][1], 0.07);
+        el.style.opacity = v.toFixed(3);
+        el.style.transform = `translateY(${((1 - v) * 14).toFixed(1)}px) scale(${(0.97 + v * 0.03).toFixed(3)})`;
+        el.style.filter = v < 0.99 ? `blur(${((1 - v) * 6).toFixed(1)}px)` : "";
+      });
       hintRef.current?.classList.toggle("cf-hidden", p1 > 0.03);
 
       /* ── ACT II — the morphing ring ──────────────────────────── */
@@ -327,8 +332,10 @@ export function CinematicFilm() {
             </p>
           </div>
 
-          <div className="cf-step" ref={stepRef} aria-hidden="true">
-            <p>Step <em>inside.</em></p>
+          <div className="cf-step" aria-hidden="true">
+            <p ref={el => { stepRefs.current[0] = el; }}>Step <em>inside.</em></p>
+            <p ref={el => { stepRefs.current[1] = el; }}>The arena is <em>listening.</em></p>
+            <p ref={el => { stepRefs.current[2] = el; }}>Show it what you <em>know.</em></p>
           </div>
 
           <div className="cf-hint" ref={hintRef} aria-hidden="true">
