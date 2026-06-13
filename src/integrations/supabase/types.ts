@@ -1096,6 +1096,15 @@ export type Database = {
         Args: { p_chest_label: string; p_node_id: number }
         Returns: number
       }
+      claim_ecliptar: {
+        Args: {
+          p_archetype: string
+          p_name: string
+          p_node_id: number
+          p_slug: string
+        }
+        Returns: Json
+      }
       complete_ghost_battle: {
         Args: { p_opponent_rating: number; p_session_id: string }
         Returns: Json
@@ -1109,6 +1118,7 @@ export type Database = {
         Args: { p_archetype: string; p_challenged_id: string }
         Returns: string
       }
+      enqueue_pvp: { Args: { p_archetype: string }; Returns: undefined }
       find_pvp_match: {
         Args: { p_archetype: string; p_rating: number }
         Returns: Json
