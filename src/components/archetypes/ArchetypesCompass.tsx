@@ -1,26 +1,22 @@
 /**
  * ArchetypesCompass — scroll-driven cinematic showcase of every Eclipta
- * archetype as if the user is travelling through a symbolic compass wheel.
+ * archetype. The user travels a rotating compass; the needle locks onto
+ * each archetype in turn while a panel cross-fades its identity.
  *
- * Layout:
- *   * The outer <section> is tall enough to give each archetype its own
- *     scroll window. Inside, a position:sticky viewport pins for the whole
- *     travel and hosts three z-layers:
- *       - Background:  drifting star grid + radial colour wash + vignette
- *       - Midground:   the large rotating compass wheel + active node halo
- *       - Foreground:  active archetype title, sigil, descriptor, stat tags
+ * Layout (three pinned z-layers inside a tall sticky section):
+ *   - Background:  volumetric aura wash in the active colour + slow sweep
+ *   - Midground:   rotating wheel of archetype icons + a fixed lock-on arc
+ *   - Foreground:  active archetype panel (name, blurb, stats)
  *
- * Animation:
- *   * useScroll() yields scrollYProgress across the section (0 → 1).
- *   * Each archetype owns a window [i/N, (i+1)/N]; titles/glyphs are driven
- *     by useTransform over the archetype's own window for crisp entrances.
- *   * Colours step (not interpolate) between archetypes so we never feed
- *     framer-motion an oklch() string array — it can only interpolate
- *     rgb/hex/hsl, and the previous version threw at mount because of it.
- *
- * Accessibility:
- *   * Respects prefers-reduced-motion. When set, the compass holds still
- *     and every archetype panel renders fully visible.
+ * Motion plumbing (kept from the battle-tested version — do not "simplify"):
+ *   * useScroll() → scrollYProgress (0→1) across the section.
+ *   * activeIndex is discrete; wheel rotation springs toward it so wheel
+ *     position and panel text are always driven by the SAME event and can
+ *     never drift out of phase (a real bug we hit when they read scroll
+ *     through different mechanisms).
+ *   * Colours STEP between archetypes via callback transforms — never fed
+ *     to framer-motion as an array, which can't interpolate oklch().
+ *   * prefers-reduced-motion holds the wheel still and shows panels plainly.
  */
 import { useRef, useState, useEffect } from "react";
 import {
@@ -34,45 +30,47 @@ const ORDER: ArchetypeId[] = [
   "speedster", "tank", "chud", "gambler", "healer", "fulcrum", "accelerator", "god",
 ];
 
-// Section layout in viewport heights. The total section becomes
-//   (N + 2) * SLOT_VH
-// where one extra SLOT_VH sits at the top as an intro buffer and one at
-// the bottom as an outro buffer. Everything maps cleanly inside [0, 1]
-// of scrollYProgress, so no out-of-range stop ever needs to be clamped.
-//
-// SLOT_VH controls how much scroll each archetype owns. Previously this
-// was 70vh — when sandwiched between the existing v11 hero (240vh) and
-// the v11 Loop section (380vh) the compass alone needed 600vh of pinned
-// scrolling, and users were giving up at gambler (≈ 0.45 of progress)
-// before reaching healer, fulcrum, accelerator, god. 40vh makes the
-// whole tour traversable in ~3 page heights — fast enough that nobody
-// bails halfway, slow enough that each archetype still gets a real beat.
+// Scroll budget per archetype, in viewport heights. Section height is
+// (N + 2) * SLOT_VH — one buffer slot at each end so the first/last
+// archetype still gets a full dwell inside [0,1] of scrollYProgress.
 const SLOT_VH = 40;
 
-// Per-archetype aura colour. Kept as rgba hex so framer-motion can use
-// them safely in style props (no oklch interpolation gotchas) and the
-// shadow / glow math works in older browsers.
+// Film fonts (loaded globally from the <head> in __root.tsx).
+const F_DISPLAY = "'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif";
+const F_SERIF   = "'Instrument Serif', 'Times New Roman', serif";
+const F_MONO    = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace";
+
+// Per-archetype identity colour. Hex (not oklch) so framer-motion can use
+// them in style props and withAlpha() math works everywhere.
 const AURA: Record<ArchetypeId, string> = {
-  speedster:   "#5dd9ff",  // cyan
-  tank:        "#c8c8c8",  // silver
-  chud:        "#ff5566",  // champion red
-  gambler:     "#f5c542",  // gold
-  healer:      "#ff5fa1",  // pink
-  fulcrum:     "#a64dff",  // purple
-  accelerator: "#9fb0c8",  // platinum
-  god:         "#ffd86b",  // god / sun
+  speedster:   "#5dd9ff",
+  tank:        "#cbd2dd",
+  chud:        "#ff5d6c",
+  gambler:     "#f5c542",
+  healer:      "#ff5fa1",
+  fulcrum:     "#8a6bff",
+  accelerator: "#9fc4e8",
+  god:         "#ffd86b",
 };
 
-const SIGIL_GLYPH: Record<ArchetypeId, string> = {
-  speedster:   "⟫",
-  tank:        "◇",
-  chud:        "✶",
-  gambler:     "⚄",
-  healer:      "✚",
-  fulcrum:     "⚖",
-  accelerator: "↟",
-  god:         "✺",
+// One-word serif label per archetype — the "role" beneath the name.
+const ROLE: Record<ArchetypeId, string> = {
+  speedster:   "Tempo",
+  tank:        "Bulwark",
+  chud:        "Glass cannon",
+  gambler:     "Chaos",
+  healer:      "Sustain",
+  fulcrum:     "Balance",
+  accelerator: "Momentum",
+  god:         "Apex",
 };
+
+/* Wheel geometry — viewBox is 400×400 centred on origin. */
+const VIEW = 400;
+const R_OUTER  = 188;
+const R_TICK_IN = 176;
+const R_NODE   = 128; // icon-node ring
+const R_HUB    = 54;
 
 export function ArchetypesCompass() {
   const containerRef = useRef<HTMLElement | null>(null);
@@ -84,34 +82,22 @@ export function ArchetypesCompass() {
   });
 
   const N = ORDER.length;
+  const wedge = 360 / N;
 
-  // Active archetype = the one whose centre we're closest to. We map
-  // scrollYProgress through the "active band" (0.1..0.9 — the part of the
-  // section that holds archetypes, sandwiched between the intro and outro
-  // buffers) so the user dwells on each archetype evenly.
+  // Active archetype = whichever sits in the "active band" (between the
+  // intro/outro buffer slots), so dwell time is even across all eight.
   const activeIndex = useTransform(scrollYProgress, (p) => {
     const t = Math.max(0, Math.min(1, (p - 1 / (N + 2)) / (N / (N + 2))));
     return Math.max(0, Math.min(N - 1, Math.floor(t * N)));
   });
   const auraColour = useTransform(activeIndex, (i) => AURA[ORDER[i]]);
 
-  // Wheel rotation is driven by the discrete active index, then smoothed
-  // through a spring. Previously the wheel rotated continuously off
-  // scrollYProgress — so during each archetype's full-visibility window
-  // the user saw the wheel sweep through 1+ wedges while the words stayed
-  // put, reading as "the words only change every 3 sections of the
-  // compass." With this version the wheel literally only moves when the
-  // active archetype changes, so wheel-position and text-content are
-  // always in lockstep.
-  const wheelTarget = useTransform(activeIndex, (i) => -(i + 0.5) * (360 / N));
-  const wheelRotate = useSpring(wheelTarget, {
-    stiffness: 110,
-    damping: 22,
-    mass: 0.7,
-  });
+  // Wheel rotates so the active wedge sits under the (fixed, top) needle.
+  // Springing the discrete target keeps wheel + text in lockstep.
+  const wheelTarget = useTransform(activeIndex, (i) => -(i + 0.5) * wedge);
+  const wheelRotate = useSpring(wheelTarget, { stiffness: 110, damping: 22, mass: 0.7 });
 
-  // segIndex stays continuous for the glyph scale-up effect — we want the
-  // glyphs to ease in as their wedge approaches the needle, not snap.
+  // Continuous segIndex drives per-icon scale/opacity falloff (eases, not snaps).
   const segIndex = useTransform(
     scrollYProgress,
     [1 / (N + 2), (N + 1) / (N + 2)],
@@ -133,68 +119,66 @@ export function ArchetypesCompass() {
           reduce={!!reduce}
         />
         <ForegroundLayer activeIndex={activeIndex} reduce={!!reduce} />
-        <ProgressTrack scrollYProgress={scrollYProgress} />
+        <ProgressRail activeIndex={activeIndex} reduce={!!reduce} />
       </div>
     </section>
   );
 }
 
-// ─── Background ──────────────────────────────────────────────────────
+/* ─── Background ─────────────────────────────────────────────────────── */
 
 function BackgroundLayer({
   auraColour, reduce,
 }: { auraColour: MotionValue<string>; reduce: boolean }) {
-  // String-to-string transform via callback is safe — no array
-  // interpolation across colour spaces.
-  const radial = useTransform(
+  const wash = useTransform(
     auraColour,
-    (c) => `radial-gradient(60% 60% at 50% 45%, ${withAlpha(c, 0.18)} 0%, transparent 70%)`,
+    (c) => `radial-gradient(58% 56% at 50% 46%, ${withAlpha(c, 0.16)} 0%, transparent 68%)`,
+  );
+  const sweepTint = useTransform(
+    auraColour,
+    (c) => `conic-gradient(from 0deg at 50% 46%, transparent 0deg, ${withAlpha(c, 0.07)} 38deg, transparent 110deg, transparent 360deg)`,
   );
   return (
     <>
+      {/* Aura wash in the active colour */}
       <motion.div
         className="absolute inset-0 pointer-events-none transition-[background] duration-700 ease-out"
-        style={{ background: radial }}
+        style={{ background: wash }}
         aria-hidden
       />
+      {/* Fine dot field, masked toward the centre */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.35]"
+        className="absolute inset-0 pointer-events-none opacity-25"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 1.5px)",
-          backgroundSize: "40px 40px",
-          maskImage: "radial-gradient(circle at 50% 45%, black 0%, transparent 80%)",
-          WebkitMaskImage: "radial-gradient(circle at 50% 45%, black 0%, transparent 80%)",
+            "radial-gradient(circle at 1px 1px, rgba(180,205,255,0.16) 1px, transparent 1.5px)",
+          backgroundSize: "44px 44px",
+          maskImage: "radial-gradient(circle at 50% 46%, black 0%, transparent 78%)",
+          WebkitMaskImage: "radial-gradient(circle at 50% 46%, black 0%, transparent 78%)",
         }}
         aria-hidden
       />
+      {/* Slow volumetric light sweep — one beam, recoloured to the active aura */}
       {!reduce && (
-        <div
-          className="absolute inset-0 pointer-events-none opacity-30 animate-arena-drift"
-          style={{
-            background:
-              "conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(166,77,255,0.06) 60deg, transparent 120deg, rgba(255,95,161,0.06) 180deg, transparent 240deg, rgba(93,217,255,0.06) 300deg, transparent 360deg)",
-          }}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: sweepTint }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 48, repeat: Infinity, ease: "linear" }}
           aria-hidden
         />
       )}
+      {/* Edge vignette */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 50%, transparent 50%, rgba(0,0,0,0.6) 100%)",
-        }}
+        style={{ background: "radial-gradient(circle at 50% 50%, transparent 48%, rgba(4,5,10,0.72) 100%)" }}
         aria-hidden
       />
     </>
   );
 }
 
-// ─── Compass wheel ───────────────────────────────────────────────────
-//
-// Wheel rings + wedge separators live inside SVG. Glyphs that sit on the
-// wedges are HTML overlays (absolutely positioned) instead of SVG <text>
-// nodes — way fewer cross-browser transform gotchas.
+/* ─── Compass wheel ──────────────────────────────────────────────────── */
 
 function CompassLayer({
   wheelRotate, segIndex, auraColour, reduce,
@@ -208,104 +192,110 @@ function CompassLayer({
   const wedge = 360 / N;
   const haloShadow = useTransform(
     auraColour,
-    (c) => `0 0 120px 20px ${withAlpha(c, 0.45)}, 0 0 240px 60px ${withAlpha(c, 0.18)}`,
+    (c) => `0 0 140px 24px ${withAlpha(c, 0.32)}, 0 0 300px 80px ${withAlpha(c, 0.12)}`,
   );
-  const needleColour = useTransform(auraColour, (c) => c);
+
+  // Fixed lock-on arc spanning the top wedge (centred on -90°).
+  const a0 = (-90 - wedge / 2) * Math.PI / 180;
+  const a1 = (-90 + wedge / 2) * Math.PI / 180;
+  const arcPath =
+    `M ${(Math.cos(a0) * R_OUTER).toFixed(2)} ${(Math.sin(a0) * R_OUTER).toFixed(2)} ` +
+    `A ${R_OUTER} ${R_OUTER} 0 0 1 ${(Math.cos(a1) * R_OUTER).toFixed(2)} ${(Math.sin(a1) * R_OUTER).toFixed(2)}`;
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Breathing halo */}
       <motion.div
         className="absolute rounded-full transition-[box-shadow] duration-700 ease-out"
-        style={{
-          width:  "min(140vh, 140vw)",
-          height: "min(140vh, 140vw)",
-          boxShadow: haloShadow,
-        }}
+        style={{ width: "min(132vh, 132vw)", height: "min(132vh, 132vw)", boxShadow: haloShadow }}
+        animate={reduce ? undefined : { scale: [1, 1.04, 1] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         aria-hidden
       />
+
+      {/* Rotating wheel */}
       <motion.div
         className="relative"
         style={{
-          width:  "min(110vh, 110vw)",
-          height: "min(110vh, 110vw)",
+          width: "min(108vh, 108vw)",
+          height: "min(108vh, 108vw)",
           rotate: reduce ? 0 : wheelRotate,
         }}
         aria-hidden
       >
-        <svg viewBox="-200 -200 400 400" className="w-full h-full absolute inset-0">
-          <defs>
-            <radialGradient id="wheel-fade" cx="50%" cy="50%" r="50%">
-              <stop offset="60%" stopColor="rgba(255,255,255,0)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
-            </radialGradient>
-          </defs>
-          <circle cx="0" cy="0" r="195" fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="0.5" />
-          <circle cx="0" cy="0" r="170" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-          <circle cx="0" cy="0" r="120" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-          <circle cx="0" cy="0" r="60"  fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="0.5" />
-          <circle cx="0" cy="0" r="200" fill="url(#wheel-fade)" />
+        <svg viewBox={`${-VIEW / 2} ${-VIEW / 2} ${VIEW} ${VIEW}`} className="w-full h-full absolute inset-0">
+          {/* Two clean rings */}
+          <circle cx="0" cy="0" r={R_OUTER} fill="none" stroke="rgba(210,225,255,0.14)" strokeWidth="0.6" />
+          <circle cx="0" cy="0" r={R_HUB}  fill="none" stroke="rgba(210,225,255,0.12)" strokeWidth="0.6" />
+
+          {/* Boundary ticks (between wedges) */}
           {ORDER.map((_, i) => {
-            const angle = -90 + i * wedge;
-            const rad = (angle * Math.PI) / 180;
-            const x1 = Math.cos(rad) * 60;
-            const y1 = Math.sin(rad) * 60;
-            const x2 = Math.cos(rad) * 195;
-            const y2 = Math.sin(rad) * 195;
+            const ang = (-90 + i * wedge - wedge / 2) * Math.PI / 180;
             return (
               <line
-                key={i}
-                x1={x1} y1={y1} x2={x2} y2={y2}
-                stroke="rgba(255,255,255,0.08)"
-                strokeWidth="0.5"
+                key={`tick-${i}`}
+                x1={(Math.cos(ang) * R_TICK_IN).toFixed(2)} y1={(Math.sin(ang) * R_TICK_IN).toFixed(2)}
+                x2={(Math.cos(ang) * R_OUTER).toFixed(2)}   y2={(Math.sin(ang) * R_OUTER).toFixed(2)}
+                stroke="rgba(210,225,255,0.16)" strokeWidth="0.6"
               />
             );
           })}
-          <circle cx="0" cy="0" r="3"  fill="rgba(255,255,255,0.6)" />
-          <circle cx="0" cy="0" r="14" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="0.5" />
+
+          {/* Hub core */}
+          <circle cx="0" cy="0" r="2.6" fill="rgba(220,235,255,0.7)" />
         </svg>
 
-        {/* HTML glyph overlay — one per wedge, positioned at the wedge's
-            mid-angle on a ring 145 units out. Counter-rotates the wheel
-            so glyphs stay upright. */}
+        {/* Icon nodes — HTML overlay, counter-rotated to stay upright */}
         {ORDER.map((id, i) => {
-          const angle = -90 + i * wedge + wedge / 2;
-          const rad = (angle * Math.PI) / 180;
-          // Wheel viewBox is 400x400 centred on 0. The rendered size is
-          // min(110vh,110vw); 145 of those 400 viewBox units → 36.25%.
-          const radiusPct = (145 / 400) * 100;
-          const x = 50 + Math.cos(rad) * radiusPct;
-          const y = 50 + Math.sin(rad) * radiusPct;
+          const ang = (-90 + i * wedge + wedge / 2) * Math.PI / 180;
+          const radiusPct = (R_NODE / VIEW) * 100;
+          const x = 50 + Math.cos(ang) * radiusPct;
+          const y = 50 + Math.sin(ang) * radiusPct;
           return (
-            <CompassGlyph
+            <CompassNode
               key={id}
               id={id}
               xPct={x} yPct={y}
               i={i}
               segIndex={segIndex}
-              wheelAngle={angle + 90} // 0 when at 12 o'clock
+              wheelAngle={-90 + i * wedge + wedge / 2 + 90}
               reduce={reduce}
             />
           );
         })}
       </motion.div>
 
-      {/* Static needle pointing at 12 o'clock so the wheel feels like
-          what's actually moving. */}
-      <div className="absolute top-[12%] flex flex-col items-center gap-1" aria-hidden>
-        <motion.div
-          className="w-px h-10"
-          style={{ background: needleColour }}
-        />
-        <motion.div
-          className="w-3 h-3 rotate-45 border-2"
-          style={{ borderColor: needleColour }}
-        />
+      {/* Fixed lock-on overlay (does NOT rotate) — frames whichever node is
+          currently at the top, recolouring smoothly via CSS transition. */}
+      <div className="absolute" style={{ width: "min(108vh, 108vw)", height: "min(108vh, 108vw)" }} aria-hidden>
+        <svg viewBox={`${-VIEW / 2} ${-VIEW / 2} ${VIEW} ${VIEW}`} className="w-full h-full">
+          {/* Glowing arc on the active wedge */}
+          <motion.path
+            d={arcPath}
+            fill="none"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            style={{ stroke: auraColour, transition: "stroke 0.6s ease", filter: "drop-shadow(0 0 6px currentColor)" }}
+          />
+          {/* Spoke from hub to the active node */}
+          <motion.line
+            x1="0" y1={-R_HUB - 4} x2="0" y2={-R_NODE + 22}
+            strokeWidth="1"
+            style={{ stroke: auraColour, transition: "stroke 0.6s ease", opacity: 0.5 }}
+          />
+          {/* Needle marker just inside the outer ring */}
+          <motion.path
+            d={`M -7 ${-R_OUTER + 4} L 0 ${-R_OUTER + 16} L 7 ${-R_OUTER + 4}`}
+            fill="none" strokeWidth="1.6" strokeLinejoin="round"
+            style={{ stroke: auraColour, transition: "stroke 0.6s ease" }}
+          />
+        </svg>
       </div>
     </div>
   );
 }
 
-function CompassGlyph({
+function CompassNode({
   id, xPct, yPct, i, segIndex, wheelAngle, reduce,
 }: {
   id: ArchetypeId;
@@ -316,67 +306,64 @@ function CompassGlyph({
   reduce: boolean;
 }) {
   const N = ORDER.length;
-  // Shortest-path distance from this archetype to the live focus.
+  const Icon = ARCHETYPES[id].icon;
+  const aura = AURA[id];
+
+  // Shortest-path distance from this node to the live focus.
   const distance = useTransform(segIndex, (s) => {
     const raw = Math.abs(s - (i + 0.5));
     return Math.min(raw, N - raw);
   });
-  const scale   = useTransform(distance, [0, 2], [1.6, 0.7]);
-  const opacity = useTransform(distance, [0, 1.5, 3], [1, 0.55, 0.25]);
+  const scale   = useTransform(distance, [0, 0.5, 2], [1.35, 1.1, 0.78]);
+  const opacity = useTransform(distance, [0, 0.5, 2.5], [1, 0.8, 0.28]);
+  const glow    = useTransform(distance, [0, 0.5], [1, 0]);
+  const ring    = useTransform(glow, (g) =>
+    `${withAlpha(aura, 0.25 + g * 0.6)}`);
+  const shadow  = useTransform(glow, (g) =>
+    g > 0.05 ? `0 0 ${(10 + g * 26).toFixed(0)}px ${withAlpha(aura, 0.2 + g * 0.5)}` : "none");
+  const bg      = useTransform(glow, (g) => withAlpha(aura, 0.06 + g * 0.16));
 
   return (
     <motion.div
-      className="absolute font-serif font-bold pointer-events-none select-none"
+      className="absolute pointer-events-none select-none"
       style={{
         left: `${xPct}%`,
-        top:  `${yPct}%`,
-        // Counter-rotate to keep upright while the wheel turns.
+        top: `${yPct}%`,
         transform: `translate(-50%, -50%) rotate(${-wheelAngle}deg)`,
-        color: AURA[id],
-        textShadow: `0 0 14px ${AURA[id]}`,
-        fontSize: "clamp(1rem, 2.4vw, 1.6rem)",
-        scale:    reduce ? 1   : scale,
-        opacity:  reduce ? 0.8 : opacity,
+        scale: reduce ? 1 : scale,
+        opacity: reduce ? 0.85 : opacity,
       }}
     >
-      {SIGIL_GLYPH[id]}
+      <motion.div
+        className="flex items-center justify-center rounded-full border"
+        style={{
+          width: "clamp(40px, 5.2vw, 60px)",
+          height: "clamp(40px, 5.2vw, 60px)",
+          borderColor: reduce ? withAlpha(aura, 0.5) : ring,
+          background: reduce ? withAlpha(aura, 0.1) : bg,
+          boxShadow: reduce ? "none" : shadow,
+          color: aura,
+          backdropFilter: "blur(2px)",
+        }}
+      >
+        <Icon style={{ width: "44%", height: "44%" }} />
+      </motion.div>
     </motion.div>
   );
 }
 
-// ─── Foreground ──────────────────────────────────────────────────────
-//
-// Earlier this layer rendered one motion.div per archetype with opacity
-// transforms driven directly by scrollYProgress. That worked fine on the
-// standalone /archetypes page but on the homepage — where the compass is
-// sandwiched between the v11 hero (with its own RAF-driven animations)
-// and the Loop section — users perceived the text as "extremely delayed"
-// after the speedster→tank transition. The wheel and the text were
-// reading scroll updates through different mechanisms (spring vs raw
-// transforms), and any tiny RAF stutter from the surrounding sections
-// made them drift out of phase.
-//
-// Now both wheel and text snap on the same discrete activeIndex change.
-// AnimatePresence handles the visible fade so the transition still
-// feels cinematic, but there's no way for the text to lag the wheel
-// (or vice versa) — they're literally driven by the same event.
+/* ─── Foreground panel ───────────────────────────────────────────────── */
 
 function ForegroundLayer({
   activeIndex, reduce,
 }: { activeIndex: MotionValue<number>; reduce: boolean }) {
-  // Mirror the MotionValue into React state so we can use AnimatePresence
-  // (which is keyed on React state changes, not motion values).
   const [active, setActive] = useState(0);
   useMotionValueEvent(activeIndex, "change", (i) => setActive(Math.round(i)));
-  // Initial sync in case the section is already part-way scrolled when
-  // we mount (e.g. when navigating back to the page).
-  useEffect(() => {
-    setActive(Math.round(activeIndex.get()));
-  }, [activeIndex]);
+  useEffect(() => { setActive(Math.round(activeIndex.get())); }, [activeIndex]);
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div className="relative w-full max-w-3xl mx-auto px-6 h-[60vh]">
+      <div className="relative w-full max-w-3xl mx-auto px-6 h-[62vh]">
         <AnimatePresence mode="wait" initial={false}>
           <ArchetypePanel key={ORDER[active]} id={ORDER[active]} i={active} reduce={reduce} />
         </AnimatePresence>
@@ -387,63 +374,65 @@ function ForegroundLayer({
 
 function ArchetypePanel({
   id, i, reduce,
-}: {
-  id: ArchetypeId;
-  i: number;
-  reduce: boolean;
-}) {
+}: { id: ArchetypeId; i: number; reduce: boolean }) {
   const arch = ARCHETYPES[id];
-  const Icon = arch.icon;
   const aura = AURA[id];
+  // Names read "The Speedster" — render the article as a quiet serif kicker
+  // and the noun as the headline.
+  const parts = arch.name.split(" ");
+  const lead = parts.length > 1 ? parts[0] : "";
+  const noun = parts.length > 1 ? parts.slice(1).join(" ") : arch.name;
 
   return (
     <motion.div
       className="absolute inset-0 flex flex-col items-center justify-center text-center"
-      initial={reduce ? false : { opacity: 0, y: 24, scale: 0.96 }}
-      animate={reduce ? undefined : { opacity: 1, y: 0,  scale: 1    }}
-      exit={reduce ? undefined : { opacity: 0, y: -24, scale: 0.96 }}
-      transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+      initial={reduce ? false : { opacity: 0, y: 20 }}
+      animate={reduce ? undefined : { opacity: 1, y: 0 }}
+      exit={reduce ? undefined : { opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
       style={{ pointerEvents: "none" }}
     >
-      <div className="relative w-28 h-28 mb-6">
-        <div
-          className="absolute inset-0 rounded-full flex items-center justify-center border"
-          style={{
-            borderColor: aura,
-            boxShadow: `0 0 60px 0 ${withAlpha(aura, 0.5)}, inset 0 0 30px 0 ${withAlpha(aura, 0.15)}`,
-            background: `radial-gradient(circle at 50% 50%, ${withAlpha(aura, 0.10)}, transparent 70%)`,
-          }}
-        >
-          <Icon className="w-12 h-12" style={{ color: aura }} />
-        </div>
-        <div
-          className="absolute -top-3 -right-3 text-3xl font-serif select-none"
-          style={{ color: aura, textShadow: `0 0 20px ${aura}` }}
-          aria-hidden
-        >
-          {SIGIL_GLYPH[id]}
-        </div>
-      </div>
-
+      {/* Eyebrow */}
       <p
-        className="text-[10px] font-bold tracking-[0.4em] uppercase mb-3"
-        style={{ color: aura }}
+        className="mb-5 inline-flex items-center gap-3"
+        style={{ fontFamily: F_MONO, fontSize: 11, letterSpacing: "0.34em", textTransform: "uppercase", color: aura }}
       >
-        {String(i + 1).padStart(2, "0")} · ARCHETYPE
+        <span style={{ width: 22, height: 1, background: "currentColor", opacity: 0.7 }} />
+        {String(i + 1).padStart(2, "0")} / 08 · {ROLE[id]}
       </p>
 
-      <h2
-        className="font-display font-bold tracking-tight text-5xl md:text-7xl mb-4 leading-[1.05]"
-        style={{ textShadow: `0 0 30px ${withAlpha(aura, 0.4)}` }}
-      >
-        {arch.name}
+      {/* Name */}
+      <h2 className="mb-4 leading-[0.92]">
+        {lead && (
+          <span
+            className="block"
+            style={{ fontFamily: F_SERIF, fontStyle: "italic", fontSize: "clamp(20px, 2.4vw, 30px)", color: "var(--cf-dim, #b9bfcc)", opacity: 0.85 }}
+          >
+            {lead}
+          </span>
+        )}
+        <span
+          className="block"
+          style={{
+            fontFamily: F_DISPLAY, fontWeight: 200,
+            fontSize: "clamp(48px, 7vw, 100px)", letterSpacing: "-0.03em",
+            textShadow: `0 0 44px ${withAlpha(aura, 0.45)}`,
+          }}
+        >
+          {noun}
+        </span>
       </h2>
 
-      <p className="text-base md:text-lg text-foreground/80 max-w-xl leading-relaxed mb-6">
+      {/* Blurb */}
+      <p
+        className="max-w-xl mb-8"
+        style={{ fontSize: "clamp(15px, 1.6vw, 18px)", lineHeight: 1.62, color: "#c8cdd8", fontWeight: 300 }}
+      >
         {arch.description}
       </p>
 
-      <div className="flex gap-px bg-border/40 border border-border/40 backdrop-blur-md">
+      {/* Stats */}
+      <div className="flex items-stretch gap-3">
         <StatCell label="HP"   value={arch.statsAreRandom ? "??" : String(arch.maxHp)} aura={aura} />
         <StatCell
           label="DMG"
@@ -457,9 +446,10 @@ function ArchetypePanel({
         />
       </div>
 
+      {/* Passive tagline */}
       <p
-        className="mt-5 text-[11px] font-bold tracking-widest uppercase"
-        style={{ color: aura }}
+        className="mt-6"
+        style={{ fontFamily: F_MONO, fontSize: 10.5, letterSpacing: "0.22em", textTransform: "uppercase", color: withAlpha(aura, 0.85) }}
       >
         {arch.passive}
       </p>
@@ -469,36 +459,54 @@ function ArchetypePanel({
 
 function StatCell({ label, value, aura }: { label: string; value: string; aura: string }) {
   return (
-    <div className="bg-background/40 px-5 py-3 min-w-[90px]">
-      <div className="text-2xl font-display font-bold tabular-nums" style={{ color: aura }}>{value}</div>
-      <div className="text-[9px] font-bold tracking-widest text-muted-foreground mt-0.5">{label}</div>
+    <div
+      className="px-6 py-3.5 rounded-xl border backdrop-blur-md min-w-[92px]"
+      style={{ borderColor: withAlpha(aura, 0.22), background: withAlpha(aura, 0.05) }}
+    >
+      <div
+        className="tabular-nums"
+        style={{ fontFamily: F_DISPLAY, fontWeight: 200, fontSize: 26, letterSpacing: "-0.01em", color: aura }}
+      >
+        {value}
+      </div>
+      <div
+        className="mt-1"
+        style={{ fontFamily: F_MONO, fontSize: 9, letterSpacing: "0.26em", textTransform: "uppercase", color: "#767b87" }}
+      >
+        {label}
+      </div>
     </div>
   );
 }
 
-function ProgressTrack({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
+/* ─── Progress rail ──────────────────────────────────────────────────── */
+
+function ProgressRail({
+  activeIndex, reduce,
+}: { activeIndex: MotionValue<number>; reduce: boolean }) {
+  const [active, setActive] = useState(0);
+  useMotionValueEvent(activeIndex, "change", (i) => setActive(Math.round(i)));
+  useEffect(() => { setActive(Math.round(activeIndex.get())); }, [activeIndex]);
   const N = ORDER.length;
-  const fillPct = useTransform(scrollYProgress, (p) => `${Math.min(100, Math.max(0, p * 100))}%`);
+
   return (
-    <div className="absolute right-6 top-1/2 -translate-y-1/2 h-[50vh] w-px bg-border/40 pointer-events-none">
-      <motion.div
-        className="absolute top-0 left-0 w-px bg-foreground/80"
-        style={{ height: fillPct }}
-      />
+    <div className="absolute right-7 top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 pointer-events-none" aria-hidden>
       {ORDER.map((id, i) => {
+        const on = i === active;
+        const done = i < active;
         const aura = AURA[id];
-        const top = `${((i + 0.5) / N) * 100}%`;
         return (
-          <div
+          <motion.div
             key={id}
-            className="absolute -left-[3px] w-[7px] h-[7px] rounded-full border"
+            className="rounded-full"
             style={{
-              top,
-              borderColor: aura,
-              transform: "translateY(-50%)",
-              boxShadow: `0 0 10px ${aura}`,
+              width: on ? 8 : 6,
+              height: on ? 8 : 6,
+              background: on ? aura : done ? withAlpha(aura, 0.6) : "rgba(255,255,255,0.18)",
+              boxShadow: on ? `0 0 12px ${aura}` : "none",
             }}
-            aria-label={ARCHETYPES[id].name}
+            animate={reduce || !on ? undefined : { scale: [1, 1.35, 1] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
           />
         );
       })}
@@ -506,11 +514,10 @@ function ProgressTrack({ scrollYProgress }: { scrollYProgress: MotionValue<numbe
   );
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────
+/* ─── Helpers ────────────────────────────────────────────────────────── */
 
 /** Add an alpha channel to a 6-digit hex colour. Safe to call repeatedly. */
 function withAlpha(hex: string, alpha: number): string {
-  // Accept "#rrggbb"; anything else → return as-is (already alpha or named).
   if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
