@@ -272,15 +272,16 @@ function CinemaRoad({ allNodes, ownedSlugs, claimedChestIds, onClaimed, onChestC
   const progressRef = useRef<HTMLDivElement>(null);
   const bigNameRef  = useRef<HTMLDivElement>(null);
   const bigSubRef   = useRef<HTMLDivElement>(null);
-  const infoTitleRef = useRef<HTMLDivElement>(null);
   const infoDescRef  = useRef<HTMLDivElement>(null);
   const barTierRef   = useRef<HTMLSpanElement>(null);
+  const watermarkRef = useRef<HTMLDivElement>(null);
 
   const targetXRef   = useRef(0);
   const smoothXRef   = useRef(0);
   const maxXRef      = useRef(0);
   const lastTierRef  = useRef<TierId | null>(null);
   const tierOffsetsRef = useRef<Array<{ tier: TierId; left: number }>>([]);
+  const nodeElsRef   = useRef<Array<{ el: HTMLElement; center: number }>>([]);
 
   const totalCleared = allNodes.filter(n => n.unlocked).length;
 
@@ -295,31 +296,48 @@ function CinemaRoad({ allNodes, ownedSlugs, claimedChestIds, onClaimed, onChestC
     return items;
   }, [allNodes]);
 
-  // Update overlay text and aurora color — called from RAF, no setState
+  // Update header text + aurora color — called from RAF, no setState.
+  // Each tier change re-arms a blur-in entrance on the headline + watermark
+  // so crossing a tier boundary reads like a scene cut.
   const updateTierUI = useCallback((tierId: TierId) => {
     if (tierId === lastTierRef.current) return;
+    const isFirst = lastTierRef.current === null;
     lastTierRef.current = tierId;
     const tier = TIERS[tierId];
     cinemaRef.current?.style.setProperty("--cinema-tc", `var(--tr-${tierId})`);
     if (bigNameRef.current)   bigNameRef.current.textContent  = tier.name;
     if (bigSubRef.current)    bigSubRef.current.textContent   = tier.label;
-    if (infoTitleRef.current) infoTitleRef.current.textContent = tier.label;
     if (infoDescRef.current)  infoDescRef.current.textContent  = tier.description;
     if (barTierRef.current)   barTierRef.current.textContent   = tier.name;
+    if (watermarkRef.current) watermarkRef.current.textContent = tier.name;
+    if (!isFirst) {
+      [bigNameRef.current, bigSubRef.current, infoDescRef.current, watermarkRef.current].forEach(el => {
+        if (!el) return;
+        el.classList.remove("tr-tier-in");
+        void el.offsetWidth; // restart the entrance animation
+        el.classList.add("tr-tier-in");
+      });
+    }
   }, []);
 
-  // Capture tier divider offsets after first paint
+  // Capture tier divider offsets + node centers after paint (and on resize)
   useEffect(() => {
     const road = roadRef.current;
     const stage = stageRef.current;
     if (!road || !stage) return;
 
-    const dividers = road.querySelectorAll<HTMLElement>("[data-tier-start]");
-    tierOffsetsRef.current = Array.from(dividers).map(d => ({
-      tier: d.dataset.tierStart as TierId,
-      left: d.offsetLeft,
-    }));
-    maxXRef.current = Math.max(0, road.scrollWidth - stage.clientWidth);
+    const measure = () => {
+      const dividers = road.querySelectorAll<HTMLElement>("[data-tier-start]");
+      tierOffsetsRef.current = Array.from(dividers).map(d => ({
+        tier: d.dataset.tierStart as TierId,
+        left: d.offsetLeft,
+      }));
+      nodeElsRef.current = Array.from(
+        road.querySelectorAll<HTMLElement>(".tr-cinema-node"),
+      ).map(el => ({ el, center: el.offsetLeft + el.offsetWidth / 2 }));
+      maxXRef.current = Math.max(0, road.scrollWidth - stage.clientWidth);
+    };
+    measure();
 
     // Jump to current node on mount
     const currentEl = road.querySelector<HTMLElement>("[data-current='true']");
@@ -328,6 +346,9 @@ function CinemaRoad({ allNodes, ownedSlugs, claimedChestIds, onClaimed, onChestC
       targetXRef.current = x;
       smoothXRef.current = x;
     }
+
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, [allNodes]);
 
   // RAF: lerp + UI update
@@ -358,6 +379,16 @@ function CinemaRoad({ allNodes, ownedSlugs, claimedChestIds, onClaimed, onChestC
         let cur: TierId = offsets[0].tier;
         for (const o of offsets) { if (o.left <= center) cur = o.tier; }
         updateTierUI(cur);
+      }
+
+      // Depth of field — nodes near the viewport center step forward,
+      // distant ones recede. Transform/opacity only, so it stays cheap.
+      const falloff = stage.clientWidth * 0.55;
+      for (const n of nodeElsRef.current) {
+        const f = Math.max(0, 1 - Math.abs(n.center - center) / falloff);
+        const e = f * f * (3 - 2 * f); // smoothstep
+        n.el.style.transform = `translate3d(0, ${((1 - e) * 8).toFixed(1)}px, 0) scale(${(0.86 + e * 0.14).toFixed(3)})`;
+        n.el.style.opacity = (0.4 + e * 0.6).toFixed(3);
       }
 
       rafId = requestAnimationFrame(tick);
@@ -428,6 +459,7 @@ function CinemaRoad({ allNodes, ownedSlugs, claimedChestIds, onClaimed, onChestC
   return (
     <div className="tr-cinema" ref={cinemaRef}>
       <div className="tr-cinema-bg" />
+      <div className="tr-cinema-grain" aria-hidden />
 
       {/* Top bar */}
       <div className="tr-cinema-bar">
@@ -458,20 +490,25 @@ function CinemaRoad({ allNodes, ownedSlugs, claimedChestIds, onClaimed, onChestC
         <span className="tr-cinema-hint">← drag · scroll →</span>
       </div>
 
-      {/* Scrollable stage */}
-      <div className="tr-cinema-stage" ref={stageRef}>
-        {/* Pinned overlay — updated via refs, no re-render */}
-        <div className="tr-cinema-overlay" aria-hidden>
+      {/* Tier header — its own band above the stage, so headline copy can
+          never collide with the scrolling nodes below */}
+      <div className="tr-cinema-head">
+        <div className="tr-cinema-head-left">
           <div className="tr-cinema-bigname" ref={bigNameRef}>Bronze</div>
           <div className="tr-cinema-bigname-sub" ref={bigSubRef}>Origin</div>
-          <div className="tr-cinema-info">
-            <div className="tr-cinema-info-eyebrow">now entering</div>
-            <div className="tr-cinema-info-title" ref={infoTitleRef}>Origin</div>
-            <div className="tr-cinema-info-desc" ref={infoDescRef}>
-              Where every ascent begins. Foundations of form, focus, and pace.
-            </div>
+        </div>
+        <div className="tr-cinema-info">
+          <div className="tr-cinema-info-eyebrow">now entering</div>
+          <div className="tr-cinema-info-desc" ref={infoDescRef}>
+            Where every ascent begins. Foundations of form, focus, and pace.
           </div>
         </div>
+      </div>
+
+      {/* Scrollable stage */}
+      <div className="tr-cinema-stage" ref={stageRef}>
+        {/* Scenography only — a giant tier watermark far behind the road */}
+        <div className="tr-cinema-watermark" ref={watermarkRef} aria-hidden>Bronze</div>
 
         {/* The road */}
         <div className="tr-cinema-road" ref={roadRef}>
