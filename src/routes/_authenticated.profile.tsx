@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { User, Trophy, Flame, Target, Zap, BookOpen, Sparkles, Loader2, MessageSquare, LogOut, Sun, Moon, Monitor, Settings, Check, Lock, ExternalLink, AlertTriangle, Camera, ListChecks, Clock, Info, Pencil, XCircle, Users, UserCheck } from "lucide-react";
+import { User, Trophy, Flame, Target, Zap, BookOpen, Sparkles, Loader2, MessageSquare, LogOut, Sun, Moon, Monitor, Settings, Check, Lock, ExternalLink, AlertTriangle, Camera, ListChecks, Clock, Info, Pencil, XCircle, Users, UserCheck, Brain } from "lucide-react";
 import { ARCHETYPES } from "@/components/battles/archetypes";
 import { ECLIPTARS, getEcliptarsByArchetype } from "@/lib/ecliptars";
 import { useOwnedEcliptars } from "@/hooks/use-player-xp";
@@ -35,6 +35,7 @@ type Profile = {
   equipped_ecliptar: string | null;
   avatar_url: string | null;
   luna_notes: string | null;
+  learner_profile: unknown | null;
 };
 type Ecliptar = { id: string; ecliptar_name: string; archetype: string; claimed_at: string };
 type Enrollment = { id: string; course_slug: string; course_title: string; enrolled_at: string };
@@ -60,7 +61,7 @@ function ProfilePage() {
   const reload = async () => {
     if (!user) return;
     const [p, e, en, t, a, pr, uc, fc, fgc] = await Promise.all([
-      supabase.from("user_profiles").select("username,bio,xp,current_streak,best_streak,total_correct,total_questions,total_sessions,preferred_pace,preferred_style,equipped_ecliptar,avatar_url,luna_notes").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_profiles").select("username,bio,xp,current_streak,best_streak,total_correct,total_questions,total_sessions,preferred_pace,preferred_style,equipped_ecliptar,avatar_url,luna_notes,learner_profile").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_ecliptars").select("id,ecliptar_name,archetype,claimed_at").eq("user_id", user.id).order("claimed_at", { ascending: false }),
       supabase.from("enrollments").select("id,course_slug,course_title,enrolled_at").eq("user_id", user.id).order("enrolled_at", { ascending: false }),
       supabase.from("forum_threads").select("id,title,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
@@ -132,6 +133,12 @@ function ProfilePage() {
                     <ExternalLink className="w-2.5 h-2.5" />/u/{profile.username}
                   </Link>
                 )}
+                <Link
+                  to="/calibration"
+                  className="text-[10px] font-bold tracking-widest text-neon-purple hover:text-neon-pink inline-flex items-center gap-1 border border-neon-purple/30 hover:border-neon-pink/40 px-2 py-0.5 transition-colors"
+                >
+                  <Brain className="w-2.5 h-2.5" />{profile?.learner_profile ? "RECALIBRATE LUNA" : "CALIBRATE LUNA"}
+                </Link>
               </div>
             </div>
             <button

@@ -162,6 +162,22 @@ serve(async (req) => {
       if (typeof p.luna_notes === 'string' && p.luna_notes.trim()) {
         contextualPrompt += `\n\n═══════════════════════════════════════\nUSER PREFERENCES (HONOUR THESE)\n═══════════════════════════════════════\nThe user has explicitly told you the following. Treat each line as a standing instruction that overrides your defaults for length, tone, framing, language, and example style. Do not acknowledge that you "remember" — just comply.\n${p.luna_notes.trim()}`;
       }
+
+      // Structured learner model from the calibration diagnostic
+      // (src/lib/luna-calibration.ts). This is what makes Luna adapt to HOW a
+      // person learns — pace, cognitive load, scaffolding, and metacognition —
+      // not just what they asked. Kept short and structured on purpose.
+      const lp = p.learner_profile;
+      if (lp && typeof lp === 'object') {
+        const lm: string[] = [];
+        lm.push(`Pace: ${lp.pace ?? 'standard'} · Chunk size: ${lp.chunk_size ?? 'medium'} · Struggle tolerance: ${lp.struggle_tolerance ?? 'medium'} (with low tolerance, break problems into smaller steps and check in sooner).`);
+        if (lp.scaffold) lm.push(`Scaffold: ${lp.scaffold === 'socratic_first' ? 'let them try to spot the pattern before you confirm it' : 'show one worked example before asking them to try'}.`);
+        if (lp.lean) lm.push(`Thinking lean: ${lp.lean}${lp.lean === 'procedural' ? " — they reach answers fast, so make the 'why' explicit, not just the steps" : ''}.`);
+        if (lp.metacognition === 'overconfident') lm.push(`Metacognition: overconfident — before you confirm an answer, ask for a confidence level and a one-line justification so they catch their own slips.`);
+        else if (lp.metacognition === 'underconfident') lm.push(`Metacognition: underconfident — when their reasoning is sound, say so plainly and explain why it generalizes.`);
+        if (typeof lp.ability === 'number') lm.push(`Suggested starting difficulty: ${lp.ability}/5 — calibrate up or down from there.`);
+        contextualPrompt += `\n\n═══════════════════════════════════════\nLEARNER MODEL (how this person learns — adapt to it)\n═══════════════════════════════════════\n${lm.join('\n')}`;
+      }
     }
 
     // Inject recent learning history for memory
