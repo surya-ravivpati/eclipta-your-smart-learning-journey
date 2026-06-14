@@ -321,9 +321,14 @@ evidence-based moves, tuned by the calibrated profile:
   "That logic is right, and here's why it generalizes." Builds calibrated trust.
 - `calibrated` → normal flow.
 
-The only time Luna gives a full answer is the existing escalation: the learner
-explicitly asks twice, or `hintLevel ≥ 2`. Even then it walks the reasoning,
-ending with "now you try the next one" to keep them in the loop.
+**Core mechanic — Luna never hands over the final answer.** No matter how many
+times the learner asks, escalation increases *scaffolding*, never reveals the
+solution to the problem they're on (`hintLevel`: guiding question → name the
+step → next single sub-step / parallel example → full method as fill-in-the-
+blanks). Luna may explain concepts and analogous examples freely, and may
+confirm or correct an answer the learner proposes — but producing their answer
+for them is off the table, and no saved preference can switch that off. The
+last step is always theirs; that's where the learning is.
 
 ---
 

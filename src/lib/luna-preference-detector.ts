@@ -29,8 +29,13 @@ const TRIGGER_PATTERNS: { rx: RegExp; build: (m: RegExpMatchArray) => string }[]
   { rx: /\b(?:answer|reply|respond|write|talk to me) (?:in|using) (english|spanish|french|german|portuguese|italian|chinese|japanese|korean|hindi|arabic|dutch|polish|swedish|norwegian|finnish|danish|turkish|russian|greek|hebrew)\b/i,
     build: m => `respond in ${m[1].toLowerCase()}` },
   // Hints
+  // "just give me the answer" is transient frustration, not a durable
+  // preference — never persist it as a standing instruction (that would defeat
+  // Luna's core never-give-the-answer mechanic). Escalation is handled live by
+  // hintLevel instead. Only the "fewer hints" intent persists, and it means
+  // "get concrete faster", not "skip to the answer".
   { rx: /\b(?:give me|just give|just tell|stop with|skip) (?:the )?(?:full )?(answer|hints|hint)s?\b/i,
-    build: m => /answer/i.test(m[0]) ? "ok to give direct answers when asked" : "fewer hints" },
+    build: m => /answer/i.test(m[0]) ? "" : "get to concrete, specific guidance faster" },
   // Tone
   { rx: /\b(?:be more|sound more|talk more) (formal|casual|technical|friendly|serious|playful|encouraging)\b/i,
     build: m => `${m[1].toLowerCase()} tone` },
