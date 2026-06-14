@@ -3,15 +3,15 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  Sparkles, Target, Swords, Trophy, Brain, Users, User, Mail, Github,
+  Sparkles, Target, Swords, Trophy, Brain, Users, Mail, Github,
   MessageSquare, Send, CheckCircle2, Loader2, AlertCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import "./About.css";
 
 // ─── Contact form ────────────────────────────────────────────────────
 // Backed by submit_contact_message RPC (validates, rate-limits, runs through
-// moderation, stores in contact_messages). Previously this opened mailto: —
-// which silently fell off the rails for any user without a mail client.
+// moderation, stores in contact_messages).
 
 interface FieldErrors {
   name?: string;
@@ -86,19 +86,15 @@ function ContactForm() {
 
   if (sent) {
     return (
-      <div className="glass-panel p-8 border border-neon-cyan/30 text-center">
-        <CheckCircle2 className="w-10 h-10 text-neon-cyan mx-auto mb-3" />
-        <h3 className="font-bold font-display text-lg mb-2">Message received</h3>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-5">
+      <div className="ab-panel-card" style={{ textAlign: "center" }}>
+        <CheckCircle2 className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--ab-accent)" }} />
+        <h3 className="ab-serif" style={{ fontSize: 22, marginBottom: 8 }}>Message received</h3>
+        <p style={{ fontSize: 14, color: "var(--ab-dim)", maxWidth: 360, margin: "0 auto 20px", lineHeight: 1.6 }}>
           Thanks for reaching out. We read everything that lands in the inbox
           and usually reply within 48 hours.
         </p>
-        <button
-          type="button"
-          onClick={() => setSent(false)}
-          className="px-4 py-2 text-[11px] font-bold tracking-widest border border-neon-cyan/40 text-neon-cyan hover:bg-neon-cyan/10 transition-colors"
-        >
-          SEND ANOTHER
+        <button type="button" onClick={() => setSent(false)} className="ab-link" style={{ borderRadius: 6 }}>
+          Send another
         </button>
       </div>
     );
@@ -110,21 +106,18 @@ function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="glass-panel p-6 border border-neon-purple/20 space-y-4" noValidate>
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 bg-neon-purple/10 border border-neon-purple/40 flex items-center justify-center">
-            <Mail className="w-4 h-4 text-neon-purple" />
-          </div>
-          <div>
-            <h3 className="font-bold font-display text-base leading-tight">Send us a message</h3>
-            <p className="text-[11px] text-muted-foreground">Goes straight to the team inbox.</p>
-          </div>
+    <form onSubmit={handleSubmit} className="ab-panel-card" noValidate>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
+        <div className="ab-pillar-icon" style={{ marginBottom: 0 }}>
+          <Mail className="w-4 h-4" />
         </div>
-        <span className="text-[10px] text-muted-foreground">Usually replied within 48h</span>
+        <div>
+          <h3 className="ab-serif" style={{ fontSize: 18, lineHeight: 1.1 }}>Send us a message</h3>
+          <p style={{ fontSize: 11, color: "var(--ab-fog)", marginTop: 2 }}>Goes straight to the team inbox.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <Field
           label="Name" value={name} onChange={setName} maxLength={80}
           error={errors.name} onBlur={onBlur("name")}
@@ -137,15 +130,17 @@ function ContactForm() {
         />
       </div>
 
-      <Field
-        label="Subject" value={subject} onChange={setSubject} maxLength={120}
-        placeholder="What's this about? (optional)"
-      />
+      <div style={{ marginTop: 14 }}>
+        <Field
+          label="Subject" value={subject} onChange={setSubject} maxLength={120}
+          placeholder="What's this about? (optional)"
+        />
+      </div>
 
-      <div>
-        <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase flex items-center justify-between">
-          <span>Message <span className="text-neon-pink">*</span></span>
-          <span className={message.length > 4000 ? "text-neon-pink" : "text-muted-foreground/70"}>
+      <div style={{ marginTop: 14 }}>
+        <label className="ab-flabel">
+          <span>Message <span className="req">*</span></span>
+          <span style={{ color: message.length > 4000 ? "var(--ab-pink)" : "var(--ab-fog)" }}>
             {message.length}/4000
           </span>
         </label>
@@ -156,33 +151,23 @@ function ContactForm() {
           rows={6}
           maxLength={4000}
           placeholder="How can we help? Feedback, questions, bug reports — all welcome."
-          className={`w-full mt-1 bg-secondary/30 border px-3 py-2 text-sm focus:outline-none focus:ring-1 resize-none transition-colors ${
-            errors.message
-              ? "border-neon-pink focus:ring-neon-pink"
-              : "border-input focus:ring-neon-purple"
-          }`}
+          className={`ab-textarea${errors.message ? " is-error" : ""}`}
           required
         />
         {errors.message && (
-          <p className="text-[11px] text-neon-pink mt-1 inline-flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />{errors.message}
-          </p>
+          <p className="ab-ferror"><AlertCircle className="w-3 h-3" />{errors.message}</p>
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
-        <p className="text-[10px] text-muted-foreground">
-          By submitting, you agree we may reply to <span className="text-foreground">{email.trim() || "your email"}</span>.
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap", marginTop: 20 }}>
+        <p className="ab-fhint">
+          By submitting, you agree we may reply to <span style={{ color: "var(--ab-dim)" }}>{email.trim() || "your email"}</span>.
         </p>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="px-5 py-2.5 text-xs font-bold tracking-widest bg-neon-purple text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity inline-flex items-center gap-2"
-        >
+        <button type="submit" disabled={submitting} className="ab-btn ab-btn--accent">
           {submitting ? (
-            <><Loader2 className="w-3.5 h-3.5 animate-spin" />SENDING…</>
+            <><Loader2 className="w-3.5 h-3.5 animate-spin" />Sending…</>
           ) : (
-            <><Send className="w-3.5 h-3.5" />SEND MESSAGE</>
+            <><Send className="w-3.5 h-3.5" />Send message</>
           )}
         </button>
       </div>
@@ -206,8 +191,8 @@ function Field({
 }) {
   return (
     <div>
-      <label className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
-        {label} {required && <span className="text-neon-pink">*</span>}
+      <label className="ab-flabel">
+        <span>{label} {required && <span className="req">*</span>}</span>
       </label>
       <input
         type={type}
@@ -218,16 +203,10 @@ function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}
-        className={`w-full mt-1 bg-secondary/30 border px-3 py-2 text-sm focus:outline-none focus:ring-1 transition-colors ${
-          error
-            ? "border-neon-pink focus:ring-neon-pink"
-            : "border-input focus:ring-neon-purple"
-        }`}
+        className={`ab-input${error ? " is-error" : ""}`}
       />
       {error && (
-        <p className="text-[11px] text-neon-pink mt-1 inline-flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />{error}
-        </p>
+        <p className="ab-ferror"><AlertCircle className="w-3 h-3" />{error}</p>
       )}
     </div>
   );
@@ -251,20 +230,29 @@ const FOUNDERS = [
 ];
 
 const PILLARS = [
-  { icon: Brain,     title: "Adaptive AI",            desc: "Luna learns your pace, your weak spots, and the way you think — then meets you there." },
-  { icon: Swords,    title: "Battles, Not Worksheets", desc: "Knowledge battles turn rote practice into competitive duels with real stakes." },
-  { icon: Trophy,    title: "Trophy Road Progression", desc: "Every XP point unlocks new ranks, Ecliptars, and rewards worth claiming." },
-  { icon: Target,    title: "Personalized Mastery",   desc: "Adaptive tests and personalized courses target the exact skills you need next." },
-  { icon: Users,     title: "Built for Learners",     desc: "Forums, leaderboards, and community challenges keep momentum alive." },
-  { icon: Sparkles,  title: "Designed to Delight",    desc: "A neon arena aesthetic that makes you actually want to come back tomorrow." },
+  { icon: Brain,     title: "Adaptive AI",             desc: "Luna learns your pace, your weak spots, and the way you think — then meets you there." },
+  { icon: Swords,    title: "Battles, not worksheets", desc: "Knowledge battles turn rote practice into competitive duels with real stakes." },
+  { icon: Trophy,    title: "Trophy Road progression", desc: "Every XP point unlocks new ranks, Ecliptars, and rewards worth claiming." },
+  { icon: Target,    title: "Personalized mastery",    desc: "Adaptive tests and personalized courses target the exact skills you need next." },
+  { icon: Users,     title: "Built for learners",      desc: "Forums, leaderboards, and community challenges keep momentum alive." },
+  { icon: Sparkles,  title: "Designed to delight",     desc: "A cinematic arena aesthetic that makes you actually want to come back tomorrow." },
 ];
 
 const STATS = [
-  { value: "7",   label: "Archetypes" },
-  { value: "8",   label: "Trophy tiers" },
-  { value: "AI",  label: "Adaptive tutor" },
+  { value: "7",    label: "Archetypes" },
+  { value: "8",    label: "Trophy tiers" },
+  { value: "AI",   label: "Adaptive tutor" },
   { value: "24/7", label: "Live battles" },
 ];
+
+// shared scroll-reveal — same easing + blur grammar as the homepage film
+const EASE: [number, number, number, number] = [0.2, 0.7, 0.2, 1];
+const reveal = {
+  initial: { opacity: 0, y: 28, filter: "blur(10px)" },
+  whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+  viewport: { once: true, amount: 0.3 },
+  transition: { duration: 0.9, ease: EASE },
+};
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -280,205 +268,166 @@ export const Route = createFileRoute("/about")({
 
 function AboutPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <section className="pt-24 pb-20 max-w-5xl mx-auto px-6">
-        {/* Hero */}
-        <motion.div
-          className="text-center mb-14"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 border border-neon-pink/30 bg-neon-pink/10 text-neon-pink text-xs font-bold tracking-widest mb-6">
-            <Sparkles className="w-3 h-3" />
-            ABOUT ECLIPTA
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold font-display tracking-tight mb-5 leading-[1.05]">
-            Learning, but make it{" "}
-            <span className="text-neon-pink">an arena</span>.
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Eclipta is the world's first adaptive learning arena. We rebuilt education from the
-            ground up — AI-driven growth paths, knowledge battles, and a trophy road that
-            actually feels like progress.
-          </p>
-        </motion.div>
+    <div className="ab">
+      {/* Environment — one fixed, evolving atmosphere */}
+      <div className="ab-bg" aria-hidden="true">
+        <div className="ab-aurora" />
+        <div className="ab-grain" />
+        <div className="ab-vignette" />
+      </div>
 
-        {/* Stats strip */}
-        <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border/40 border border-border mb-14 overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          {STATS.map((s) => (
-            <div key={s.label} className="bg-background/60 backdrop-blur px-5 py-5 text-center">
-              <div className="text-2xl md:text-3xl font-bold font-display text-neon-cyan tabular-nums">{s.value}</div>
-              <div className="text-[10px] font-bold tracking-widest text-muted-foreground mt-1">{s.label.toUpperCase()}</div>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Mission */}
-        <motion.div
-          className="glass-panel p-8 md:p-10 mb-14 border border-neon-purple/20"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-1 h-6 bg-neon-purple" />
-            <h2 className="text-2xl font-bold font-display text-neon-purple">Our Mission</h2>
+      <div className="ab-content">
+        {/* ── Hero ─────────────────────────────────────────────── */}
+        <header className="ab-hero">
+          <div>
+            <img src="/eclipta-logo.png" alt="Eclipta" className="ab-hero-logo" width={124} height={124} draggable={false} />
+            <p className="ab-kicker">Eclipta · About</p>
+            <h1 className="ab-title">
+              Learning, but make it <em>an arena.</em>
+            </h1>
+            <p className="ab-lead">
+              The world's first adaptive learning arena — rebuilt from the ground up around
+              AI-driven growth, knowledge battles, and a trophy road that actually feels like progress.
+            </p>
           </div>
-          <p className="text-muted-foreground leading-relaxed text-base md:text-lg">
-            Traditional learning platforms reward completion. Eclipta rewards{" "}
-            <span className="text-foreground font-bold">growth</span>. Every battle you win,
-            every course you finish, every adaptive test you crush feeds one progression
-            engine — your XP — that unlocks new Ecliptars, ranks, and challenges. Mastery
-            should feel like leveling up, not grinding.
-          </p>
-        </motion.div>
-
-        {/* Pillars */}
-        <div className="mb-16">
-          <div className="text-center mb-8">
-            <p className="text-[10px] font-bold tracking-widest text-neon-cyan mb-2">WHAT MAKES ECLIPTA</p>
-            <h2 className="text-3xl font-bold font-display tracking-tight">Six pillars, one arena</h2>
+          <div className="ab-scrollhint" aria-hidden="true">
+            <span />
+            Scroll
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {PILLARS.map((p, i) => {
+        </header>
+
+        {/* ── Stats ────────────────────────────────────────────── */}
+        <section className="ab-section">
+          <motion.div className="ab-stats" {...reveal}>
+            {STATS.map((s) => (
+              <div key={s.label} className="ab-stat">
+                <div className="ab-stat-num">{s.value}</div>
+                <div className="ab-stat-lbl">{s.label}</div>
+              </div>
+            ))}
+          </motion.div>
+        </section>
+
+        {/* ── 01 · Mission ─────────────────────────────────────── */}
+        <section className="ab-section">
+          <motion.div className="ab-section-head" {...reveal}>
+            <p className="ab-actlabel is-accent">01 · The Mission</p>
+          </motion.div>
+          <motion.p className="ab-mission" {...reveal}>
+            Traditional platforms reward <em>completion</em>. Eclipta rewards
+            {" "}<strong>growth</strong> — every battle won, every course finished, every
+            adaptive test crushed feeds one engine: your XP, unlocking ranks, Ecliptars,
+            and challenges. Mastery should feel like <em>leveling up</em>, not grinding.
+          </motion.p>
+        </section>
+
+        {/* ── 02 · The Arena (pillars) ─────────────────────────── */}
+        <section className="ab-section">
+          <motion.div className="ab-section-head is-center" {...reveal}>
+            <p className="ab-actlabel">02 · The Arena</p>
+            <h2 className="ab-h2">Six pillars, <em>one arena.</em></h2>
+          </motion.div>
+          <motion.div
+            className="ab-grid"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={{ show: { transition: { staggerChildren: 0.07 } } }}
+          >
+            {PILLARS.map((p) => {
               const Icon = p.icon;
               return (
                 <motion.div
                   key={p.title}
-                  className="glass-panel p-6 border border-border hover:border-neon-purple/40 hover:bg-neon-purple/[0.02] transition-colors group"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
+                  className="ab-pillar"
+                  variants={{
+                    hidden: { opacity: 0, y: 22, filter: "blur(8px)" },
+                    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.7, ease: EASE } },
+                  }}
                 >
-                  <div className="w-10 h-10 mb-4 bg-neon-purple/10 border border-neon-purple/30 flex items-center justify-center group-hover:bg-neon-purple/20 transition-colors">
-                    <Icon className="w-5 h-5 text-neon-purple" />
-                  </div>
-                  <h3 className="font-bold font-display text-lg mb-2 leading-tight">{p.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
+                  <div className="ab-pillar-icon"><Icon className="w-5 h-5" /></div>
+                  <h3>{p.title}</h3>
+                  <p>{p.desc}</p>
                 </motion.div>
               );
             })}
-          </div>
-        </div>
+          </motion.div>
+        </section>
 
-        {/* Founders */}
-        <motion.div
-          className="mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <div className="text-center mb-8">
-            <p className="text-[10px] font-bold tracking-widest text-neon-cyan mb-2">THE TEAM</p>
-            <h2 className="text-3xl font-bold font-display tracking-tight">Meet the founders</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* ── 03 · The Team ────────────────────────────────────── */}
+        <section className="ab-section">
+          <motion.div className="ab-section-head is-center" {...reveal}>
+            <p className="ab-actlabel">03 · The Team</p>
+            <h2 className="ab-h2">Meet the <em>founders.</em></h2>
+          </motion.div>
+          <div className="ab-founders">
             {FOUNDERS.map((f, i) => (
               <motion.div
                 key={f.name}
-                className="glass-panel p-6 border border-neon-cyan/20 hover:border-neon-cyan/50 transition-colors flex items-start gap-4"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                className="ab-founder"
+                {...reveal}
+                transition={{ ...reveal.transition, delay: i * 0.1 }}
               >
-                <div className="w-16 h-16 shrink-0 bg-neon-cyan/10 border border-neon-cyan/40 flex items-center justify-center text-neon-cyan font-bold font-display text-lg tracking-wider">
-                  {f.initials}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold font-display text-lg leading-tight">{f.name}</h3>
-                  <p className="text-[10px] font-bold tracking-widest text-neon-cyan mt-1 mb-2">{f.role.toUpperCase()}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.bio}</p>
+                <div className="ab-monogram">{f.initials}</div>
+                <div style={{ minWidth: 0 }}>
+                  <h3>{f.name}</h3>
+                  <p className="ab-founder-role">{f.role}</p>
+                  <p>{f.bio}</p>
                 </div>
               </motion.div>
             ))}
           </div>
-        </motion.div>
+        </section>
 
-        {/* Contact */}
-        <motion.div
-          id="contact"
-          className="mb-16 scroll-mt-24"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <div className="text-center mb-8">
-            <p className="text-[10px] font-bold tracking-widest text-neon-purple mb-2">CONTACT</p>
-            <h2 className="text-3xl font-bold font-display tracking-tight">Get in touch</h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
-              Questions, feedback, bug reports, or just want to say hi — pick the channel that fits.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
+        {/* ── 04 · Contact ─────────────────────────────────────── */}
+        <section className="ab-section" id="contact" style={{ scrollMarginTop: 96 }}>
+          <motion.div className="ab-section-head is-center" {...reveal}>
+            <p className="ab-actlabel">04 · Say Hello</p>
+            <h2 className="ab-h2">Get in <em>touch.</em></h2>
+          </motion.div>
+          <motion.div className="ab-contact-grid" {...reveal}>
             <ContactForm />
-            <div className="grid gap-3 content-start">
-              <Link
-                to="/forum"
-                className="glass-panel p-5 border border-neon-pink/20 hover:border-neon-pink/50 hover:bg-neon-pink/[0.02] transition-colors group block"
-              >
-                <MessageSquare className="w-5 h-5 text-neon-pink mb-2 group-hover:scale-110 transition-transform" />
-                <h3 className="font-bold font-display text-sm mb-1">Community Forum</h3>
-                <p className="text-xs text-muted-foreground leading-snug">Best for product questions and learner support.</p>
+            <div className="ab-channels">
+              <Link to="/forum" className="ab-channel">
+                <MessageSquare className="w-5 h-5" />
+                <h3>Community Forum</h3>
+                <p>Best for product questions and learner support.</p>
               </Link>
-              <a
-                href="mailto:hello@eclipta.app"
-                className="glass-panel p-5 border border-neon-purple/20 hover:border-neon-purple/50 hover:bg-neon-purple/[0.02] transition-colors group block"
-              >
-                <Mail className="w-5 h-5 text-neon-purple mb-2 group-hover:scale-110 transition-transform" />
-                <h3 className="font-bold font-display text-sm mb-1">Direct Email</h3>
-                <p className="text-xs text-muted-foreground leading-snug break-all">hello@eclipta.app</p>
+              <a href="mailto:hello@eclipta.app" className="ab-channel">
+                <Mail className="w-5 h-5" />
+                <h3>Direct Email</h3>
+                <p style={{ wordBreak: "break-all" }}>hello@eclipta.app</p>
               </a>
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="glass-panel p-5 border border-neon-cyan/20 hover:border-neon-cyan/50 hover:bg-neon-cyan/[0.02] transition-colors group block"
-              >
-                <Github className="w-5 h-5 text-neon-cyan mb-2 group-hover:scale-110 transition-transform" />
-                <h3 className="font-bold font-display text-sm mb-1">Open Source</h3>
-                <p className="text-xs text-muted-foreground leading-snug">Report bugs, suggest features, or contribute.</p>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="ab-channel">
+                <Github className="w-5 h-5" />
+                <h3>Open Source</h3>
+                <p>Report bugs, suggest features, or contribute.</p>
               </a>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </section>
 
-        {/* CTA */}
-        <motion.div
-          className="text-center glass-panel p-10 md:p-12 border border-neon-pink/20 relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-neon-pink/5 via-transparent to-neon-purple/5 pointer-events-none" />
-          <div className="relative">
-            <h2 className="text-3xl md:text-4xl font-bold font-display mb-3 leading-tight">Ready to enter the arena?</h2>
-            <p className="text-muted-foreground mb-7 max-w-md mx-auto">
+        {/* ── Finale ───────────────────────────────────────────── */}
+        <section className="ab-finale">
+          <motion.div {...reveal}>
+            <p className="ab-actlabel" style={{ justifyContent: "center" }}>Your move</p>
+            <h2>Enter the <em>arena.</em></h2>
+            <p className="ab-finale-sub">
               Pick an archetype, claim your first Ecliptar, and start climbing the Trophy Road.
+              Free to play — find out what you actually know.
             </p>
-            <div className="flex gap-3 justify-center flex-wrap">
-              <Link
-                to="/signup"
-                className="px-6 py-3 bg-neon-pink text-primary-foreground text-xs font-bold tracking-widest hover:opacity-90 transition-opacity"
-              >
-                CREATE ACCOUNT
+            <div className="ab-cta-row">
+              <Link to="/signup" className="ab-btn ab-btn--accent">
+                Create account
+                <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
+                  <path d="M0 5 H11 M8 1 L12 5 L8 9" stroke="currentColor" strokeWidth="1.3" />
+                </svg>
               </Link>
-              <Link
-                to="/"
-                className="px-6 py-3 border border-border text-xs font-bold tracking-widest hover:border-neon-purple transition-colors"
-              >
-                EXPLORE FIRST
-              </Link>
+              <Link to="/" className="ab-link">Explore first</Link>
             </div>
-          </div>
-        </motion.div>
-      </section>
+          </motion.div>
+        </section>
+      </div>
     </div>
   );
 }
