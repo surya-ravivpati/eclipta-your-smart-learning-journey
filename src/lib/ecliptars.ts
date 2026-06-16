@@ -1,6 +1,7 @@
 /**
  * Ecliptars — claimable monsters tied to archetypes.
- * Two placeholders per archetype, unlocked by claiming the matching trophy road monster node.
+ * Two claimable per archetype (named creatures), unlocked via the matching
+ * trophy-road monster node. ECLIPTAR_NAMES holds the full roster per archetype.
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { LucideIcon } from "lucide-react";
@@ -29,8 +30,20 @@ const ARCH_ICON: Record<MonsterArchetypeKey, LucideIcon> = {
 /**
  * Two Ecliptars per archetype. For the God archetype, the two slots are filled
  * by the final-boss monsters Newton and Ecliptadon (claimed from their own
- * trophy-road nodes), replacing the generic A/B placeholders.
+ * trophy-road nodes). Names come from ECLIPTAR_NAMES below; the slugs stay
+ * stable (`<arch>-a` / `<arch>-b`) because they're a server claim contract.
  */
+export const ECLIPTAR_NAMES: Record<MonsterArchetypeKey, string[]> = {
+  speedster:   ["Griffinink", "Spark", "Correr", "Zypheroo"],
+  tank:        ["Dingus", "Syntium", "Mammorock", "Ironhide"],
+  chud:        ["Flingus", "Broco Lee", "Squirt", "Gibit"],
+  gambler:     ["Mr. McHenry", "Rattleslot", "Snail-ette", "Fortunox"],
+  healer:      ["Brighteye", "Chobroni", "Bloomheart", "Moss Golem"],
+  fulcrum:     ["Fuego", "Petrona", "Ticonder", "Equinox"],
+  accelerator: ["Venuk", "Fueljaw", "Adrenalynx", "Chronovex"],
+  god:         ["Newton", "Ecliptadon", "Einsteinium", "Temporobys"],
+};
+
 export const ECLIPTARS: Ecliptar[] = (
   Object.keys(ARCH_ICON) as MonsterArchetypeKey[]
 ).flatMap((arch): Ecliptar[] => {
@@ -40,9 +53,10 @@ export const ECLIPTARS: Ecliptar[] = (
       { slug: "ecliptadon", name: "Ecliptadon", archetype: "god", icon: Atom  },
     ];
   }
+  const names = ECLIPTAR_NAMES[arch];
   return [
-    { slug: `${arch}-a`, name: `Ecliptar A`, archetype: arch, icon: ARCH_ICON[arch] },
-    { slug: `${arch}-b`, name: `Ecliptar B`, archetype: arch, icon: ARCH_ICON[arch] },
+    { slug: `${arch}-a`, name: names[0], archetype: arch, icon: ARCH_ICON[arch] },
+    { slug: `${arch}-b`, name: names[1], archetype: arch, icon: ARCH_ICON[arch] },
   ];
 });
 

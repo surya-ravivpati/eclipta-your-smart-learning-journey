@@ -21,7 +21,7 @@ import { BattleReport } from "./battles/BattleReport";
 import { UserSearchDialog } from "./battles/UserSearchDialog";
 import { ChallengeInbox } from "./battles/ChallengeInbox";
 import { DailyStreakCard } from "./battles/DailyStreakCard";
-import { ECLIPTARS, type Ecliptar } from "@/lib/ecliptars";
+import { ECLIPTARS, ECLIPTAR_NAMES, type Ecliptar } from "@/lib/ecliptars";
 import { supabase } from "@/integrations/supabase/client";
 import { getTodayChallenge } from "@/lib/daily-challenge";
 import { findMatch, leaveQueue, type MatchResult, type OpponentType } from "@/lib/matchmaking";
@@ -1892,10 +1892,13 @@ function BattleArena() {
         oppArchetype = match.opponentArchetype;
         oppName = match.opponentName;
       } else {
-        // Bot: pick a random ecliptar so the opponent has a real archetype identity
+        // Bot: pick a random ecliptar so the opponent has a real archetype
+        // identity, then name it from that archetype's full roster (all four
+        // creatures, not just the two claimable slots).
         const oppEclip = pickOpponent(cls);
         oppArchetype = oppEclip.archetype;
-        oppName      = oppEclip.name;
+        const pool   = ECLIPTAR_NAMES[oppArchetype];
+        oppName      = pool[Math.floor(Math.random() * pool.length)];
       }
       // Always use the archetype's icon so ghost / bot / live opponents
       // visually reflect their build instead of a generic robot.
