@@ -44,20 +44,26 @@ export const ECLIPTAR_NAMES: Record<MonsterArchetypeKey, string[]> = {
   god:         ["Newton", "Ecliptadon", "Einsteinium", "Temporobys"],
 };
 
+const SLOTS = ["a", "b", "c", "d"] as const;
+
 export const ECLIPTARS: Ecliptar[] = (
   Object.keys(ARCH_ICON) as MonsterArchetypeKey[]
 ).flatMap((arch): Ecliptar[] => {
   if (arch === "god") {
     return [
-      { slug: "newton",     name: "Newton",     archetype: "god", icon: Apple },
-      { slug: "ecliptadon", name: "Ecliptadon", archetype: "god", icon: Atom  },
+      { slug: "newton",      name: "Newton",      archetype: "god", icon: Apple },
+      { slug: "ecliptadon",  name: "Ecliptadon",  archetype: "god", icon: Atom  },
+      { slug: "einsteinium", name: "Einsteinium", archetype: "god", icon: Crown },
+      { slug: "temporobys",  name: "Temporobys",  archetype: "god", icon: Crown },
     ];
   }
-  const names = ECLIPTAR_NAMES[arch];
-  return [
-    { slug: `${arch}-a`, name: names[0], archetype: arch, icon: ARCH_ICON[arch] },
-    { slug: `${arch}-b`, name: names[1], archetype: arch, icon: ARCH_ICON[arch] },
-  ];
+  // Four claimable per archetype, all granted from the archetype's monster node.
+  return ECLIPTAR_NAMES[arch].map((name, i) => ({
+    slug: `${arch}-${SLOTS[i]}`,
+    name,
+    archetype: arch,
+    icon: ARCH_ICON[arch],
+  }));
 });
 
 export function getEcliptarsByArchetype(arch: MonsterArchetypeKey): Ecliptar[] {

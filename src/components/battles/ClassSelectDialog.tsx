@@ -193,6 +193,7 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection
           const isUnlocked = unlocked.includes(arch.id);
           const monsterNode = ROAD_NODES.find(n => n.archetype === arch.id);
           const xpNeeded = monsterNode ? monsterNode.xp : 0;
+          const totalCount = getEcliptarsByArchetype(arch.id).length;
           const ownedCount = getEcliptarsByArchetype(arch.id).filter(e => ownedSlugs.has(e.slug)).length;
 
           return (
@@ -220,7 +221,7 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection
 
               {isUnlocked && (
                 <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 text-[9px] font-bold tracking-widest rounded-full bg-secondary/60 text-foreground">
-                  {ownedCount}/2 ECLIPTARS
+                  {ownedCount}/{totalCount} ECLIPTARS
                 </div>
               )}
 
