@@ -31,6 +31,21 @@ serve(async (req) => {
     const user = userData?.user;
     if (!user) return new Response(JSON.stringify({ ok: false, error: "no user" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+    // Read the user's OWN current memory server-side instead of trusting the
+    // client snapshot. The client value is captured at page load and goes
+    // stale, so two turns close together would each merge onto the same old
+    // arrays and the second write would clobber the first (lost update). Reading
+    // here makes the merge base authoritative and also folds the luna_auto_notes
+    // read into a single round-trip (the note section below reuses `prof`).
+    // Client-supplied arrays remain only as a fallback if the read fails.
+    const { data: prof } = await sb
+      .from("user_profiles")
+      .select("weak_areas, strong_areas, luna_auto_notes")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const baseWeak: string[] = Array.isArray((prof as any)?.weak_areas) ? (prof as any).weak_areas : currentWeak;
+    const baseStrong: string[] = Array.isArray((prof as any)?.strong_areas) ? (prof as any).strong_areas : currentStrong;
+
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
@@ -38,7 +53,7 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: SYSTEM },
-          { role: "user", content: `User said: ${userTurn}\n\nLuna replied: ${assistantTurn}\n\nCurrent weak: ${currentWeak.join(", ") || "(none)"}\nCurrent strong: ${currentStrong.join(", ") || "(none)"}` },
+          { role: "user", content: `User said: ${userTurn}\n\nLuna replied: ${assistantTurn}\n\nCurrent weak: ${baseWeak.join(", ") || "(none)"}\nCurrent strong: ${baseStrong.join(", ") || "(none)"}` },
         ],
         tools: [{
           type: "function",
@@ -82,8 +97,8 @@ serve(async (req) => {
       return Array.from(set.values()).slice(0, 12);
     };
 
-    const newWeak = merge(currentWeak, (parsed.add_weak || []).filter(Boolean));
-    const newStrong = merge(currentStrong, (parsed.add_strong || []).filter(Boolean));
+    const newWeak = merge(baseWeak, (parsed.add_weak || []).filter(Boolean));
+    const newStrong = merge(baseStrong, (parsed.add_strong || []).filter(Boolean));
     // Remove anything from weak that just got promoted to strong
     const strongSet = new Set(newStrong.map(norm));
     const weakFiltered = newWeak.filter(w => !strongSet.has(norm(w)));
@@ -116,7 +131,6 @@ serve(async (req) => {
         if (/diagram|story|real[- ]world/.test(tt)) return "examples";
         return null;
       };
-      const { data: prof } = await sb.from("user_profiles").select("luna_auto_notes").eq("user_id", user.id).maybeSingle();
       const existing = ((prof as any)?.luna_auto_notes as string | null) || "";
       const lines = existing.split(/\r?\n/).map((l: string) => l.trim()).filter(Boolean);
       const note = parsed.note.trim();

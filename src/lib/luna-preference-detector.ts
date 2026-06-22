@@ -2,7 +2,9 @@
  * Lightweight client-side detector for tutoring-style preferences the user
  * states in chat. We capture intent ("write shorter", "use more analogies",
  * "answer in Spanish") as a short imperative phrase, then merge it into
- * user_profiles.luna_notes so Luna sees it on every future reply.
+ * user_profiles.luna_auto_notes (the auto-detected channel — kept separate from
+ * luna_notes, which is reserved for what the user types on /profile) so Luna
+ * sees it on every future reply.
  *
  * This is intentionally heuristic — false positives are cheap (the user can
  * edit notes from /profile) and false negatives just mean the preference
