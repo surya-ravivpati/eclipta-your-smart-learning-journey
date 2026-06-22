@@ -62,6 +62,7 @@ export function useLunaVoice(opts: { onTranscript: (text: string) => void }) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
@@ -74,6 +75,7 @@ export function useLunaVoice(opts: { onTranscript: (text: string) => void }) {
   }, []);
 
   const releaseRecorder = useCallback(() => {
+    if (maxTimerRef.current) { clearTimeout(maxTimerRef.current); maxTimerRef.current = null; }
     try { streamRef.current?.getTracks().forEach(t => t.stop()); } catch { /* ignore */ }
     streamRef.current = null;
     recorderRef.current = null;
@@ -105,6 +107,10 @@ export function useLunaVoice(opts: { onTranscript: (text: string) => void }) {
         body: fd,
       });
       if (!r.ok) {
+        if (r.status === 404) {
+          setVoiceError("Voice input isn't set up on the server yet (the luna-stt function needs to be deployed).");
+          return;
+        }
         const data = await r.json().catch(() => ({}));
         setVoiceError(typeof data?.error === "string" ? data.error : `Transcription failed (${r.status}).`);
         return;
@@ -133,6 +139,7 @@ export function useLunaVoice(opts: { onTranscript: (text: string) => void }) {
       chunksRef.current = [];
       recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunksRef.current.push(e.data); };
       recorder.onstop = () => {
+        if (maxTimerRef.current) { clearTimeout(maxTimerRef.current); maxTimerRef.current = null; }
         const type = recorder.mimeType || mimeType || "audio/webm";
         const blob = new Blob(chunksRef.current, { type });
         releaseRecorder();
@@ -146,6 +153,12 @@ export function useLunaVoice(opts: { onTranscript: (text: string) => void }) {
       };
       recorder.start();
       setListening(true);
+      // Safety net: a forgotten recording shouldn't run forever. Auto-stop
+      // after 60s, which also flushes the clip to transcription.
+      maxTimerRef.current = setTimeout(() => {
+        const rec = recorderRef.current;
+        if (rec && rec.state !== "inactive") { try { rec.stop(); } catch { /* ignore */ } }
+      }, 60000);
     } catch (err) {
       releaseRecorder();
       setListening(false);
@@ -187,7 +200,12 @@ export function useLunaVoice(opts: { onTranscript: (text: string) => void }) {
         body: JSON.stringify({ text: clean.slice(0, 1800) }),
         signal: ctrl.signal,
       });
-      if (!r.ok || ctrl.signal.aborted) return;
+      if (!r.ok || ctrl.signal.aborted) {
+        if (r.status === 404 && !ctrl.signal.aborted) {
+          setVoiceError("Read-aloud isn't set up on the server yet (the luna-tts function needs to be deployed).");
+        }
+        return;
+      }
       const blob = await r.blob();
       if (ctrl.signal.aborted) return;
       const url = URL.createObjectURL(blob);

@@ -95,19 +95,25 @@ serve(async (req) => {
 
     if (parsed.note && parsed.note.trim()) {
       // Auto-detected notes go to luna_auto_notes — luna_notes is the
-      // user-editable channel surfaced in /profile. Same category-aware
-      // conflict cleanup as the client-side detector (mergePreference).
+      // user-editable channel surfaced in /profile. Category-aware conflict
+      // cleanup that MUST stay in sync with the client detector's
+      // preferenceCategory (src/lib/luna-preference-detector.ts): both writers
+      // touch luna_auto_notes, so divergent categories would leave contradicting
+      // notes side by side ("shorter responses" next to "longer responses").
       const categoryOf = (line: string): string | null => {
         const tt = line.toLowerCase().trim();
         if (/respond in\s+\w+/.test(tt)) return "language";
         if (/\b(short|long|brief|concise|detailed|thorough)\b.*responses?/.test(tt)) return "length";
+        if (/\b(short|brief|concise|detailed|thorough) responses?/.test(tt)) return "length";
         if (/\b(fewer|less|more)\s+(words|sentences|paragraphs|details|steps)\b/.test(tt)) return "length";
         if (/analog/.test(tt)) return "analogies";
         if (/example/.test(tt)) return "examples";
-        if (/\b(hint|hints)\b/.test(tt)) return "hints";
+        if (/\b(hint|hints)\b/.test(tt) || /get to concrete/.test(tt)) return "hints";
         if (/\btone\b/.test(tt)) return "tone";
         if (/^explain like i'?m/.test(tt)) return "level";
         if (/emoji/.test(tt)) return "emoji";
+        if (/\b(code|equations?)\b/.test(tt)) return "format";
+        if (/diagram|story|real[- ]world/.test(tt)) return "examples";
         return null;
       };
       const { data: prof } = await sb.from("user_profiles").select("luna_auto_notes").eq("user_id", user.id).maybeSingle();

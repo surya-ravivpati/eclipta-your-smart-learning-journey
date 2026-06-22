@@ -35,6 +35,7 @@ type Profile = {
   equipped_ecliptar: string | null;
   avatar_url: string | null;
   luna_notes: string | null;
+  luna_auto_notes: string | null;
   learner_profile: unknown | null;
 };
 type Ecliptar = { id: string; ecliptar_name: string; archetype: string; claimed_at: string };
@@ -61,7 +62,7 @@ function ProfilePage() {
   const reload = async () => {
     if (!user) return;
     const [p, e, en, t, a, pr, uc, fc, fgc] = await Promise.all([
-      supabase.from("user_profiles").select("username,bio,xp,current_streak,best_streak,total_correct,total_questions,total_sessions,preferred_pace,preferred_style,equipped_ecliptar,avatar_url,luna_notes,learner_profile").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_profiles").select("username,bio,xp,current_streak,best_streak,total_correct,total_questions,total_sessions,preferred_pace,preferred_style,equipped_ecliptar,avatar_url,luna_notes,luna_auto_notes,learner_profile").eq("user_id", user.id).maybeSingle(),
       supabase.from("user_ecliptars").select("id,ecliptar_name,archetype,claimed_at").eq("user_id", user.id).order("claimed_at", { ascending: false }),
       supabase.from("enrollments").select("id,course_slug,course_title,enrolled_at").eq("user_id", user.id).order("enrolled_at", { ascending: false }),
       supabase.from("forum_threads").select("id,title,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
@@ -316,6 +317,7 @@ function SettingsPanel({ profile, userId, onSaved }: {
   const [saving, setSaving] = useState(false);
   const [savingBio, setSavingBio] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [clearingAuto, setClearingAuto] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "taken" | "invalid" | "current">("idle");
 
@@ -376,6 +378,18 @@ function SettingsPanel({ profile, userId, onSaved }: {
     setSavingPrefs(false);
     if (error) return toast.error(error.message);
     toast.success("Learning preferences saved");
+    onSaved();
+  };
+
+  const autoNotes = (profile?.luna_auto_notes || "")
+    .split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+  const clearAutoNotes = async () => {
+    setClearingAuto(true);
+    const { error } = await supabase.from("user_profiles").update({ luna_auto_notes: null }).eq("user_id", userId);
+    setClearingAuto(false);
+    if (error) return toast.error(error.message);
+    toast.success("Cleared what Luna picked up from chat");
     onSaved();
   };
 
@@ -571,6 +585,35 @@ function SettingsPanel({ profile, userId, onSaved }: {
             />
             <p className="text-[10px] text-muted-foreground mt-1">{lunaNotes.length}/600 characters</p>
           </div>
+
+          {autoNotes.length > 0 && (
+            <div className="mt-4 border-t border-border/60 pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-bold tracking-widest text-muted-foreground">
+                  PICKED UP FROM CHAT
+                </p>
+                <button
+                  onClick={clearAutoNotes}
+                  disabled={clearingAuto}
+                  className="text-[10px] font-bold tracking-widest text-muted-foreground hover:text-neon-pink disabled:opacity-40 transition-colors inline-flex items-center gap-1.5"
+                >
+                  {clearingAuto ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+                  CLEAR
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Preferences Luna inferred from your chats. She applies these silently; clear them if any are off.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {autoNotes.map((n, i) => (
+                  <span key={i} className="px-2 py-1 text-[10px] bg-secondary/40 border border-border rounded text-muted-foreground">
+                    {n}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end mt-3">
             <button
               onClick={savePrefs}
