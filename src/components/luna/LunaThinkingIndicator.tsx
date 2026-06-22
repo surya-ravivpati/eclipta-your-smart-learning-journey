@@ -82,16 +82,16 @@ export function LunaThinkingIndicator({ compact = false }: { compact?: boolean }
           />
 
           {/* Moon body */}
-          <circle cx={CX} cy={CY} r={R} fill="oklch(0.14 0.022 278)" />
+          <circle cx={CX} cy={CY} r={R} fill="oklch(0.17 0.03 85)" />
 
           {/* Lit face — only this element's `d` attribute changes each frame */}
           <path ref={pathRef} d={litPath(0)} fill="url(#luna-lit)" />
 
           {/* Craters — permanently on the dark body, partially masked by light */}
-          <circle cx="8.4"  cy="10.6" r="1.15" fill="oklch(0.10 0.016 278)" opacity="0.62" />
-          <circle cx="13.8" cy="14.9" r="0.74" fill="oklch(0.10 0.016 278)" opacity="0.52" />
-          <circle cx="10.3" cy="7.1"  r="0.54" fill="oklch(0.10 0.016 278)" opacity="0.46" />
-          <circle cx="15.2" cy="9.4"  r="0.48" fill="oklch(0.10 0.016 278)" opacity="0.38" />
+          <circle cx="8.4"  cy="10.6" r="1.15" fill="oklch(0.11 0.02 85)" opacity="0.62" />
+          <circle cx="13.8" cy="14.9" r="0.74" fill="oklch(0.11 0.02 85)" opacity="0.52" />
+          <circle cx="10.3" cy="7.1"  r="0.54" fill="oklch(0.11 0.02 85)" opacity="0.46" />
+          <circle cx="15.2" cy="9.4"  r="0.48" fill="oklch(0.11 0.02 85)" opacity="0.38" />
 
           {/* Limb ring — thin highlight at the edge */}
           <circle
