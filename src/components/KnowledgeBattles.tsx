@@ -1576,36 +1576,18 @@ function BattleArena() {
       // idempotent per day). Realtime updates the navbar flame + streak card.
       await supabase.rpc("record_daily_practice" as never);
 
-      await supabase.from("learning_history").insert({
-        user_id: user.id,
-        session_type: "battle",
-        was_correct: won,
-        topic: ARCHETYPES[archetype].name,
-        luna_summary: `${won ? "Victory" : "Defeat"} as ${ARCHETYPES[archetype].name} · score ${Math.floor(finalScore)} · streak ${finalStreak}`,
+      await supabase.rpc("log_learning_history" as any, {
+        p_session_type:     "battle",
+        p_topic:            ARCHETYPES[archetype].name,
+        p_question_text:    null,
+        p_was_correct:      won,
+        p_response_time_ms: null,
+        p_hint_level_used:  0,
+        p_luna_summary:     `${won ? "Victory" : "Defeat"} as ${ARCHETYPES[archetype].name} · score ${Math.floor(finalScore)} · streak ${finalStreak}`,
       });
       if (won) {
-        const today = new Date().toISOString().slice(0, 10);
-        const challenge = getTodayChallenge();
-        const { data: existing } = await supabase
-          .from("daily_challenge_progress")
-          .select("id, wins, bonus_claimed")
-          .eq("user_id", user.id)
-          .eq("challenge_date", today)
-          .maybeSingle();
-        if (existing) {
-          const newWins = (existing.wins ?? 0) + 1;
-          await supabase
-            .from("daily_challenge_progress")
-            .update({ wins: newWins })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("daily_challenge_progress").insert({
-            user_id: user.id,
-            challenge_date: today,
-            wins: 1,
-            bonus_claimed: false,
-          });
-        }
+        // Server-side atomic increment; clients can no longer set wins directly.
+        await supabase.rpc("increment_daily_challenge_win" as any);
         window.dispatchEvent(new Event("daily-challenge-updated"));
       }
 
