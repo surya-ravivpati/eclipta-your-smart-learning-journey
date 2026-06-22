@@ -21,9 +21,9 @@
   --cf-accent:  var(--brand-accent);
   --cf-flash:   var(--brand-flash);
 
-  --cf-display: var(--brand-cinematic-display);
-  --cf-serif:   var(--brand-serif);
-  --cf-mono:    var(--brand-mono);
+  --cf-display: var(--font-cinematic);
+  --cf-serif:   var(--font-serif);
+  --cf-mono:    var(--font-mono);
 
   background: var(--cf-bg);
   color: var(--cf-ink);

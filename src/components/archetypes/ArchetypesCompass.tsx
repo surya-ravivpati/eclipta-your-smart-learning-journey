@@ -35,10 +35,11 @@ const ORDER: ArchetypeId[] = [
 // archetype still gets a full dwell inside [0,1] of scrollYProgress.
 const SLOT_VH = 40;
 
-// Film fonts (loaded globally from the <head> in __root.tsx).
-const F_DISPLAY = "'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif";
-const F_SERIF   = "'Instrument Serif', 'Times New Roman', serif";
-const F_MONO    = "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace";
+// Film fonts — reference the canonical type roles (defined in styles.css
+// @theme, loaded globally from the <head> in __root.tsx).
+const F_DISPLAY = "var(--font-cinematic)";
+const F_SERIF   = "var(--font-serif)";
+const F_MONO    = "var(--font-mono)";
 
 // Per-archetype identity colour. Hex (not oklch) so framer-motion can use
 // them in style props and withAlpha() math works everywhere.

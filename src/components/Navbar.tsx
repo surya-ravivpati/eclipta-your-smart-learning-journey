@@ -11,6 +11,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/use-notifications";
+import { BrandLockup } from "@/components/BrandLockup";
 
 const NAV_GROUPS = [
   {
@@ -68,9 +69,8 @@ export function Navbar() {
     <nav className="fixed top-0 w-full z-50 border-b border-border bg-background/70 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-9 min-w-0">
-          <Link to="/" className="flex items-center gap-2.5 shrink-0 text-foreground" aria-label="Eclipta home">
-            <img src="/eclipta-logo.png" alt="" width={24} height={24} className="shrink-0 select-none" draggable={false} />
-            <span className="font-mono text-xs tracking-[0.3em] uppercase">Eclipta</span>
+          <Link to="/" className="shrink-0" aria-label="Eclipta home">
+            <BrandLockup size="sm" />
           </Link>
           <div className="hidden lg:flex gap-1">
             {NAV_GROUPS.map((group) => {

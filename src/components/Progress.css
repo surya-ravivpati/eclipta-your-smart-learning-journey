@@ -16,10 +16,10 @@
   --pg-gold:      oklch(0.82 0.14 165);
   --pg-fire:      oklch(0.72 0.22 0);
   --pg-god:       oklch(0.92 0.06 90);
-  --pg-shout:     "Bebas Neue", "Helvetica Neue", sans-serif;
-  --pg-mono:      "JetBrains Mono", ui-monospace, "SF Mono", monospace;
-  --pg-serif:     "Instrument Serif", "Times New Roman", serif;
-  --pg-body:      "Helvetica Neue", "Helvetica", "Arial", system-ui, sans-serif;
+  --pg-shout:     var(--font-shout);
+  --pg-mono:      var(--font-mono);
+  --pg-serif:     var(--font-serif);
+  --pg-body:      var(--font-cinematic);
   --pg-max:       1280px;
   --pg-gutter:    40px;
 

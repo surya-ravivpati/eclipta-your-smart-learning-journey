@@ -87,8 +87,8 @@
   --btt-fog:     #7A7D85;
   --btt-line:    rgba(255, 255, 255, 0.07);
   --btt-line-s:  rgba(255, 255, 255, 0.14);
-  --btt-display: 'Bebas Neue', 'RobotHeroes', sans-serif;
-  --btt-mono:    var(--brand-mono);
+  --btt-display: var(--font-shout);
+  --btt-mono:    var(--font-mono);
 }
 
 /* ─── Enhanced glassmorphism in battles context ───────────────── */

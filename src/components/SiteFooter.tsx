@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Github, Mail } from "lucide-react";
+import { BrandLockup } from "@/components/BrandLockup";
 
 const FOOTER_GROUPS = [
   {
@@ -33,9 +34,8 @@ export function SiteFooter() {
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-2.5 text-foreground" aria-label="Eclipta home">
-              <img src="/eclipta-logo.png" alt="" width={24} height={24} className="shrink-0 select-none" draggable={false} />
-              <span className="font-mono text-xs tracking-[0.3em] uppercase">Eclipta</span>
+            <Link to="/" className="inline-flex" aria-label="Eclipta home">
+              <BrandLockup size="sm" />
             </Link>
             <p className="text-xs text-muted-foreground mt-4 leading-relaxed max-w-xs">
               An adaptive learning arena. Battles, trophies, and AI guidance for serious learners.

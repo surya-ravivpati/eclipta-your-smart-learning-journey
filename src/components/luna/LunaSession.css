@@ -8,7 +8,7 @@
   padding-top: 64px;
   background: #05060A;
   color: #F5F6F8;
-  font-family: "Helvetica Neue", "Helvetica", "Arial", system-ui, sans-serif;
+  font-family: var(--font-cinematic);
   -webkit-font-smoothing: antialiased;
   display: flex;
   flex-direction: column;
@@ -88,7 +88,7 @@
 }
 
 .luna-name {
-  font-family: "Bebas Neue", "Helvetica Neue", sans-serif;
+  font-family: var(--font-shout);
   font-size: 22px;
   letter-spacing: 0.07em;
   color: #F5F6F8;

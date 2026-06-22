@@ -13,16 +13,16 @@
   --tr-bronze:   oklch(0.65 0.13 55);
   --tr-silver:   oklch(0.78 0.02 260);
   --tr-gold:     oklch(0.78 0.16 85);
-  --tr-diamond:  oklch(0.72 0.18 240);
+  --tr-diamond:  oklch(0.74 0.13 215);
   --tr-platinum: oklch(0.82 0.10 190);
   --tr-champion: oklch(0.68 0.22 25);
   --tr-unreal:   oklch(0.62 0.28 310);
   --tr-god:      oklch(0.88 0.12 90);
 
-  --tr-shout: "Bebas Neue", "Helvetica Neue", sans-serif;
-  --tr-mono:  "JetBrains Mono", ui-monospace, "SF Mono", monospace;
-  --tr-serif: "Instrument Serif", "Times New Roman", serif;
-  --tr-body:  "Helvetica Neue", "Helvetica", "Arial", system-ui, sans-serif;
+  --tr-shout: var(--font-shout);
+  --tr-mono:  var(--font-mono);
+  --tr-serif: var(--font-serif);
+  --tr-body:  var(--font-cinematic);
 
   color: var(--tr-ink);
   font-family: var(--tr-body);

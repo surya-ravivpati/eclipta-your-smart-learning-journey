@@ -21,9 +21,9 @@
   --ab-pink:    oklch(0.72 0.19 350);
   --ab-panel:   rgba(255, 255, 255, 0.022);
 
-  --ab-display: var(--brand-cinematic-display);
-  --ab-serif:   var(--brand-serif);
-  --ab-mono:    var(--brand-mono);
+  --ab-display: var(--font-cinematic);
+  --ab-serif:   var(--font-serif);
+  --ab-mono:    var(--font-mono);
 
   position: relative;
   min-height: 100vh;

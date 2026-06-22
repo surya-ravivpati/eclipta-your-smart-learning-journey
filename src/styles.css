@@ -80,9 +80,17 @@
   --color-tier-unreal: var(--tier-unreal);
   --color-tier-god: var(--tier-god);
 
-  --font-display: 'RobotHeroes', 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', Calibri, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* ── Type roles (single source of truth) ──────────────────────
+     One signature + defined supporting roles, each applied by ROLE so
+     the same role never drifts between faces across surfaces. These
+     also generate Tailwind utilities: font-display, font-body,
+     font-serif, font-shout, font-cinematic, font-mono. */
+  --font-display:   'RobotHeroes', 'Space Grotesk', sans-serif;            /* signature: brand + headings */
+  --font-body:      'Inter', Calibri, sans-serif;                          /* body copy */
+  --font-mono:      'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; /* labels / numerics / wordmark */
+  --font-serif:     'Instrument Serif', 'Times New Roman', serif;          /* emotional accent (italic) */
+  --font-shout:     'Bebas Neue', 'RobotHeroes', sans-serif;               /* condensed stat / shout */
+  --font-cinematic: 'Archivo', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif; /* editorial hero / long-form display */
 }
 
 :root {
@@ -138,19 +146,17 @@
   --brand-flash:   #dbe7ff;                /* light-burst highlight    */
   --brand-accent:       oklch(0.82 0.12 235); /* cinematic azure       */
   --brand-accent-base:  oklch(0.58 0.17 252); /* app interactive accent */
-
-  /* Brand type voice. --brand-cinematic-display is webfont-loaded
-     (Archivo, in __root.tsx) so the landing/About heroes render the
-     same off-Mac instead of silently falling back to Arial. */
-  --brand-cinematic-display: 'Archivo', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
-  --brand-serif: 'Instrument Serif', 'Times New Roman', serif;
-  --brand-mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Brand TYPE roles live in @theme above (--font-display / -cinematic /
+     -serif / -shout / -body / -mono). Every cinematic scope references
+     those by role rather than re-declaring font stacks. */
 
   /* Rank tier colors */
   --tier-bronze: oklch(0.6 0.12 55);
   --tier-silver: oklch(0.72 0.02 260);
   --tier-gold: oklch(0.75 0.16 85);
-  --tier-diamond: oklch(0.7 0.18 240);
+  /* Icy cyan-blue, pulled off the 235–252 brand-blue band so "Diamond"
+     and the brand accent stop reading as the same color. */
+  --tier-diamond: oklch(0.74 0.13 215);
   --tier-platinum: oklch(0.8 0.1 190);
   --tier-champion: oklch(0.65 0.22 25);
   --tier-unreal: oklch(0.6 0.28 310);
