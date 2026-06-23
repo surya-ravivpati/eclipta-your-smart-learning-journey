@@ -771,6 +771,106 @@ export type Database = {
         }
         Relationships: []
       }
+      study_room_members: {
+        Row: {
+          display_name: string | null
+          ecliptar_slug: string | null
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string | null
+          ecliptar_slug?: string | null
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string | null
+          ecliptar_slug?: string | null
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_room_messages: {
+        Row: {
+          author_name: string | null
+          body: string
+          created_at: string
+          ecliptar_slug: string | null
+          id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          body: string
+          created_at?: string
+          ecliptar_slug?: string | null
+          id?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          ecliptar_slug?: string | null
+          id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_rooms: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean
+          join_code: string | null
+          name: string
+          owner_id: string
+          topic: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          join_code?: string | null
+          name: string
+          owner_id: string
+          topic?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          join_code?: string | null
+          name?: string
+          owner_id?: string
+          topic?: string | null
+        }
+        Relationships: []
+      }
       user_chest_claims: {
         Row: {
           bonus_xp: number
@@ -1128,6 +1228,30 @@ export type Database = {
         Args: { p_archetype: string; p_challenged_id: string }
         Returns: string
       }
+      create_study_room: {
+        Args: {
+          p_display_name: string
+          p_ecliptar_slug: string
+          p_is_public: boolean
+          p_name: string
+          p_topic: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          is_public: boolean
+          join_code: string | null
+          name: string
+          owner_id: string
+          topic: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "study_rooms"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       enqueue_pvp: { Args: { p_archetype: string }; Returns: undefined }
       find_pvp_match: {
         Args: { p_archetype: string; p_rating: number }
@@ -1186,6 +1310,20 @@ export type Database = {
         Args: { p_battle_id: string; p_turn_number: number }
         Returns: Json
       }
+      get_study_rooms: {
+        Args: never
+        Returns: {
+          am_member: boolean
+          created_at: string
+          id: string
+          is_public: boolean
+          join_code: string
+          member_count: number
+          name: string
+          owner_id: string
+          topic: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1194,6 +1332,31 @@ export type Database = {
         Returns: boolean
       }
       increment_daily_challenge_win: { Args: never; Returns: number }
+      is_study_member: { Args: { p_room: string }; Returns: boolean }
+      join_study_room: {
+        Args: {
+          p_code: string
+          p_display_name: string
+          p_ecliptar_slug: string
+          p_room: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          is_public: boolean
+          join_code: string | null
+          name: string
+          owner_id: string
+          topic: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "study_rooms"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      leave_study_room: { Args: { p_room: string }; Returns: undefined }
       log_learning_history: {
         Args: {
           p_hint_level_used: number
