@@ -25,6 +25,7 @@ import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated.notifications'
 import { Route as AuthenticatedLunaRouteImport } from './routes/_authenticated.luna'
+import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated.groups'
 import { Route as AuthenticatedForumRouteImport } from './routes/_authenticated.forum'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated.collection'
 import { Route as AuthenticatedCertifiedRouteImport } from './routes/_authenticated.certified'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedCalibrationRouteImport } from './routes/_authenti
 import { Route as AuthenticatedBuildCourseRouteImport } from './routes/_authenticated.build-course'
 import { Route as AuthenticatedBattlesRouteImport } from './routes/_authenticated.battles'
 import { Route as AuthenticatedAdaptiveTestsRouteImport } from './routes/_authenticated.adaptive-tests'
+import { Route as AuthenticatedGroupsRoomIdRouteImport } from './routes/_authenticated.groups_.$roomId'
 import { Route as AuthenticatedForumThreadIdRouteImport } from './routes/_authenticated.forum_.$threadId'
 import { Route as AuthenticatedCertifiedSlugRouteImport } from './routes/_authenticated.certified.$slug'
 import { Route as AuthenticatedAdminForumRouteImport } from './routes/_authenticated.admin.forum'
@@ -119,6 +121,11 @@ const AuthenticatedLunaRoute = AuthenticatedLunaRouteImport.update({
   path: '/luna',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedForumRoute = AuthenticatedForumRouteImport.update({
   id: '/forum',
   path: '/forum',
@@ -155,6 +162,12 @@ const AuthenticatedAdaptiveTestsRoute =
   AuthenticatedAdaptiveTestsRouteImport.update({
     id: '/adaptive-tests',
     path: '/adaptive-tests',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGroupsRoomIdRoute =
+  AuthenticatedGroupsRoomIdRouteImport.update({
+    id: '/groups_/$roomId',
+    path: '/groups/$roomId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedForumThreadIdRoute =
@@ -209,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/certified': typeof AuthenticatedCertifiedRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/forum': typeof AuthenticatedForumRoute
+  '/groups': typeof AuthenticatedGroupsRoute
   '/luna': typeof AuthenticatedLunaRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -219,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/admin/forum': typeof AuthenticatedAdminForumRoute
   '/certified/$slug': typeof AuthenticatedCertifiedSlugRouteWithChildren
   '/forum/$threadId': typeof AuthenticatedForumThreadIdRoute
+  '/groups/$roomId': typeof AuthenticatedGroupsRoomIdRoute
   '/certified/$slug/forum': typeof AuthenticatedCertifiedSlugForumRoute
   '/certified/$slug/learn': typeof AuthenticatedCertifiedSlugLearnRoute
   '/courses/$courseId/edit': typeof AuthenticatedCoursesCourseIdEditRoute
@@ -239,6 +254,7 @@ export interface FileRoutesByTo {
   '/certified': typeof AuthenticatedCertifiedRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/forum': typeof AuthenticatedForumRoute
+  '/groups': typeof AuthenticatedGroupsRoute
   '/luna': typeof AuthenticatedLunaRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -249,6 +265,7 @@ export interface FileRoutesByTo {
   '/admin/forum': typeof AuthenticatedAdminForumRoute
   '/certified/$slug': typeof AuthenticatedCertifiedSlugRouteWithChildren
   '/forum/$threadId': typeof AuthenticatedForumThreadIdRoute
+  '/groups/$roomId': typeof AuthenticatedGroupsRoomIdRoute
   '/certified/$slug/forum': typeof AuthenticatedCertifiedSlugForumRoute
   '/certified/$slug/learn': typeof AuthenticatedCertifiedSlugLearnRoute
   '/courses/$courseId/edit': typeof AuthenticatedCoursesCourseIdEditRoute
@@ -271,6 +288,7 @@ export interface FileRoutesById {
   '/_authenticated/certified': typeof AuthenticatedCertifiedRouteWithChildren
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/forum': typeof AuthenticatedForumRoute
+  '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/luna': typeof AuthenticatedLunaRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -281,6 +299,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/forum': typeof AuthenticatedAdminForumRoute
   '/_authenticated/certified/$slug': typeof AuthenticatedCertifiedSlugRouteWithChildren
   '/_authenticated/forum_/$threadId': typeof AuthenticatedForumThreadIdRoute
+  '/_authenticated/groups_/$roomId': typeof AuthenticatedGroupsRoomIdRoute
   '/_authenticated/certified/$slug/forum': typeof AuthenticatedCertifiedSlugForumRoute
   '/_authenticated/certified/$slug/learn': typeof AuthenticatedCertifiedSlugLearnRoute
   '/_authenticated/courses/$courseId/edit': typeof AuthenticatedCoursesCourseIdEditRoute
@@ -303,6 +322,7 @@ export interface FileRouteTypes {
     | '/certified'
     | '/collection'
     | '/forum'
+    | '/groups'
     | '/luna'
     | '/notifications'
     | '/profile'
@@ -313,6 +333,7 @@ export interface FileRouteTypes {
     | '/admin/forum'
     | '/certified/$slug'
     | '/forum/$threadId'
+    | '/groups/$roomId'
     | '/certified/$slug/forum'
     | '/certified/$slug/learn'
     | '/courses/$courseId/edit'
@@ -333,6 +354,7 @@ export interface FileRouteTypes {
     | '/certified'
     | '/collection'
     | '/forum'
+    | '/groups'
     | '/luna'
     | '/notifications'
     | '/profile'
@@ -343,6 +365,7 @@ export interface FileRouteTypes {
     | '/admin/forum'
     | '/certified/$slug'
     | '/forum/$threadId'
+    | '/groups/$roomId'
     | '/certified/$slug/forum'
     | '/certified/$slug/learn'
     | '/courses/$courseId/edit'
@@ -364,6 +387,7 @@ export interface FileRouteTypes {
     | '/_authenticated/certified'
     | '/_authenticated/collection'
     | '/_authenticated/forum'
+    | '/_authenticated/groups'
     | '/_authenticated/luna'
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
@@ -374,6 +398,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/forum'
     | '/_authenticated/certified/$slug'
     | '/_authenticated/forum_/$threadId'
+    | '/_authenticated/groups_/$roomId'
     | '/_authenticated/certified/$slug/forum'
     | '/_authenticated/certified/$slug/learn'
     | '/_authenticated/courses/$courseId/edit'
@@ -507,6 +532,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLunaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/groups': {
+      id: '/_authenticated/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof AuthenticatedGroupsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/forum': {
       id: '/_authenticated/forum'
       path: '/forum'
@@ -554,6 +586,13 @@ declare module '@tanstack/react-router' {
       path: '/adaptive-tests'
       fullPath: '/adaptive-tests'
       preLoaderRoute: typeof AuthenticatedAdaptiveTestsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/groups_/$roomId': {
+      id: '/_authenticated/groups_/$roomId'
+      path: '/groups/$roomId'
+      fullPath: '/groups/$roomId'
+      preLoaderRoute: typeof AuthenticatedGroupsRoomIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/forum_/$threadId': {
@@ -640,12 +679,14 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCertifiedRoute: typeof AuthenticatedCertifiedRouteWithChildren
   AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
   AuthenticatedForumRoute: typeof AuthenticatedForumRoute
+  AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
   AuthenticatedLunaRoute: typeof AuthenticatedLunaRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
   AuthenticatedAdminForumRoute: typeof AuthenticatedAdminForumRoute
   AuthenticatedForumThreadIdRoute: typeof AuthenticatedForumThreadIdRoute
+  AuthenticatedGroupsRoomIdRoute: typeof AuthenticatedGroupsRoomIdRoute
   AuthenticatedCoursesCourseIdEditRoute: typeof AuthenticatedCoursesCourseIdEditRoute
 }
 
@@ -657,12 +698,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCertifiedRoute: AuthenticatedCertifiedRouteWithChildren,
   AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
   AuthenticatedForumRoute: AuthenticatedForumRoute,
+  AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
   AuthenticatedLunaRoute: AuthenticatedLunaRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedProgressRoute: AuthenticatedProgressRoute,
   AuthenticatedAdminForumRoute: AuthenticatedAdminForumRoute,
   AuthenticatedForumThreadIdRoute: AuthenticatedForumThreadIdRoute,
+  AuthenticatedGroupsRoomIdRoute: AuthenticatedGroupsRoomIdRoute,
   AuthenticatedCoursesCourseIdEditRoute: AuthenticatedCoursesCourseIdEditRoute,
 }
 
@@ -697,3 +740,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
