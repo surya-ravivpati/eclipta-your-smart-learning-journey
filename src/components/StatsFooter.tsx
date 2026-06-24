@@ -76,7 +76,7 @@ export function StatsFooter() {
           </Link>
           <div className="flex flex-wrap justify-center gap-8 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
             <Link to="/certified" className="hover:text-neon-purple transition-colors">Courses</Link>
-            <Link to="/battles" className="hover:text-neon-purple transition-colors">Arena</Link>
+            <Link to="/battles" className="hover:text-neon-purple transition-colors">Battles</Link>
             <Link to="/forum" className="hover:text-neon-purple transition-colors">Forum</Link>
             <Link to="/about" className="hover:text-neon-purple transition-colors">About</Link>
           </div>

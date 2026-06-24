@@ -1029,6 +1029,7 @@ function BattleArena() {
   const liveResolutionRef = useRef<(actions: LiveTurnActionRow[], turnNumber: number) => void>(() => {});
   const rematchStartedRef = useRef(false);
   const liveRematchStateRef = useRef<"idle" | "waiting" | "starting">("idle");
+  const rematchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const myUserIdRef = useRef<string | null>(null);
   const opponentUserIdRef = useRef<string | null>(null);
   const iAmChallengerRef = useRef(false);
@@ -1651,6 +1652,15 @@ function BattleArena() {
     if (!battleId) return;
     if (liveRematchStateRef.current !== "idle") return;
     setLiveRematchState("waiting");
+    // Don't strand the player on "WAITING FOR OPPONENT…": if the opponent never
+    // accepts, reset to idle so QUICK REMATCH is clickable again.
+    if (rematchTimeoutRef.current) clearTimeout(rematchTimeoutRef.current);
+    rematchTimeoutRef.current = setTimeout(() => {
+      if (liveRematchStateRef.current === "waiting") {
+        setLiveRematchState("idle");
+        toast("Rematch timed out — your opponent didn't accept.");
+      }
+    }, 30000);
     try {
       const { data, error } = await supabase.rpc("request_pvp_rematch" as any, {
         p_battle_id: battleId,

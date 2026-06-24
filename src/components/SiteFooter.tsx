@@ -7,6 +7,7 @@ const FOOTER_GROUPS = [
     label: "LEARN",
     links: [
       { to: "/certified", label: "Certified Courses" },
+      { to: "/courses", label: "Community Courses" },
       { to: "/build-course", label: "Build a Course" },
       { to: "/luna", label: "Luna Tutor" },
     ],
@@ -22,6 +23,7 @@ const FOOTER_GROUPS = [
     label: "COMMUNITY",
     links: [
       { to: "/forum", label: "Forum" },
+      { to: "/groups", label: "Study Rooms" },
       { to: "/about", label: "About" },
     ],
   },

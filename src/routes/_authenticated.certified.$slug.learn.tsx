@@ -264,13 +264,13 @@ function CoursePlayer() {
             {/* "Video" placeholder — represents the lesson stage */}
             <div className="aspect-video w-full glass-panel mb-8 flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-neon-purple/10 via-transparent to-neon-pink/10" />
-              <div className="relative text-center">
-                <PlayCircle className="w-12 h-12 text-neon-purple mx-auto mb-3 opacity-80" />
+              <div className="relative text-center px-6">
+                <BookOpen className="w-12 h-12 text-neon-purple mx-auto mb-3 opacity-80" />
                 <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                  Lesson Stage
+                  Written Lesson
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Video & interactive content for "{lesson.lessonTitle}"
+                  An auto-generated study outline for "{lesson.lessonTitle}" — read it below. Video walkthroughs aren't available yet.
                 </p>
               </div>
             </div>

@@ -583,14 +583,14 @@ export function Forum({ defaultCourse, lockCourse = false, heading, subheading }
               <BookOpen className="w-6 h-6 text-neon-cyan" />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h3 className="font-bold font-display text-lg tracking-tight mb-1">Peer Tutoring & Safe Messaging</h3>
+              <h3 className="font-bold font-display text-lg tracking-tight mb-1">Study Rooms — learn together, live</h3>
               <p className="text-sm text-muted-foreground">
-                Connect with other learners directly. Message, tutor, and collaborate in a moderated environment designed for focused learning.
+                Take it real-time: join a public room or start a private one with friends, chat as you work, and bring your Ecliptar along.
               </p>
             </div>
-            <button className="px-5 py-2 text-xs font-bold tracking-widest border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10 transition-colors shrink-0">
-              COMING SOON
-            </button>
+            <Link to="/groups" className="px-5 py-2 text-xs font-bold tracking-widest border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10 transition-colors shrink-0">
+              ENTER STUDY ROOMS
+            </Link>
           </div>
         </motion.div>
       </div>
