@@ -12,6 +12,8 @@ export interface StreakState {
   streakFreezes: number;
   /** ISO date (UTC) of the last practice day, or null. */
   lastPracticeDate: string | null;
+  /** Rolling history of practiced UTC days (YYYY-MM-DD), for the calendar. */
+  practiceDates: string[];
 }
 
 /** Result returned by the record_daily_practice RPC. */
@@ -19,12 +21,22 @@ export interface PracticeResult {
   daily_streak: number;
   longest_daily_streak: number;
   streak_freezes: number;
+  practice_dates: string[];
   froze: boolean;
   milestone: number | null;
+  milestone_reward: number;
   already: boolean;
 }
 
 export const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100, 180, 365] as const;
+
+/** Bonus XP the server grants when a milestone is newly crossed. */
+export const MILESTONE_REWARDS: Record<number, number> = {
+  3: 30, 7: 75, 14: 150, 30: 350, 60: 600, 100: 900, 180: 1000, 365: 1000,
+};
+export function milestoneReward(milestone: number): number {
+  return MILESTONE_REWARDS[milestone] ?? 0;
+}
 
 /** Today's date as a UTC YYYY-MM-DD string (matches the server's date math). */
 export function todayUtc(now: Date = new Date()): string {
@@ -77,4 +89,42 @@ export function streakMessage(state: StreakState, now: Date = new Date()): strin
       : "Locked in for today. You're in legendary territory.";
   }
   return `Keep your ${s}-day streak alive — just one session today.`;
+}
+
+// ─── Calendar + loss-aversion helpers ───────────────────────────────────────
+
+/** The last `n` UTC dates (YYYY-MM-DD), oldest → newest, ending today. */
+export function lastNDays(n: number, now: Date = new Date()): string[] {
+  const out: string[] = [];
+  const base = new Date(now.toISOString().slice(0, 10) + "T00:00:00Z");
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(base);
+    d.setUTCDate(d.getUTCDate() - i);
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+/** One-letter weekday for a YYYY-MM-DD string (UTC). */
+export function weekdayLetter(iso: string): string {
+  return ["S", "M", "T", "W", "T", "F", "S"][new Date(iso + "T00:00:00Z").getUTCDay()];
+}
+
+/**
+ * The streak is "at risk" when there's an active streak but today hasn't been
+ * practiced yet — the loss-aversion moment that drives the daily return.
+ */
+export function isAtRisk(state: Pick<StreakState, "dailyStreak" | "lastPracticeDate">, now: Date = new Date()): boolean {
+  return state.dailyStreak > 0 && !practicedToday(state, now);
+}
+
+/** Urgent (but warm) line shown when the streak is on the line today. */
+export function riskMessage(state: StreakState, now: Date = new Date()): string {
+  const s = state.dailyStreak;
+  const hoursLeft = 24 - now.getUTCHours();
+  const window = hoursLeft <= 6 ? ` Only ${hoursLeft}h left today.` : "";
+  if (state.streakFreezes > 0) {
+    return `Your ${s}-day streak is on the line.${window} A freeze can save it once — but don't waste it. One session keeps it real.`;
+  }
+  return `Your ${s}-day streak is on the line and you have no freezes left.${window} One session today saves it.`;
 }

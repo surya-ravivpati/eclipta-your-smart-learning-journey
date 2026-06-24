@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts, useRouterState } f
 import { Luna } from "@/components/Luna";
 import { Navbar } from "@/components/Navbar";
 import { SiteFooter } from "@/components/SiteFooter";
+import { StreakCelebrationListener } from "@/components/streak/StreakCelebration";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { Toaster } from "@/components/ui/sonner";
@@ -103,6 +104,7 @@ function RootComponent() {
         <Outlet />
         {showFooter && <SiteFooter />}
         {showLuna && <Luna />}
+        <StreakCelebrationListener />
         <Toaster />
       </AuthProvider>
     </ThemeProvider>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Brain, TrendingUp, Target, Zap, BarChart3, Check, X, ArrowRight, Flame, ShieldCheck, Code2, Cpu, Sigma, Flag, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { recordDailyPractice } from "@/lib/record-practice";
 
 /* ── data ── */
 
@@ -187,6 +188,7 @@ function LiveDemo() {
     // Persist to learning_history if logged in (best-effort, non-blocking).
     // Server RPC validates and rate-limits writes.
     if (user) {
+      void recordDailyPractice();
       void supabase.rpc("log_learning_history" as any, {
         p_session_type:     "adaptive_test",
         p_topic:            currentQ.topic,

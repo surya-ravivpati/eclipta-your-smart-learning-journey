@@ -12,6 +12,7 @@ import { captureScreenFrame } from "@/lib/luna-screen";
 import { supabase } from "@/integrations/supabase/client";
 import { useLunaProfile } from "@/hooks/use-luna-profile";
 import { extractPreference, mergePreference } from "@/lib/luna-preference-detector";
+import { recordDailyPractice } from "@/lib/record-practice";
 
 export type ConversationMessage = {
   role: "assistant" | "user";
@@ -107,6 +108,8 @@ export function useLunaConversation({ messages, setMessages, sessionType, reason
     // drops any older entry in the same category, so "shorter responses" is
     // replaced when the user later asks for "longer responses".
     if (text) {
+      // A Luna message counts toward the daily-practice streak (idempotent/day).
+      void recordDailyPractice();
       const pref = extractPreference(text);
       if (pref) {
         (async () => {

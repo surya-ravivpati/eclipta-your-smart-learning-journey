@@ -20,7 +20,8 @@ import { ClassSelectDialog, type ClassSelection } from "./battles/ClassSelectDia
 import { BattleReport } from "./battles/BattleReport";
 import { UserSearchDialog } from "./battles/UserSearchDialog";
 import { ChallengeInbox } from "./battles/ChallengeInbox";
-import { DailyStreakCard } from "./battles/DailyStreakCard";
+import { StreakHub } from "./streak/StreakHub";
+import { recordDailyPractice } from "@/lib/record-practice";
 import { ECLIPTARS, ECLIPTAR_NAMES, type Ecliptar } from "@/lib/ecliptars";
 import { supabase } from "@/integrations/supabase/client";
 import { getTodayChallenge } from "@/lib/daily-challenge";
@@ -1573,8 +1574,8 @@ function BattleArena() {
       await awardBattleXp(correctAnswers, totalQuestions, won);
 
       // Count today toward the daily-practice streak (server-authoritative,
-      // idempotent per day). Realtime updates the navbar flame + streak card.
-      await supabase.rpc("record_daily_practice" as never);
+      // idempotent per day). Fires the milestone celebration when crossed.
+      await recordDailyPractice();
 
       await supabase.rpc("log_learning_history" as any, {
         p_session_type:     "battle",
@@ -2953,7 +2954,7 @@ export function KnowledgeBattles() {
 
         <div className="space-y-6">
           <ChallengeInbox />
-          <DailyStreakCard />
+          <StreakHub />
           <div className="relative">
             <div className="flex items-center justify-end gap-2 mb-3">
               <button

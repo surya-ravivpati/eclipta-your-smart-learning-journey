@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlayerXp } from "@/hooks/use-player-xp";
 import { useDailyStreak } from "@/hooks/use-daily-streak";
+import { isAtRisk } from "@/lib/daily-streak";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, User, Menu, X, Zap, ChevronDown, Sun, Moon, Monitor, Bell, Flame } from "lucide-react";
@@ -44,7 +45,9 @@ const NAV_GROUPS = [
 export function Navbar() {
   const { user, isAuthenticated } = useAuth();
   const { xp } = usePlayerXp();
-  const { dailyStreak } = useDailyStreak();
+  const streakState = useDailyStreak();
+  const dailyStreak = streakState.dailyStreak;
+  const streakAtRisk = isAtRisk(streakState);
   const { theme, setTheme } = useTheme();
   const { unread } = useNotifications();
   const cycleTheme = () => {
@@ -133,12 +136,12 @@ export function Navbar() {
               </Link>
               {dailyStreak > 0 && (
                 <Link
-                  to="/battles"
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-secondary/30 border border-border hover:border-neon-pink/40 transition-colors"
-                  title={`${dailyStreak}-day practice streak — keep it alive`}
+                  to="/streak"
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-secondary/30 border transition-colors ${streakAtRisk ? "border-primary/70 animate-pulse" : "border-border hover:border-primary/40"}`}
+                  title={streakAtRisk ? `${dailyStreak}-day streak at risk — practice today!` : `${dailyStreak}-day practice streak — keep it alive`}
                   aria-label={`${dailyStreak} day practice streak`}
                 >
-                  <Flame className="w-3.5 h-3.5 text-neon-pink" />
+                  <Flame className={`w-3.5 h-3.5 text-primary ${streakAtRisk ? "" : ""}`} />
                   <span className="text-xs font-bold tabular-nums text-foreground">{dailyStreak}</span>
                 </Link>
               )}

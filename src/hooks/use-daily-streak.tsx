@@ -12,6 +12,7 @@ const EMPTY: StreakState = {
   longestDailyStreak: 0,
   streakFreezes: 0,
   lastPracticeDate: null,
+  practiceDates: [],
 };
 
 function fromRow(r: Record<string, unknown> | null): StreakState {
@@ -21,7 +22,15 @@ function fromRow(r: Record<string, unknown> | null): StreakState {
     longestDailyStreak: (r.longest_daily_streak as number) ?? 0,
     streakFreezes: (r.streak_freezes as number) ?? 0,
     lastPracticeDate: (r.last_practice_date as string) ?? null,
+    practiceDates: (r.practice_dates as string[]) ?? [],
   };
+}
+
+/** Fire a global event so a top-level listener can show the celebration modal. */
+export function emitStreakMilestone(detail: { milestone: number; reward: number; streak: number }) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("eclipta:streak-milestone", { detail }));
+  }
 }
 
 export function useDailyStreak() {
@@ -35,7 +44,7 @@ export function useDailyStreak() {
     if (!user) { setState(EMPTY); setLoading(false); return; }
     const { data } = await supabase
       .from("user_profiles")
-      .select("daily_streak, longest_daily_streak, streak_freezes, last_practice_date")
+      .select("daily_streak, longest_daily_streak, streak_freezes, last_practice_date, practice_dates")
       .eq("user_id", user.id)
       .maybeSingle();
     setState(fromRow(data as Record<string, unknown> | null));
@@ -56,7 +65,12 @@ export function useDailyStreak() {
         longestDailyStreak: r.longest_daily_streak,
         streakFreezes: r.streak_freezes,
         lastPracticeDate: new Date().toISOString().slice(0, 10),
+        practiceDates: r.practice_dates ?? prev.practiceDates,
       }));
+      // A newly-crossed milestone triggers the celebration overlay anywhere.
+      if (!r.already && r.milestone) {
+        emitStreakMilestone({ milestone: r.milestone, reward: r.milestone_reward ?? 0, streak: r.daily_streak });
+      }
     }
     return r;
   }, []);
