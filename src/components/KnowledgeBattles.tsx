@@ -998,6 +998,7 @@ function BattleArena() {
 
   // PvP / matchmaking state
   const [opponentType, setOpponentType]     = useState<OpponentType>("bot");
+  const [confirmExit, setConfirmExit]       = useState(false);
   const [matchStatus, setMatchStatus]       = useState("Finding opponent…");
   const [matchTier, setMatchTier]           = useState<OpponentType>("live");
   const [pvpBattleId, setPvpBattleId]       = useState<string | null>(null);
