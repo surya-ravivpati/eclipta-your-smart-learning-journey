@@ -29,6 +29,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/battles", label: "Knowledge Battles", desc: "1v1 duels" },
       { to: "/progress", label: "Trophy Road", desc: "Your progression map" },
+      { to: "/collection", label: "Collection", desc: "Your Ecliptar dex" },
     ],
   },
   {
