@@ -222,3 +222,87 @@
 .sr-lofi-mute { background: none; border: none; color: var(--sr-fog); cursor: pointer; display: flex; }
 .sr-lofi-vol { width: 72px; accent-color: var(--sr-gold); }
 .sr-lofi-missing { font-family: var(--font-mono, monospace); font-size: 9px; color: var(--sr-fog); }
+
+/* ── Shared Session Clock ─────────────────────────────────────────────── */
+.sr-clock {
+  margin: 14px 0 18px; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--sr-line-2); background: rgba(0, 0, 0, 0.22);
+  position: relative;
+}
+.sr-clock--break { background: rgba(232, 201, 122, 0.06); border-color: rgba(232, 201, 122, 0.20); }
+.sr-clock-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.sr-clock-phase {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono, monospace); font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--sr-warm);
+}
+.sr-clock-time {
+  font-family: var(--font-mono, monospace); font-size: 26px; font-weight: 500;
+  color: var(--brand-ink); font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
+}
+.sr-clock-pattern { margin-left: auto; position: relative; }
+.sr-clock-pbtn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 6px 10px; border-radius: 999px;
+  border: 1px solid var(--sr-line-2); background: transparent; color: var(--brand-dim);
+  font-family: var(--font-mono, monospace); font-size: 11px; letter-spacing: 0.06em;
+}
+.sr-clock-pbtn:hover { border-color: var(--sr-gold); color: var(--brand-ink); }
+.sr-clock-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 10;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 6px; min-width: 160px; border-radius: 10px;
+  border: 1px solid var(--sr-line-2); background: #14182a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.sr-clock-menu-item {
+  text-align: left; padding: 8px 10px; border-radius: 7px; cursor: pointer;
+  border: none; background: transparent; color: var(--brand-ink); font-size: 13px;
+}
+.sr-clock-menu-item:hover { background: rgba(244, 241, 234, 0.06); }
+.sr-clock-custom { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; padding: 8px; }
+.sr-clock-custom label {
+  display: flex; flex-direction: column; gap: 3px;
+  font-family: var(--font-mono, monospace); font-size: 10px; color: var(--sr-fog);
+}
+.sr-clock-custom input {
+  width: 100%; padding: 5px 7px; font-size: 13px; border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3); border: 1px solid var(--sr-line-2); color: var(--brand-ink);
+}
+.sr-clock-apply {
+  align-self: end; padding: 6px 10px; border-radius: 7px; border: none; cursor: pointer;
+  background: var(--sr-gold); color: #0B1020; font-size: 12px; font-weight: 600;
+}
+.sr-clock-bar {
+  margin-top: 10px; height: 3px; border-radius: 999px; overflow: hidden;
+  background: rgba(244, 241, 234, 0.06);
+}
+.sr-clock-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--sr-warm), var(--sr-gold));
+  transition: width 0.5s linear;
+}
+
+/* ── System log lines in chat (pattern change, idle nudge) ─────────────── */
+.sr-system {
+  display: flex; justify-content: center; padding: 4px 0;
+}
+.sr-system-text {
+  font-family: var(--font-mono, monospace); font-size: 11px; letter-spacing: 0.04em;
+  color: var(--sr-fog); text-align: center; line-height: 1.5;
+  padding: 4px 12px; border-radius: 999px;
+  background: rgba(244, 241, 234, 0.03); border: 1px solid var(--sr-line);
+}
+
+/* ── Quiet-chat collapsed-message counter ─────────────────────────────── */
+.sr-pending {
+  display: flex; justify-content: center; padding: 6px 12px;
+  border-top: 1px solid var(--sr-line);
+}
+.sr-pending-btn {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--sr-line-2); background: rgba(244, 241, 234, 0.04);
+  color: var(--brand-dim); font-family: var(--font-mono, monospace);
+  font-size: 11px; letter-spacing: 0.06em;
+}
+.sr-pending-btn:hover { color: var(--brand-ink); border-color: var(--sr-warm); }
