@@ -1032,6 +1032,59 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          category: string | null
+          confirmed: boolean | null
+          created_at: string
+          decision_id: string | null
+          id: string
+          note: string | null
+          processed_at: string | null
+          reporter_id: string
+          status: string
+          target_author: string | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          category?: string | null
+          confirmed?: boolean | null
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          note?: string | null
+          processed_at?: string | null
+          reporter_id: string
+          status?: string
+          target_author?: string | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          category?: string | null
+          confirmed?: boolean | null
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          note?: string | null
+          processed_at?: string | null
+          reporter_id?: string
+          status?: string
+          target_author?: string | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "moderation_decisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_queue: {
         Row: {
           author_id: string | null
@@ -1810,6 +1863,16 @@ export type Database = {
         }
         Relationships: []
       }
+      reporter_trust: {
+        Row: {
+          confirmed: number | null
+          last_report_at: string | null
+          reporter_id: string | null
+          resolved: number | null
+          unconfirmed: number | null
+        }
+        Relationships: []
+      }
       user_violation_counts: {
         Row: {
           category: string | null
@@ -1900,6 +1963,19 @@ export type Database = {
           opponent_after: number
           opponent_before: number
         }[]
+      }
+      apply_report_outcome: {
+        Args: {
+          p_category: string
+          p_confidence: number
+          p_decision: string
+          p_decision_id: string
+          p_snapshot: string
+          p_target_author: string
+          p_target_id: string
+          p_target_type: string
+        }
+        Returns: undefined
       }
       award_battle_xp: {
         Args: { p_correct: number; p_total: number; p_won: boolean }
@@ -2143,6 +2219,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_report_target_gone: {
+        Args: { p_target_id: string; p_target_type: string }
+        Returns: undefined
+      }
       moderation_cfg: { Args: { p_key: string }; Returns: Json }
       moderation_floor: {
         Args: { p_text: string }
@@ -2233,6 +2313,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      report_target_author: {
+        Args: { p_target_id: string; p_target_type: string }
+        Returns: string
+      }
+      reporter_is_high_trust: { Args: { p_user: string }; Returns: boolean }
       request_pvp_rematch: {
         Args: { p_archetype: string; p_battle_id: string }
         Returns: Json
@@ -2381,6 +2466,15 @@ export type Database = {
           p_self_damage?: number
           p_time_spent?: number
           p_turn_number: number
+        }
+        Returns: Json
+      }
+      submit_report: {
+        Args: {
+          p_category: string
+          p_note: string
+          p_target_id: string
+          p_target_type: string
         }
         Returns: Json
       }
