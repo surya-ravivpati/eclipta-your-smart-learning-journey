@@ -8,6 +8,8 @@ import { useModerator } from "@/hooks/use-moderator";
 import { toast } from "sonner";
 import { findProfanity } from "@/lib/profanity";
 import { moderateContent, moderateAfterInsert, REMOVED_PLACEHOLDER, isContentVisible } from "@/lib/moderation";
+import { CrisisSupport } from "@/components/moderation/CrisisSupport";
+import "@/components/moderation/crisis-support.css";
 
 type Thread = {
   id: string;
@@ -163,6 +165,7 @@ function NewThreadDialog({ open, onClose, onCreated, lockedCourse }: { open: boo
   const [course, setCourse] = useState(lockedCourse ?? "General");
   const [tagsInput, setTagsInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showCrisis, setShowCrisis] = useState(false);
 
   if (!open) return null;
 
@@ -184,6 +187,8 @@ function NewThreadDialog({ open, onClose, onCreated, lockedCourse }: { open: boo
     //    the full context. If verdict is 'block' we never write the row.
     const fullText = `${title.trim()}\n\n${body.trim()}\n\nTags: ${tagsInput}`;
     const verdict = await moderateContent(fullText, "thread");
+    // Self-harm is its own supportive path — show resources, never a block.
+    if (verdict.selfHarm) setShowCrisis(true);
     if (verdict.verdict === "block") {
       setSubmitting(false);
       toast.error(`Post rejected: ${verdict.reason || "content violates guidelines"}.`);
@@ -247,6 +252,7 @@ function NewThreadDialog({ open, onClose, onCreated, lockedCourse }: { open: boo
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center pt-20 px-4 overflow-y-auto" onClick={onClose}>
+      <CrisisSupport open={showCrisis} onClose={() => setShowCrisis(false)} />
       <div className="glass-panel w-full max-w-2xl p-6 my-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-xl tracking-tight">Start a thread</h2>

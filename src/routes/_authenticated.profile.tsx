@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import type { MonsterArchetypeKey } from "@/lib/trophy-road-data";
 import { containsProfanity } from "@/lib/profanity";
+import { moderate, calmBlockMessage } from "@/lib/moderation";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -360,6 +361,12 @@ function SettingsPanel({ profile, userId, onSaved }: {
     if (trimmed === profile?.username) return;
     if (availability === "taken") return toast.error("That username is already taken");
     setSaving(true);
+    // Unified moderation — every username change goes through the same pipeline.
+    const modVerdict = await moderate(trimmed, "username");
+    if (modVerdict.blocked) {
+      setSaving(false);
+      return toast.error(calmBlockMessage(modVerdict.category));
+    }
     const { error } = await supabase.from("user_profiles").update({ username: trimmed }).eq("user_id", userId);
     setSaving(false);
     if (error) {

@@ -22,6 +22,9 @@ import {
 } from "@/lib/study-teachback";
 import { RegenerateCodeButton, RemoveMemberButton, MessageMenu } from "@/components/study/RoomSafety";
 import { useBlockedUsers } from "@/hooks/use-blocked-users";
+import { moderate, calmBlockMessage } from "@/lib/moderation";
+import { CrisisSupport } from "@/components/moderation/CrisisSupport";
+import "@/components/moderation/crisis-support.css";
 
 export const Route = createFileRoute("/_authenticated/groups_/$roomId")({
   component: StudyRoomView,
@@ -56,6 +59,7 @@ function StudyRoomView() {
 
   const { isBlocked, block } = useBlockedUsers();
   const leftRef = useRef(false);   // true once I deliberately leave (vs. removed)
+  const [crisisOpen, setCrisisOpen] = useState(false);
 
   const stuckRef = useRef<StuckRequest[]>([]);
   stuckRef.current = stuck;
@@ -302,6 +306,24 @@ function StudyRoomView() {
     if (!body || sending) return;
     setSending(true);
     setDraft("");
+
+    // Unified moderation pipeline — same path as forums & usernames.
+    const verdict = await moderate(body, "chat_message");
+    // Self-harm is its own supportive path: show resources, never block on it.
+    if (verdict.selfHarm) setCrisisOpen(true);
+    if (verdict.blocked) {
+      setSending(false);
+      toast.error(calmBlockMessage(verdict.category));
+      setDraft(body);
+      return;
+    }
+    if (verdict.paused) {
+      setSending(false);
+      toast.error("Posting is paused for now, pending review.");
+      setDraft(body);
+      return;
+    }
+
     const myMember = members.find((m) => m.user_id === meRef.current.userId);
     const err = await sendRoomMessage({
       roomId, body,
@@ -309,7 +331,13 @@ function StudyRoomView() {
       ecliptarSlug: myMember?.ecliptar_slug ?? meRef.current.equippedSlug,
     });
     setSending(false);
-    if (err) { toast.error("Message didn't send", { description: err }); setDraft(body); }
+    if (err) {
+      // The DB trigger is the bypass-proof floor; surface its calm rejection.
+      const msg = /check_violation|moderation|rejected/i.test(err)
+        ? "That message couldn't be sent." : err;
+      toast.error(msg, { description: undefined });
+      setDraft(body);
+    }
   };
 
   const leave = async () => {
@@ -356,7 +384,13 @@ function StudyRoomView() {
   // Blocking is account-level and personal: hide a blocked person's chat (system
   // lines have no human author, so they're never hidden). Filtering at render
   // means the block takes effect immediately, here and in any other room.
-  const visibleMessages = messages.filter((m) => !(m.kind === "chat" && isBlocked(m.user_id)));
+  const myId = meRef.current.userId;
+  const visibleMessages = messages.filter((m) => {
+    if (m.kind === "chat" && isBlocked(m.user_id)) return false;            // personal block
+    // Moderator-hidden/removed chat is hidden from everyone but its author.
+    if (m.moderation_status && m.moderation_status !== "visible" && m.user_id !== myId) return false;
+    return true;
+  });
   const visiblePending = pending.filter((m) => !isBlocked(m.user_id));
 
   return (
@@ -512,6 +546,10 @@ function StudyRoomView() {
 
             {/* Ask Luna — private, only the asker sees this; never broadcast. */}
             <AskLuna />
+
+            {/* Supportive resources if a message read as self-harm/distress.
+                Not a moderation block, and never attributed to Luna. */}
+            <CrisisSupport open={crisisOpen} onClose={() => setCrisisOpen(false)} />
           </section>
         </div>
       </div>

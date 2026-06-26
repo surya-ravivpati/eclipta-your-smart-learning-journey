@@ -59,6 +59,8 @@ export interface RoomMessage {
   created_at: string;
   /** `chat` = normal bubble, `system` = log line (pattern change, idle nudge). */
   kind: "chat" | "system";
+  /** Unified moderation status (a moderator can hide/remove after the fact). */
+  moderation_status?: "visible" | "hidden" | "removed";
 }
 
 /** Current user's display name + their equipped Ecliptar (the room default). */
@@ -154,7 +156,7 @@ export async function getRoomMembers(roomId: string): Promise<RoomMember[]> {
 export async function getRoomMessages(roomId: string, limit = 100): Promise<RoomMessage[]> {
   const { data, error } = await supabase
     .from("study_room_messages" as any)
-    .select("id,room_id,user_id,author_name,ecliptar_slug,body,created_at,kind")
+    .select("id,room_id,user_id,author_name,ecliptar_slug,body,created_at,kind,moderation_status")
     .eq("room_id", roomId)
     .order("created_at", { ascending: true })
     .limit(limit);

@@ -1,302 +1,238 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// moderate-content
+// moderate-content — the ONE shared moderation pipeline for all three surfaces
+// (forum posts, usernames, study-room chat). Called as moderate(content,
+// surface, author_context). Two layers combine into one decision:
 //
-// Contextual moderation for forum posts, answers, comments, and usernames.
-// Replaces the trivial banned-word list with a layered check:
+//   Layer A — deterministic, in-process, zero external dependency:
+//             moderation_scan() = dictionary (slurs/hate/sexual/...) + pattern
+//             scan (PII, scam links). Always runs, even if everything else is down.
+//   Layer B — contextual AI classifier (harassment intent, veiled threats,
+//             coded hate, sexual content, and self-harm DETECTION). A distinct,
+//             UNBRANDED system call — never "Luna" in any user-facing copy.
 //
-//   1. Auth gate + per-user rate limit.
-//   2. Dictionary pre-filter via moderation_match() RPC. Severity >= 8 means
-//      the post almost certainly contains a slur regardless of context, and
-//      we short-circuit with verdict='block' before paying for an LLM call.
-//   3. AI gateway pass that classifies the cleaned text into one of
-//      {allow, hide, block}. The model is prompted to ignore obvious math /
-//      programming jargon and only flag genuinely harmful content. JSON is
-//      schema-validated; anything malformed falls back to 'pending' so we
-//      err on the side of caution.
-//   4. (Optional) If a target_id is supplied, the verdict is applied to the
-//      row via apply_ai_moderation_result so the row's moderation_status is
-//      updated immediately.
+// Decisions: allow | flag (posts, enters human review queue) | block (rejected
+// pre-save). Self-harm is its OWN path: supportive resources to the author +
+// a quiet wellbeing alert to a reviewer — never a punitive block (it can co-occur
+// with a real violation against someone else, in which case both apply).
 //
-// The function is designed to be called from the client right before INSERT
-// (allow/hide/block decision), and also from a post-insert step to push the
-// AI verdict back to the row.
+// Fail-safe: if Layer B is unavailable, fall back to Layer A; if Layer A is
+// clean, ALLOW and queue an async re-scan (never block the platform on an AI
+// hiccup, never silently skip the re-check).
+//
+// Modes: 'check' (pre-submit gate — verdict only, no side effects) and 'record'
+// (authoritative — logs the decision, queues flags, routes self-harm, applies
+// the repeat-offender soft-pause). This same function is the on-demand re-scan
+// entry the reporting system will call.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type TargetType = "thread" | "answer" | "comment" | "username";
+type TargetType = "thread" | "answer" | "comment" | "username" | "chat_message";
+type Decision = "allow" | "flag" | "block";
 
-interface Verdict {
-  verdict: "allow" | "hide" | "block" | "pending";
+const SURFACE_OF: Record<TargetType, string> = {
+  thread: "forum", answer: "forum", comment: "forum",
+  username: "username", chat_message: "chat",
+};
+
+// Unbranded moderation classifier. Deliberately NOT "Luna" — moderation must
+// never be attributed to the product's assistant persona.
+const SYSTEM_PROMPT = `You are an automated content-safety classifier for a learning community (forums, usernames, study-room chat). You judge ONLY genuine harm — never normal off-topic banter, frustration, debate, or technical jargon ("kill the process", "abort", "execute" are safe).
+
+Return ONLY one JSON object, no prose:
+{"verdict":"allow|flag|block","category":"hate|harassment|sexual|violence|scam|spam|pii|doxxing|impersonation|self_harm|none","confidence":0-100,"self_harm":true|false}
+
+Definitions:
+- "block": clearly harmful, must never be public — slurs/hate vs a protected group, credible threats, sexual content involving minors, explicit sexual content, doxxing (sharing someone's private info), scams/phishing, targeted harassment telling a person to harm/kill themselves.
+- "flag": borderline / needs a human — possible harassment intent, veiled threat, coded hate, suggestive-not-explicit, aggressive profanity at a person. Posts but is queued for review.
+- "allow": safe.
+
+self_harm: set TRUE when the AUTHOR expresses suicidal thoughts or self-harm about THEMSELVES (e.g. "I want to end it", "I can't go on"). This is NOT a violation by them — usually verdict "allow" UNLESS the same text also harasses/targets someone else (then judge the violation normally and still set self_harm true). Telling ANOTHER person to kill themselves is harassment (block), not self_harm.
+
+Usernames (short context-free strings): bias toward block for any slur, sexual term, or impersonation of staff/official accounts.`;
+
+interface AiVerdict {
+  decision: Decision;
   category: string;
-  score: number;          // 0–100, severity of detected issue
-  reason: string;
+  confidence: number;
+  self_harm: boolean;
+  available: boolean;   // false when the classifier could not be reached
 }
 
-const SAFE_FALLBACK: Verdict = {
-  verdict: "pending",
-  category: "unknown",
-  score: 50,
-  reason: "Moderation classifier unavailable",
-};
-
-const SYSTEM_PROMPT = `You are a strict content moderator for a learning platform's community forum. Users post questions about math, programming, science, and study skills.
-
-Classify the user's submitted text into exactly one of three verdicts:
-- "allow": Safe. Normal forum content. Includes technical discussions, frustration ("ugh this is so confusing"), mild venting, debate.
-- "hide": Borderline. Profanity used aggressively, mild harassment, off-topic spam, suggestive but not explicit content, low-effort posts, attempts to dodge filters with spacing/symbols. Hide pending human review.
-- "block": Clearly harmful and must never be public. Slurs, hate speech against a protected group, sexual content involving minors, explicit graphic sex, doxxing, credible threats, self-harm encouragement, scams/phishing, mass spam.
-
-Rules:
-- Math/code with words like "kill the process", "abort", "execute" → allow.
-- Profanity directed at concepts ("this problem is fucking hard") → hide. Directed at a person ("you're a fucking idiot") → block.
-- Edge-cases bias toward "hide" (a human can restore later) over "block".
-- Detect filter evasion: spaced letters (f u c k), homoglyphs, leet (fck, fuk, f4g), zero-width chars between letters. Judge based on the obvious intent.
-- A username submission ("targetType":"username") is held to a stricter bar: any slur, sexual term, or impersonation of staff → block.
-
-Return ONLY a single JSON object, no prose:
-{"verdict":"allow|hide|block","category":"hate|sexual|self_harm|harassment|spam|profanity|safe","score":0-100,"reason":"<one short sentence>"}`;
-
-// In-process per-user rate limiter. Edge functions reset between cold starts
-// but within a warm instance this prevents one client from hammering the
-// moderation pipeline. Acts as a defence-in-depth alongside the DB-side
-// reporter rate limit.
 const rateBucket = new Map<string, number[]>();
-function checkRate(userId: string, maxPerMinute = 30): boolean {
+function checkRate(userId: string, maxPerMinute = 60): boolean {
   const now = Date.now();
-  const window = 60_000;
-  const bucket = (rateBucket.get(userId) || []).filter((t) => now - t < window);
+  const bucket = (rateBucket.get(userId) || []).filter((t) => now - t < 60_000);
   if (bucket.length >= maxPerMinute) return false;
   bucket.push(now);
   rateBucket.set(userId, bucket);
   return true;
 }
 
-async function classifyWithAi(
-  text: string,
-  targetType: TargetType,
-  apiKey: string,
-): Promise<Verdict> {
-  // Cap the prompt budget. Forum bodies cap at 4000 chars on the client; we
-  // truncate again here as defence in depth so a tampered client can't ship
-  // a 1MB payload to the model.
+async function classifyWithAi(text: string, targetType: TargetType, apiKey: string): Promise<AiVerdict> {
   const trimmed = text.slice(0, 4000);
-
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: `targetType: ${targetType}\n---\n${trimmed}`,
-          },
+          { role: "user", content: `surface: ${SURFACE_OF[targetType]}\ntargetType: ${targetType}\n---\n${trimmed}` },
         ],
         temperature: 0,
       }),
     });
-
     if (!response.ok) {
-      console.error("moderate-content: AI gateway returned", response.status, await response.text());
-      return SAFE_FALLBACK;
+      console.error("moderate: AI gateway", response.status);
+      return { decision: "allow", category: "none", confidence: 0, self_harm: false, available: false };
     }
-
     const data = await response.json();
-    const raw = data?.choices?.[0]?.message?.content ?? "";
-
-    // Extract the first JSON object from the response (the model may wrap it
-    // in ```json fences or prose despite the instruction).
-    const match = String(raw).match(/\{[\s\S]*?\}/);
-    if (!match) {
-      console.warn("moderate-content: model did not return JSON, raw:", raw);
-      return SAFE_FALLBACK;
-    }
-    let parsed: Partial<Verdict>;
-    try {
-      parsed = JSON.parse(match[0]);
-    } catch (e) {
-      console.warn("moderate-content: JSON parse failed", e, match[0]);
-      return SAFE_FALLBACK;
-    }
-
-    const verdict = parsed.verdict;
-    if (verdict !== "allow" && verdict !== "hide" && verdict !== "block") {
-      return SAFE_FALLBACK;
-    }
-
+    const raw = String(data?.choices?.[0]?.message?.content ?? "");
+    const match = raw.match(/\{[\s\S]*?\}/);
+    if (!match) return { decision: "allow", category: "none", confidence: 0, self_harm: false, available: false };
+    const parsed = JSON.parse(match[0]) as any;
+    const v = parsed.verdict;
+    const decision: Decision = v === "block" ? "block" : v === "flag" ? "flag" : "allow";
     return {
-      verdict,
-      category: typeof parsed.category === "string" ? parsed.category : "unknown",
-      score: typeof parsed.score === "number" ? Math.min(100, Math.max(0, parsed.score)) : 50,
-      reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 240) : "",
+      decision,
+      category: typeof parsed.category === "string" ? parsed.category : "none",
+      confidence: typeof parsed.confidence === "number" ? Math.min(100, Math.max(0, parsed.confidence)) : 50,
+      self_harm: parsed.self_harm === true,
+      available: true,
     };
   } catch (e) {
-    console.error("moderate-content: AI call threw", e);
-    return SAFE_FALLBACK;
+    console.error("moderate: AI threw", e);
+    return { decision: "allow", category: "none", confidence: 0, self_harm: false, available: false };
   }
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const json = (b: unknown, status = 200) =>
+    new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace("Bearer ", "");
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SERVICE_KEY  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+    const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "");
+    if (!token) return json({ error: "Unauthorized" }, 401);
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: userData } = await sb.auth.getUser(token);
-    if (!userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!userData?.user) return json({ error: "Unauthorized" }, 401);
     const userId = userData.user.id;
+    if (!checkRate(userId)) return json({ error: "Rate limit exceeded — slow down." }, 429);
 
-    if (!checkRate(userId)) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded — slow down." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // Body parsing + bounds.
     const raw = await req.text();
-    if (raw.length > 32 * 1024) {
-      return new Response(JSON.stringify({ error: "Request too large" }), {
-        status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    let payload: { text?: string; targetType?: TargetType; targetId?: string | null };
-    try { payload = JSON.parse(raw); } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (raw.length > 32 * 1024) return json({ error: "Request too large" }, 413);
+    let payload: { text?: string; targetType?: TargetType; targetId?: string | null; mode?: "check" | "record" };
+    try { payload = JSON.parse(raw); } catch { return json({ error: "Invalid JSON" }, 400); }
 
     const text = (payload.text ?? "").toString();
     const targetType: TargetType = (payload.targetType as TargetType) ?? "thread";
     const targetId = payload.targetId ?? null;
+    const mode = payload.mode === "check" ? "check" : "record";
+    if (!Object.keys(SURFACE_OF).includes(targetType)) return json({ error: "Invalid targetType" }, 400);
+    const surface = SURFACE_OF[targetType];
 
     if (!text.trim()) {
-      return new Response(
-        JSON.stringify({ verdict: "allow", category: "safe", score: 0, reason: "Empty text" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (!["thread","answer","comment","username"].includes(targetType)) {
-      return new Response(JSON.stringify({ error: "Invalid targetType" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ verdict: "allow", decision: "allow", category: "none", score: 0, confidence: 0, selfHarm: false, reason: "Empty" });
     }
 
-    // 1. Dictionary pre-filter. The DB function uses the same normalisation
-    //    as the trigger so the client sees the exact verdict the trigger
-    //    would have enforced.
-    const { data: matches, error: matchErr } = await sb.rpc(
-      "moderation_match" as any,
-      { p_text: text },
-    );
-    if (matchErr) {
-      console.error("moderate-content: moderation_match failed", matchErr);
-      // Don't fail the user's post on a DB hiccup; fall through to AI.
+    // Thresholds from the single config location (fallbacks if unreadable).
+    const { data: thr } = await sb.rpc("moderation_cfg" as any, { p_key: "thresholds" });
+    const T = (thr ?? {}) as any;
+    const BLOCK_SEV = Number(T.block_severity ?? 8);
+    const FLAG_SEV = Number(T.flag_severity ?? 5);
+    const AI_BLOCK_CONF = Number(T.ai_block_confidence ?? 80);
+    const AI_FLAG_CONF = Number(T.ai_flag_confidence ?? 45);
+
+    // ── Layer A: deterministic dictionary + pattern scan (no external dep). ──
+    const { data: scanRows } = await sb.rpc("moderation_scan" as any, { p_text: text });
+    const hits = (Array.isArray(scanRows) ? scanRows : []) as { category: string; severity: number; layer: string }[];
+    const isUsername = targetType === "username";
+    // Self-harm is never a deterministic action. Casual profanity is NOT
+    // policed in forum/chat (the non-goal: don't filter normal banter) — the AI
+    // judges whether it's directed harassment. Usernames stay strict (a profane
+    // handle is a public identity), so they keep generic_profanity.
+    const considered = hits.filter((h) =>
+      h.category !== "self_harm" && (isUsername || h.category !== "generic_profanity"));
+    const top = considered.sort((a, b) => b.severity - a.severity)[0] ?? null;
+    const layersFired = new Set<string>();
+    let aDecision: Decision = "allow";
+    let aCategory = "none";
+    let aSeverity = 0;
+    if (top) {
+      layersFired.add(top.layer);
+      aCategory = top.category; aSeverity = top.severity;
+      aDecision = isUsername
+        ? (top.severity >= FLAG_SEV ? "block" : "allow")   // usernames: deterministic-weighted, any hit blocks
+        : (top.severity >= BLOCK_SEV ? "block" : top.severity >= FLAG_SEV ? "flag" : "allow");
     }
-    const topMatch = Array.isArray(matches) && matches.length > 0 ? matches[0] as { term: string; category: string; severity: number } : null;
-    if (topMatch && topMatch.severity >= 8) {
-      const verdict: Verdict = {
-        verdict: "block",
-        category: topMatch.category,
-        score: topMatch.severity * 10,
-        reason: `Matched banned term "${topMatch.term}"`,
-      };
-      // If a row already exists (post-insert moderation), mark it removed.
-      if (targetId && targetType !== "username") {
+
+    // ── Layer B: contextual AI classifier (lighter weight for usernames). ──
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    let ai: AiVerdict = { decision: "allow", category: "none", confidence: 0, self_harm: false, available: false };
+    if (apiKey) ai = await classifyWithAi(text, targetType, apiKey);
+    if (ai.available) layersFired.add("ai");
+
+    // Map AI confidence → decision strength.
+    let bDecision: Decision = "allow";
+    if (ai.available) {
+      if (ai.decision === "block") bDecision = ai.confidence >= AI_BLOCK_CONF ? "block" : "flag";
+      else if (ai.decision === "flag" || ai.confidence >= AI_FLAG_CONF) bDecision = "flag";
+    }
+
+    // ── Combine: strongest decision wins; self-harm is detection-only. ──
+    const rank: Record<Decision, number> = { allow: 0, flag: 1, block: 2 };
+    let decision: Decision = rank[aDecision] >= rank[bDecision] ? aDecision : bDecision;
+    let category = decision === aDecision && aCategory !== "none" ? aCategory : (ai.category !== "none" ? ai.category : aCategory);
+    let confidence = decision === aDecision ? Math.max(aSeverity * 10, ai.confidence) : ai.confidence;
+    const selfHarm = ai.self_harm === true;
+
+    // Fail-safe: classifier unavailable AND Layer A clean → allow, but queue a
+    // re-scan so the AI pass happens once it recovers (never silently skipped).
+    const needsRescan = !ai.available && aDecision === "allow" && (surface !== "username"); // usernames are deterministic-weighted
+
+    // Self-harm never produces a punitive block on its own.
+    if (selfHarm && decision === "block" && category === "self_harm") { decision = "allow"; category = "none"; }
+
+    let paused = false;
+    if (mode === "record") {
+      const { data: outcome } = await sb.rpc("apply_moderation_outcome" as any, {
+        p_surface: surface, p_target_type: targetType,
+        p_content_ref: targetId, p_author: userId,
+        p_decision: decision, p_category: category === "none" ? null : category,
+        p_confidence: Math.round(confidence), p_layers: Array.from(layersFired),
+        p_self_harm: selfHarm, p_severity: Math.max(aSeverity, Math.round(confidence / 10)),
+        p_snapshot: text, p_needs_rescan: needsRescan,
+      });
+      paused = !!(outcome as any)?.paused;
+
+      // Forum rows: push the visibility verdict onto the existing row.
+      if (targetId && surface === "forum") {
         await sb.rpc("apply_ai_moderation_result" as any, {
-          p_target_type: targetType,
-          p_target_id: targetId,
-          p_verdict: "block",
-          p_category: verdict.category,
-          p_score: verdict.score,
-          p_reason: verdict.reason,
+          p_target_type: targetType, p_target_id: targetId,
+          p_verdict: decision === "flag" ? "hide" : decision,   // allow|hide|block
+          p_category: category, p_score: Math.round(confidence), p_reason: `Auto: ${category}`,
         });
       }
-      return new Response(JSON.stringify(verdict), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
-    // 2. AI contextual classification.
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) {
-      // No AI key configured — fall back to the dictionary pre-filter result.
-      // Anything not hit by the dictionary is allowed.
-      const verdict: Verdict = topMatch
-        ? {
-            verdict: "hide",
-            category: topMatch.category,
-            score: topMatch.severity * 10,
-            reason: `Matched term "${topMatch.term}" — held for review (AI unavailable)`,
-          }
-        : { verdict: "allow", category: "safe", score: 0, reason: "Passed dictionary check" };
-      return new Response(JSON.stringify(verdict), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const aiVerdict = await classifyWithAi(text, targetType, apiKey);
-
-    // Combine: if the dictionary already flagged the post, never let the AI
-    // weaken the verdict to "allow".
-    let finalVerdict: Verdict = aiVerdict;
-    if (topMatch && aiVerdict.verdict === "allow") {
-      finalVerdict = {
-        verdict: "hide",
-        category: topMatch.category,
-        score: topMatch.severity * 10,
-        reason: `Matched term "${topMatch.term}" — overriding AI allow to hide`,
-      };
-    }
-
-    // 3. If a target_id was supplied, push the verdict to the row.
-    if (targetId && targetType !== "username") {
-      const { error: applyErr } = await sb.rpc("apply_ai_moderation_result" as any, {
-        p_target_type: targetType,
-        p_target_id: targetId,
-        p_verdict: finalVerdict.verdict === "pending" ? "hide" : finalVerdict.verdict,
-        p_category: finalVerdict.category,
-        p_score: finalVerdict.score,
-        p_reason: finalVerdict.reason,
-      });
-      if (applyErr) {
-        console.error("moderate-content: apply_ai_moderation_result failed", applyErr);
-      }
-    }
-
-    return new Response(JSON.stringify(finalVerdict), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Back-compat verdict field (existing forum callers read .verdict/.reason).
+    const verdict = decision === "flag" ? "hide" : decision;
+    return json({
+      verdict, decision, category, confidence: Math.round(confidence), score: Math.round(confidence),
+      selfHarm, paused, needsRescan,
+      reason: decision === "block" ? `This was flagged as ${category}.` : "",
     });
   } catch (e) {
-    console.error("moderate-content fatal error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("moderate fatal:", e);
+    // Fail-safe: on an unexpected error, do NOT block the user platform-wide.
+    return json({ verdict: "allow", decision: "allow", category: "none", confidence: 0, score: 0, selfHarm: false, paused: false, reason: "" });
   }
 });

@@ -25,6 +25,8 @@ export interface ModerationResult {
   category: string;
   score: number;
   reason: string;
+  /** Author expressed self-harm/crisis — surface supportive resources. */
+  selfHarm?: boolean;
 }
 
 const SAFE_FALLBACK: ModerationResult = {
@@ -40,8 +42,10 @@ export async function moderateContent(
   targetId?: string | null,
 ): Promise<ModerationResult> {
   try {
+    // Pre-insert gate: 'check' mode returns a verdict WITHOUT logging/side
+    // effects, so the authoritative record happens once (post-insert / record).
     const { data, error } = await supabase.functions.invoke("moderate-content", {
-      body: { text, targetType, targetId: targetId ?? null },
+      body: { text, targetType, targetId: targetId ?? null, mode: "check" },
     });
     if (error) {
       console.error("moderateContent: invoke error", error);
@@ -51,12 +55,13 @@ export async function moderateContent(
       console.warn("moderateContent: malformed response", data);
       return SAFE_FALLBACK;
     }
-    const result = data as Partial<ModerationResult>;
+    const result = data as Partial<ModerationResult> & { selfHarm?: boolean };
     return {
       verdict: (result.verdict as ModerationVerdict) ?? "pending",
       category: result.category ?? "unknown",
       score: typeof result.score === "number" ? result.score : 0,
       reason: result.reason ?? "",
+      selfHarm: result.selfHarm === true,
     };
   } catch (e) {
     console.error("moderateContent threw", e);
@@ -76,7 +81,7 @@ export async function moderateAfterInsert(
 ): Promise<void> {
   try {
     await supabase.functions.invoke("moderate-content", {
-      body: { text, targetType, targetId },
+      body: { text, targetType, targetId, mode: "record" },
     });
   } catch (e) {
     // Don't surface to the user — the trigger already gated obvious bad
@@ -84,6 +89,78 @@ export async function moderateAfterInsert(
     console.warn("moderateAfterInsert failed", e);
   }
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * Unified pipeline entry — moderate(content, surface, author_context).
+ * One call for usernames and chat (single, authoritative 'record' pass). Forum
+ * keeps its two-step check→record flow above. Also the on-demand re-scan entry.
+ * ─────────────────────────────────────────────────────────────────────────── */
+export type ModerationDecision = "allow" | "flag" | "block";
+
+export interface ModerationOutcome {
+  decision: ModerationDecision;
+  category: string;
+  confidence: number;
+  /** Author expressed self-harm/crisis about themselves — surface supportive
+   *  resources. NOT a moderation consequence; can co-occur with a violation. */
+  selfHarm: boolean;
+  /** Repeat-offender soft pause applied (temporary, pending human review). */
+  paused: boolean;
+  /** True when decision === 'block' — content must not be saved/sent. */
+  blocked: boolean;
+}
+
+const SAFE_OUTCOME: ModerationOutcome = {
+  decision: "allow", category: "none", confidence: 0, selfHarm: false, paused: false, blocked: false,
+};
+
+/**
+ * Run the unified pipeline for a piece of content. `mode: "record"` (default)
+ * logs the decision and applies side effects (queue, wellbeing, repeat-offender
+ * pause); `mode: "check"` is a pure pre-submit gate.
+ */
+export async function moderate(
+  text: string,
+  targetType: ModerationTarget | "chat_message",
+  opts?: { mode?: "check" | "record"; targetId?: string | null },
+): Promise<ModerationOutcome> {
+  try {
+    const { data, error } = await supabase.functions.invoke("moderate-content", {
+      body: { text, targetType, targetId: opts?.targetId ?? null, mode: opts?.mode ?? "record" },
+    });
+    if (error || !data || typeof data !== "object") return SAFE_OUTCOME;
+    const d = data as any;
+    const decision: ModerationDecision =
+      d.decision === "block" ? "block" : d.decision === "flag" ? "flag" : "allow";
+    return {
+      decision,
+      category: typeof d.category === "string" ? d.category : "none",
+      confidence: typeof d.confidence === "number" ? d.confidence : 0,
+      selfHarm: d.selfHarm === true,
+      paused: d.paused === true,
+      blocked: decision === "block",
+    };
+  } catch (e) {
+    // Fail-safe: never block the user on a moderation transport error.
+    console.error("moderate threw", e);
+    return SAFE_OUTCOME;
+  }
+}
+
+/** Calm, non-accusatory block copy — states the category, nothing more.
+ *  Never attributed to Luna or any persona. */
+export function calmBlockMessage(category: string): string {
+  const c = (category && category !== "none") ? category.replace(/_/g, " ") : "our guidelines";
+  return `This couldn't be posted — it was flagged as ${c}.`;
+}
+
+/** Supportive crisis resources surfaced to a user whose own content reads as
+ *  self-harm/distress. Supportive tone — this is NOT a moderation action. */
+export const SELF_HARM_RESOURCES: { label: string; detail: string; href?: string }[] = [
+  { label: "988 Suicide & Crisis Lifeline", detail: "Call or text 988 (US, 24/7)", href: "tel:988" },
+  { label: "Crisis Text Line", detail: "Text HOME to 741741 (US/Canada)", href: "sms:741741" },
+  { label: "Find a helpline", detail: "International directory of crisis lines", href: "https://findahelpline.com" },
+];
 
 /**
  * Submit a report through the authoritative RPC (which enforces dedup,

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ArrowRight, ArrowLeft, Check, Sparkles, Target, Clock, Brain, User2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { containsProfanity } from "@/lib/profanity";
+import { moderate, calmBlockMessage } from "@/lib/moderation";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -124,6 +125,15 @@ function OnboardingPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
+
+      // Unified moderation — usernames go through the same pipeline (deterministic
+      // layer weighted heavily; impersonation of staff is blocked here too).
+      const modVerdict = await moderate(form.username.trim(), "username");
+      if (modVerdict.blocked) {
+        toast.error(calmBlockMessage(modVerdict.category));
+        setStep(0);
+        return;
+      }
 
       // DB check constraint allows only: 'theory' | 'practice' | 'mixed'
       const styleMap: Record<string, "theory" | "practice" | "mixed"> = {
