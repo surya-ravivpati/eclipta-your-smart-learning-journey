@@ -771,6 +771,59 @@ export type Database = {
         }
         Relationships: []
       }
+      stuck_requests: {
+        Row: {
+          ai_due_at: string
+          author_name: string | null
+          created_at: string
+          id: string
+          note: string | null
+          resolution_summary: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolver_name: string | null
+          room_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          ai_due_at: string
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolver_name?: string | null
+          room_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          ai_due_at?: string
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolver_name?: string | null
+          room_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stuck_requests_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_room_members: {
         Row: {
           display_name: string | null
@@ -1315,6 +1368,29 @@ export type Database = {
         Args: { p_archetype: string; p_challenged_id: string }
         Returns: string
       }
+      create_stuck_request: {
+        Args: { p_note: string; p_room: string }
+        Returns: {
+          ai_due_at: string
+          author_name: string | null
+          created_at: string
+          id: string
+          note: string | null
+          resolution_summary: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolver_name: string | null
+          room_id: string
+          status: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "stuck_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_study_room: {
         Args: {
           p_display_name: string
@@ -1530,6 +1606,7 @@ export type Database = {
         Args: { p_archetype: string; p_battle_id: string }
         Returns: Json
       }
+      resolve_stuck_human: { Args: { p_stuck: string }; Returns: boolean }
       respond_pvp_challenge: {
         Args: {
           p_accept: boolean
