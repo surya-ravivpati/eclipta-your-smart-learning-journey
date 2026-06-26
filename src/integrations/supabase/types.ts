@@ -333,7 +333,13 @@ export type Database = {
           author_name: string
           body: string
           created_at: string
+          hidden_at: string | null
           id: string
+          moderation_category: string | null
+          moderation_reason: string | null
+          moderation_score: number | null
+          moderation_status: string
+          report_count: number
           thread_id: string
           updated_at: string
           user_id: string
@@ -344,7 +350,13 @@ export type Database = {
           author_name: string
           body: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
+          moderation_category?: string | null
+          moderation_reason?: string | null
+          moderation_score?: number | null
+          moderation_status?: string
+          report_count?: number
           thread_id: string
           updated_at?: string
           user_id: string
@@ -355,7 +367,13 @@ export type Database = {
           author_name?: string
           body?: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
+          moderation_category?: string | null
+          moderation_reason?: string | null
+          moderation_score?: number | null
+          moderation_status?: string
+          report_count?: number
           thread_id?: string
           updated_at?: string
           user_id?: string
@@ -377,7 +395,13 @@ export type Database = {
           author_name: string
           body: string
           created_at: string
+          hidden_at: string | null
           id: string
+          moderation_category: string | null
+          moderation_reason: string | null
+          moderation_score: number | null
+          moderation_status: string
+          report_count: number
           updated_at: string
           user_id: string
         }
@@ -386,7 +410,13 @@ export type Database = {
           author_name: string
           body: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
+          moderation_category?: string | null
+          moderation_reason?: string | null
+          moderation_score?: number | null
+          moderation_status?: string
+          report_count?: number
           updated_at?: string
           user_id: string
         }
@@ -395,7 +425,13 @@ export type Database = {
           author_name?: string
           body?: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
+          moderation_category?: string | null
+          moderation_reason?: string | null
+          moderation_score?: number | null
+          moderation_status?: string
+          report_count?: number
           updated_at?: string
           user_id?: string
         }
@@ -415,7 +451,9 @@ export type Database = {
           id: string
           reason: string
           reporter_id: string
+          resolution_note: string | null
           resolved_at: string | null
+          resolver_id: string | null
           status: string
           target_id: string
           target_type: string
@@ -425,7 +463,9 @@ export type Database = {
           id?: string
           reason: string
           reporter_id: string
+          resolution_note?: string | null
           resolved_at?: string | null
+          resolver_id?: string | null
           status?: string
           target_id: string
           target_type: string
@@ -435,7 +475,9 @@ export type Database = {
           id?: string
           reason?: string
           reporter_id?: string
+          resolution_note?: string | null
           resolved_at?: string | null
+          resolver_id?: string | null
           status?: string
           target_id?: string
           target_type?: string
@@ -475,7 +517,13 @@ export type Database = {
           body: string
           course: string
           created_at: string
+          hidden_at: string | null
           id: string
+          moderation_category: string | null
+          moderation_reason: string | null
+          moderation_score: number | null
+          moderation_status: string
+          report_count: number
           solved: boolean
           tags: string[]
           title: string
@@ -490,7 +538,13 @@ export type Database = {
           body: string
           course?: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
+          moderation_category?: string | null
+          moderation_reason?: string | null
+          moderation_score?: number | null
+          moderation_status?: string
+          report_count?: number
           solved?: boolean
           tags?: string[]
           title: string
@@ -505,7 +559,13 @@ export type Database = {
           body?: string
           course?: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
+          moderation_category?: string | null
+          moderation_reason?: string | null
+          moderation_score?: number | null
+          moderation_status?: string
+          report_count?: number
           solved?: boolean
           tags?: string[]
           title?: string
@@ -579,6 +639,75 @@ export type Database = {
           topic?: string | null
           user_id?: string
           was_correct?: boolean | null
+        }
+        Relationships: []
+      }
+      moderation_actions: {
+        Row: {
+          action: string
+          actor_id: string | null
+          category: string | null
+          created_at: string
+          id: string
+          payload: Json | null
+          reason: string | null
+          score: number | null
+          source: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          reason?: string | null
+          score?: number | null
+          source: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          reason?: string | null
+          score?: number | null
+          source?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
+      moderation_terms: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          severity: number
+          term: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          severity: number
+          term: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          severity?: number
+          term?: string
         }
         Relationships: []
       }
@@ -1503,6 +1632,17 @@ export type Database = {
         Args: { p_room: string; p_user: string }
         Returns: undefined
       }
+      apply_ai_moderation_result: {
+        Args: {
+          p_category: string
+          p_reason: string
+          p_score: number
+          p_target_id: string
+          p_target_type: string
+          p_verdict: string
+        }
+        Returns: undefined
+      }
       apply_pvp_rating_pair: {
         Args: {
           p_challenger_id: string
@@ -1757,6 +1897,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      moderation_match: {
+        Args: { p_text: string }
+        Returns: {
+          category: string
+          severity: number
+          term: string
+        }[]
+      }
+      normalize_for_moderation: { Args: { p_text: string }; Returns: string }
       normalize_text: { Args: { t: string }; Returns: string }
       notify_mentions: {
         Args: {
@@ -1837,6 +1986,15 @@ export type Database = {
           username: string
           xp: number
         }[]
+      }
+      set_moderation_status: {
+        Args: {
+          p_reason?: string
+          p_status: string
+          p_target_id: string
+          p_target_type: string
+        }
+        Returns: Json
       }
       set_room_goal: {
         Args: { p_goal: string; p_room: string }
@@ -1936,6 +2094,10 @@ export type Database = {
         Returns: undefined
       }
       skip_teach_back: { Args: { p_round: string }; Returns: string }
+      submit_forum_report: {
+        Args: { p_reason: string; p_target_id: string; p_target_type: string }
+        Returns: Json
+      }
       submit_pvp_turn_action: {
         Args: {
           p_action: string
