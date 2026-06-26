@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_call_log: {
+        Row: {
+          called_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          called_at?: string
+          id?: never
+          user_id: string
+        }
+        Update: {
+          called_at?: string
+          id?: never
+          user_id?: string
+        }
+        Relationships: []
+      }
       archetype_mastery: {
         Row: {
           archetype: string
@@ -104,6 +122,24 @@ export type Database = {
           total_questions?: number
           user_id?: string
           won?: boolean
+        }
+        Relationships: []
+      }
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -900,11 +936,59 @@ export type Database = {
           },
         ]
       }
+      study_room_reports: {
+        Row: {
+          author_kind: string
+          created_at: string
+          id: string
+          message_snapshot: string
+          reason: string | null
+          reported_user_id: string | null
+          reporter_id: string
+          resolved_at: string | null
+          room_id: string | null
+          status: string
+        }
+        Insert: {
+          author_kind?: string
+          created_at?: string
+          id?: string
+          message_snapshot: string
+          reason?: string | null
+          reported_user_id?: string | null
+          reporter_id: string
+          resolved_at?: string | null
+          room_id?: string | null
+          status?: string
+        }
+        Update: {
+          author_kind?: string
+          created_at?: string
+          id?: string
+          message_snapshot?: string
+          reason?: string | null
+          reported_user_id?: string | null
+          reporter_id?: string
+          resolved_at?: string | null
+          room_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_room_reports_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_rooms: {
         Row: {
           break_minutes: number
           created_at: string
           goal_text: string | null
+          host_id: string | null
           id: string
           is_public: boolean
           join_code: string | null
@@ -914,6 +998,7 @@ export type Database = {
           owner_id: string
           phase: string
           phase_started_at: string
+          removed_user_ids: string[]
           resource_links: Json
           tb_position: number
           tb_queue: string[]
@@ -925,6 +1010,7 @@ export type Database = {
           break_minutes?: number
           created_at?: string
           goal_text?: string | null
+          host_id?: string | null
           id?: string
           is_public?: boolean
           join_code?: string | null
@@ -934,6 +1020,7 @@ export type Database = {
           owner_id: string
           phase?: string
           phase_started_at?: string
+          removed_user_ids?: string[]
           resource_links?: Json
           tb_position?: number
           tb_queue?: string[]
@@ -945,6 +1032,7 @@ export type Database = {
           break_minutes?: number
           created_at?: string
           goal_text?: string | null
+          host_id?: string | null
           id?: string
           is_public?: boolean
           join_code?: string | null
@@ -954,6 +1042,7 @@ export type Database = {
           owner_id?: string
           phase?: string
           phase_started_at?: string
+          removed_user_ids?: string[]
           resource_links?: Json
           tb_position?: number
           tb_queue?: string[]
@@ -1385,6 +1474,7 @@ export type Database = {
           break_minutes: number
           created_at: string
           goal_text: string | null
+          host_id: string | null
           id: string
           is_public: boolean
           join_code: string | null
@@ -1394,6 +1484,7 @@ export type Database = {
           owner_id: string
           phase: string
           phase_started_at: string
+          removed_user_ids: string[]
           resource_links: Json
           tb_position: number
           tb_queue: string[]
@@ -1407,6 +1498,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      allow_room_member: {
+        Args: { p_room: string; p_user: string }
+        Returns: undefined
       }
       apply_pvp_rating_pair: {
         Args: {
@@ -1426,6 +1521,10 @@ export type Database = {
         Returns: number
       }
       award_xp: { Args: { p_event: string }; Returns: number }
+      check_ai_rate_limit: {
+        Args: { p_max: number; p_user: string; p_window_secs: number }
+        Returns: boolean
+      }
       claim_chest: {
         Args: { p_chest_label: string; p_node_id: number }
         Returns: number
@@ -1443,6 +1542,7 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_abandoned_rooms: { Args: never; Returns: number }
       complete_ghost_battle: {
         Args: { p_opponent_rating: number; p_session_id: string }
         Returns: Json
@@ -1491,6 +1591,7 @@ export type Database = {
           break_minutes: number
           created_at: string
           goal_text: string | null
+          host_id: string | null
           id: string
           is_public: boolean
           join_code: string | null
@@ -1500,6 +1601,7 @@ export type Database = {
           owner_id: string
           phase: string
           phase_started_at: string
+          removed_user_ids: string[]
           resource_links: Json
           tb_position: number
           tb_queue: string[]
@@ -1579,6 +1681,7 @@ export type Database = {
           break_minutes: number
           created_at: string
           goal_text: string
+          host_id: string
           id: string
           is_public: boolean
           join_code: string
@@ -1616,6 +1719,7 @@ export type Database = {
           break_minutes: number
           created_at: string
           goal_text: string | null
+          host_id: string | null
           id: string
           is_public: boolean
           join_code: string | null
@@ -1625,6 +1729,7 @@ export type Database = {
           owner_id: string
           phase: string
           phase_started_at: string
+          removed_user_ids: string[]
           resource_links: Json
           tb_position: number
           tb_queue: string[]
@@ -1694,6 +1799,21 @@ export type Database = {
         Returns: string
       }
       record_daily_practice: { Args: never; Returns: Json }
+      regenerate_room_code: { Args: { p_room: string }; Returns: string }
+      remove_room_member: {
+        Args: { p_room: string; p_user: string }
+        Returns: undefined
+      }
+      report_room_message: {
+        Args: {
+          p_author_kind: string
+          p_reason: string
+          p_reported_user: string
+          p_room: string
+          p_snapshot: string
+        }
+        Returns: undefined
+      }
       request_pvp_rematch: {
         Args: { p_archetype: string; p_battle_id: string }
         Returns: Json
@@ -1707,6 +1827,7 @@ export type Database = {
         }
         Returns: Json
       }
+      room_inactivity_window: { Args: never; Returns: string }
       search_users: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
@@ -1723,6 +1844,7 @@ export type Database = {
           break_minutes: number
           created_at: string
           goal_text: string | null
+          host_id: string | null
           id: string
           is_public: boolean
           join_code: string | null
@@ -1732,6 +1854,7 @@ export type Database = {
           owner_id: string
           phase: string
           phase_started_at: string
+          removed_user_ids: string[]
           resource_links: Json
           tb_position: number
           tb_queue: string[]
@@ -1752,6 +1875,7 @@ export type Database = {
           break_minutes: number
           created_at: string
           goal_text: string | null
+          host_id: string | null
           id: string
           is_public: boolean
           join_code: string | null
@@ -1761,6 +1885,7 @@ export type Database = {
           owner_id: string
           phase: string
           phase_started_at: string
+          removed_user_ids: string[]
           resource_links: Json
           tb_position: number
           tb_queue: string[]
@@ -1781,6 +1906,7 @@ export type Database = {
           break_minutes: number
           created_at: string
           goal_text: string | null
+          host_id: string | null
           id: string
           is_public: boolean
           join_code: string | null
@@ -1790,6 +1916,7 @@ export type Database = {
           owner_id: string
           phase: string
           phase_started_at: string
+          removed_user_ids: string[]
           resource_links: Json
           tb_position: number
           tb_queue: string[]
