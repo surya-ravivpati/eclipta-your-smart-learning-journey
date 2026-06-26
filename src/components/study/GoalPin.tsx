@@ -87,6 +87,7 @@ export function GoalPin({
           <input
             ref={goalInputRef}
             className="sr-pin-goalinput"
+            aria-label="Session goal"
             value={goalDraft}
             maxLength={200}
             placeholder="What are we working on right now?"
@@ -127,6 +128,7 @@ export function GoalPin({
             <span className="sr-pin-add">
               <input
                 className="sr-pin-addurl"
+                aria-label="Resource link URL"
                 value={urlDraft}
                 placeholder="Paste a link…"
                 autoFocus
@@ -135,6 +137,7 @@ export function GoalPin({
               />
               <input
                 className="sr-pin-addlbl"
+                aria-label="Resource link label (optional)"
                 value={labelDraft}
                 placeholder="Label (optional)"
                 maxLength={60}

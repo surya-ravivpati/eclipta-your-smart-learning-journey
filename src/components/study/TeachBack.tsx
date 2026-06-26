@@ -122,9 +122,10 @@ export function TeachBackCard({ round, meId, mySkipUsed }: {
   ];
 
   return (
-    <div className={`sr-tb-card ${closed ? "sr-tb-card--closed" : ""}`}>
+    <div className={`sr-tb-card ${closed ? "sr-tb-card--closed" : ""}`} role="group"
+      aria-label={`Teach-back prompt for ${who}: explain ${concept}`}>
       <div className="sr-tb-card-head">
-        <GraduationCap size={14} className="sr-tb-card-ico" />
+        <GraduationCap size={14} className="sr-tb-card-ico" aria-hidden="true" />
         <span className="sr-tb-card-tag">Teach-back</span>
         {round.status === "skipped" && <span className="sr-tb-card-state">passed</span>}
         {round.status === "expired" && <span className="sr-tb-card-state">no answer</span>}
@@ -140,15 +141,17 @@ export function TeachBackCard({ round, meId, mySkipUsed }: {
         <div className="sr-tb-card-foot">
           {/* Anyone who isn't the explainer can validate the answer. */}
           {!isExplainer && (
-            <div className="sr-tb-reacts">
+            <div className="sr-tb-reacts" role="group" aria-label="React to the explanation">
               {REACTIONS.map((r) => (
                 <button
                   key={r.key}
                   className={`sr-tb-react ${mine === r.key ? "is-mine" : ""}`}
                   onClick={() => react(r.key)}
                   title={r.label}
+                  aria-label={`${r.label}${r.count > 0 ? ` (${r.count})` : ""}`}
+                  aria-pressed={mine === r.key}
                 >
-                  <span className="sr-tb-react-emoji">{r.emoji}</span>
+                  <span className="sr-tb-react-emoji" aria-hidden="true">{r.emoji}</span>
                   {r.count > 0 && <span className="sr-tb-react-n">{r.count}</span>}
                 </button>
               ))}

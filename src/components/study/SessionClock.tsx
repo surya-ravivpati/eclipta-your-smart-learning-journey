@@ -83,15 +83,18 @@ export function SessionClock({ room, onPhaseFlip }: {
   const pct = total > 0 ? Math.min(100, (elapsed / total) * 100) : 0;
 
   return (
-    <div className={`sr-clock ${isWork ? "sr-clock--work" : "sr-clock--break"}`}>
+    <div className={`sr-clock ${isWork ? "sr-clock--work" : "sr-clock--break"}`}
+      role="group" aria-label={`Session clock — ${isWork ? "focus" : "break"} phase, ${fmt(remaining)} remaining`}>
       <div className="sr-clock-row">
         <span className="sr-clock-phase">
           {isWork ? <BookOpen size={13} /> : <Coffee size={13} />}
           {isWork ? "Focus" : "Break"}
         </span>
-        <span className="sr-clock-time">{fmt(remaining)}</span>
+        <span className="sr-clock-time" role="timer" aria-live="off"
+          aria-label={`${fmt(remaining)} remaining in ${isWork ? "focus" : "break"}`}>{fmt(remaining)}</span>
         <div className="sr-clock-pattern">
-          <button className="sr-clock-pbtn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+          <button className="sr-clock-pbtn" onClick={() => setOpen((v) => !v)} aria-expanded={open}
+            aria-haspopup="menu" aria-label={`Change work/break pattern (currently ${room.work_minutes} on, ${room.break_minutes} off)`}>
             <Clock size={11} /> {room.work_minutes}/{room.break_minutes}
             <ChevronDown size={11} />
           </button>

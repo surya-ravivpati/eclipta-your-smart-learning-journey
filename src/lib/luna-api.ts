@@ -130,7 +130,13 @@ export async function streamLunaChat({
       // Surface 402/429 with explicit, user-readable messages so the UI can
       // toast them instead of dropping a raw "Error 429" into the chat bubble.
       let msg = err.error || `Error ${resp.status}`;
-      if (resp.status === 429) msg = "Luna is getting a lot of questions right now. Try again in a moment.";
+      // A per-user rate limit (code "rate_limited") carries its own friendly,
+      // non-punitive copy; a gateway-side 429 is the "everyone at once" case.
+      if (resp.status === 429) {
+        msg = err.code === "rate_limited"
+          ? (err.error || "You've hit the AI limit for now — try again in a few minutes.")
+          : "Luna is getting a lot of questions right now. Try again in a moment.";
+      }
       else if (resp.status === 402) msg = "Luna's AI credits ran out. Add more in Workspace → Usage.";
       else if (TRANSIENT_STATUSES.has(resp.status)) msg = "Luna is temporarily unavailable. Try again in a moment.";
       onError?.(msg);

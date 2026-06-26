@@ -30,6 +30,8 @@ export interface StudyRoom {
   teach_back_enabled: boolean;
   tb_queue: string[];
   tb_position: number;
+  /** Host (creator initially; succeeds to longest-present member on leave). */
+  host_id: string;
 }
 
 export interface ResourceLink {
@@ -84,6 +86,12 @@ export async function getMyRoomIdentity(): Promise<{
 }
 
 export async function listStudyRooms(): Promise<StudyRoom[]> {
+  // Check-on-access cleanup: clear empty, long-abandoned rooms whenever the
+  // lobby is opened. Fire-and-forget; the server enforces the "empty AND stale"
+  // guard so this is safe to call from any client.
+  void supabase.rpc("cleanup_abandoned_rooms" as any).then(({ error }) => {
+    if (error) console.error("cleanup_abandoned_rooms", error);
+  });
   const { data, error } = await supabase.rpc("get_study_rooms" as any);
   if (error) { console.error("listStudyRooms", error); return []; }
   return (data ?? []) as StudyRoom[];

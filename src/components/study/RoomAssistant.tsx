@@ -7,6 +7,7 @@ import {
   type StuckRequest, type RecapEvent,
 } from "@/lib/study-luna";
 import type { TeachBackRound } from "@/lib/study-teachback";
+import { MessageMenu } from "@/components/study/RoomSafety";
 
 /* ── Ask: private, personal help. Ephemeral, client-only — never broadcast. ── */
 export function AskLuna() {
@@ -98,7 +99,7 @@ export function StuckLauncher({ roomId }: { roomId: string }) {
 }
 
 /* ── Stuck card: visible to the room, ticking countdown, human resolution. ── */
-export function StuckCard({ stuck, meId }: { stuck: StuckRequest; meId: string | null }) {
+export function StuckCard({ stuck, meId, roomId }: { stuck: StuckRequest; meId: string | null; roomId: string }) {
   const [now, setNow] = useState(Date.now());
   const [resolving, setResolving] = useState(false);
   useEffect(() => {
@@ -119,9 +120,10 @@ export function StuckCard({ stuck, meId }: { stuck: StuckRequest; meId: string |
   };
 
   return (
-    <div className={`sr-stuck sr-stuck--${stuck.status}`}>
+    <div className={`sr-stuck sr-stuck--${stuck.status}`} role="group"
+      aria-label={`Stuck help request from ${who}${stuck.note ? ` about ${stuck.note}` : ""}`}>
       <div className="sr-stuck-head">
-        <HelpCircle size={14} className="sr-stuck-ico" />
+        <HelpCircle size={14} className="sr-stuck-ico" aria-hidden="true" />
         <span><b>{who}</b> is stuck{stuck.note ? ` on "${stuck.note}"` : ""} — anyone?</span>
       </div>
 
@@ -148,7 +150,14 @@ export function StuckCard({ stuck, meId }: { stuck: StuckRequest; meId: string |
               : <><Check size={12} /> {stuck.resolver_name || "A member"} has this</>}
           </div>
           {stuck.resolved_by === "ai" && stuck.resolution_summary && (
-            <div className="sr-stuck-ai">{stuck.resolution_summary}</div>
+            <div className="sr-stuck-ai">
+              {stuck.resolution_summary}
+              {/* AI answers can be wrong/harmful too — quiet report, no block. */}
+              <MessageMenu
+                roomId={roomId} authorKind="ai" reportedUserId={null} authorName="Luna"
+                snapshot={stuck.resolution_summary} canBlock={false} onBlock={() => {}}
+              />
+            </div>
           )}
         </div>
       )}

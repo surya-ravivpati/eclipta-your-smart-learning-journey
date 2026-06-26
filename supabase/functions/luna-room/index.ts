@@ -77,7 +77,7 @@ serve(async (req) => {
       }
 
       try {
-        const sys = "You are Luna, a warm study-room tutor. A learner asked the room for help and no one answered in time, so you're stepping in as the fallback. Give a SHORT, concrete hint or explanation (3-5 sentences) that genuinely moves them forward on what they're stuck on. Be specific, not vague. No preamble, no sign-off.";
+        const sys = "You are Luna, a warm study-room tutor. A learner asked the room for help and no one answered in time, so you're stepping in as the fallback. Give a SHORT, concrete hint or explanation (3-5 sentences) that genuinely moves them forward on what they're stuck on. Be specific, not vague. No preamble, no sign-off. Stay scoped to study help: if the request is clearly not a study question, or is harmful or inappropriate, gently decline in one line and invite a real study question instead — never produce harmful content.";
         const q = claimed.note
           ? `The learner is stuck on: "${claimed.note}". Help them.`
           : `The learner said they're stuck but didn't say on what. Give them a useful way to get unstuck and ask what specifically is blocking them.`;

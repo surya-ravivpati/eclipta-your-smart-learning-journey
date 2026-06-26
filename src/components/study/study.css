@@ -540,3 +540,67 @@
   display: flex; gap: 12px; margin-top: 9px; font-family: var(--font-mono, monospace);
   font-size: 11.5px; color: var(--brand-dim);
 }
+
+/* ── Safety & host controls ────────────────────────────────────────────────
+   Quiet, non-adversarial. Host-only controls render only for the host. */
+.sr-member-host {
+  font-size: 8px; letter-spacing: 0.12em; color: #0B1020; background: var(--sr-gold);
+  padding: 1px 5px; border-radius: 999px; font-weight: 700; margin-left: 4px; vertical-align: middle;
+}
+.sr-host-remove {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--sr-line-2); background: transparent; color: var(--sr-fog);
+  transition: border-color 0.15s, color 0.15s;
+}
+.sr-host-remove:hover { border-color: oklch(0.64 0.20 22); color: oklch(0.70 0.20 22); }
+.sr-host-confirm { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.sr-host-confirm-yes {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+  font-size: 10.5px; font-weight: 700; padding: 4px 8px; border-radius: 7px;
+  border: none; background: oklch(0.58 0.20 22); color: #fff;
+}
+.sr-host-confirm-no {
+  display: inline-flex; align-items: center; padding: 4px 6px; border-radius: 7px; cursor: pointer;
+  border: 1px solid var(--sr-line-2); background: transparent; color: var(--sr-fog);
+}
+
+/* Per-message overflow menu — small, appears on hover/focus, never alarming */
+.sr-msgmenu { position: relative; display: inline-flex; margin-left: auto; }
+.sr-msg-meta .sr-msgmenu { margin-left: auto; }
+.sr-msgmenu-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 6px; cursor: pointer;
+  border: none; background: transparent; color: var(--sr-fog); opacity: 0.45;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+.sr-msg:hover .sr-msgmenu-btn, .sr-system:hover .sr-msgmenu-btn,
+.sr-msgmenu-btn:focus-visible, .sr-msgmenu-btn[aria-expanded="true"] {
+  opacity: 1; color: var(--brand-dim); background: rgba(244, 241, 234, 0.06);
+}
+.sr-system { position: relative; }
+.sr-system .sr-msgmenu { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.sr-msgmenu-pop {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 20;
+  display: flex; flex-direction: column; min-width: 168px; padding: 5px;
+  border-radius: 10px; border: 1px solid var(--sr-line-2); background: #14182a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.sr-msgmenu-item {
+  display: flex; align-items: center; gap: 8px; text-align: left; cursor: pointer;
+  padding: 8px 10px; border-radius: 7px; border: none; background: transparent;
+  color: var(--brand-ink); font-size: 12.5px;
+}
+.sr-msgmenu-item:hover, .sr-msgmenu-item:focus-visible { background: rgba(244, 241, 234, 0.07); }
+.sr-report-snap {
+  font-size: 12.5px; line-height: 1.5; color: var(--brand-dim);
+  background: rgba(0, 0, 0, 0.25); border: 1px solid var(--sr-line); border-radius: 8px;
+  padding: 9px 11px; margin: 4px 0 12px; max-height: 120px; overflow-y: auto; white-space: pre-wrap;
+}
+.sr-report-lbl {
+  display: block; font-family: var(--font-mono, monospace); font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--sr-fog); margin-bottom: 6px;
+}
+/* Report affordance on an AI answer sits top-right, out of the text flow. */
+.sr-stuck-ai { position: relative; padding-right: 24px; }
+.sr-stuck-ai .sr-msgmenu { position: absolute; top: 2px; right: 0; }

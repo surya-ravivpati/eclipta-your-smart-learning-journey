@@ -107,6 +107,27 @@ serve(async (req) => {
       });
     }
 
+    // Per-user rate limit on direct AI requests (Ask + the main tutor share
+    // this counter). Stuck-card AI fallbacks are exempt — they're a room-level
+    // safety net, not a user-initiated call (see study-room-safety migration).
+    // A generous window so real study never trips it; abuse does.
+    const AI_MAX_CALLS = 40;
+    const AI_WINDOW_SECS = 300; // 5 minutes
+    try {
+      const { data: allowed } = await sb.rpc("check_ai_rate_limit", {
+        p_user: userData.user.id, p_max: AI_MAX_CALLS, p_window_secs: AI_WINDOW_SECS,
+      });
+      if (allowed === false) {
+        return new Response(
+          JSON.stringify({ error: "You've hit the AI limit for now — try again in a few minutes.", code: "rate_limited" }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    } catch (e) {
+      // Fail open: a rate-limiter outage must never take Luna down.
+      console.error("luna-chat rate-limit check failed (allowing):", e);
+    }
+
     // Cap raw request body so a malicious client can't ship megabytes of text
     // or base64 images that we'd then forward to the AI gateway.
     const MAX_BODY_BYTES = 600 * 1024; // 600 KB

@@ -20,6 +20,8 @@ import { fetchStuckRequests, triggerStuckAi, type StuckRequest } from "@/lib/stu
 import {
   fetchTeachBackRounds, openTeachBackRound, passTeachBack, type TeachBackRound,
 } from "@/lib/study-teachback";
+import { RegenerateCodeButton, RemoveMemberButton, MessageMenu } from "@/components/study/RoomSafety";
+import { useBlockedUsers } from "@/hooks/use-blocked-users";
 
 export const Route = createFileRoute("/_authenticated/groups_/$roomId")({
   component: StudyRoomView,
@@ -49,7 +51,11 @@ function StudyRoomView() {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [denied, setDenied] = useState(false);
+  const [removed, setRemoved] = useState(false);
   const [sending, setSending] = useState(false);
+
+  const { isBlocked, block } = useBlockedUsers();
+  const leftRef = useRef(false);   // true once I deliberately leave (vs. removed)
 
   const stuckRef = useRef<StuckRequest[]>([]);
   stuckRef.current = stuck;
@@ -80,8 +86,35 @@ function StudyRoomView() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const roomRef = useRef<StudyRoom | null>(null);
   roomRef.current = room;
+  const subscribedOnceRef = useRef(false);   // first realtime connect vs. reconnects
 
-  const refreshMembers = useCallback(async () => setMembers(await getRoomMembers(roomId)), [roomId]);
+  const refreshMembers = useCallback(async () => {
+    const list = await getRoomMembers(roomId);
+    setMembers(list);
+    // If I'm no longer in the member list and I didn't leave on my own, the
+    // host removed me — surface a clear reason rather than a silent dead room.
+    const me = meRef.current.userId;
+    if (me && !leftRef.current && list.length > 0 && !list.some((m) => m.user_id === me)) {
+      setRemoved(true);
+    }
+  }, [roomId]);
+
+  /** Pull every live snapshot fresh from the server. Used on first load and as
+   *  the single reconnect-resync path — clock/pin/queue derive from `room`,
+   *  Stuck/Teach-Back come straight from their tables, so one refetch makes a
+   *  reconnected client correct (no per-feature resync). */
+  const loadSnapshots = useCallback(async () => {
+    const [r, mem, msgs, st, rd] = await Promise.all([
+      refetchRoom(roomId), getRoomMembers(roomId), getRoomMessages(roomId),
+      fetchStuckRequests(roomId), fetchTeachBackRounds(roomId),
+    ]);
+    if (r) setRoom(r);
+    setMembers(mem);
+    setMessages(msgs);
+    setPending([]);   // authoritative refetch supersedes the local quiet-chat buffer
+    setStuck(st);
+    setRounds(rd);
+  }, [roomId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,9 +185,29 @@ function StudyRoomView() {
             upsertRound(payload.new as TeachBackRound);
           }
         })
-      .subscribe();
+      .subscribe((status) => {
+        // First SUBSCRIBED is the initial connect (already loaded on mount).
+        // Every SUBSCRIBED after that is a RE-connect: realtime drops events
+        // while disconnected, so resync the full snapshot to undo any drift.
+        if (status === "SUBSCRIBED") {
+          if (subscribedOnceRef.current) void loadSnapshots();
+          else subscribedOnceRef.current = true;
+        }
+      });
     return () => { supabase.removeChannel(channel); };
-  }, [roomId, denied, refreshMembers, upsertStuck, upsertRound]);
+  }, [roomId, denied, refreshMembers, upsertStuck, upsertRound, loadSnapshots]);
+
+  // Tab return / network back online → resync (same single path as reconnect).
+  useEffect(() => {
+    if (denied || removed) return;
+    const resync = () => { if (document.visibilityState === "visible") void loadSnapshots(); };
+    document.addEventListener("visibilitychange", resync);
+    window.addEventListener("online", resync);
+    return () => {
+      document.removeEventListener("visibilitychange", resync);
+      window.removeEventListener("online", resync);
+    };
+  }, [denied, removed, loadSnapshots]);
 
   // Keep chat pinned to the latest visible message.
   useEffect(() => {
@@ -260,9 +313,16 @@ function StudyRoomView() {
   };
 
   const leave = async () => {
+    leftRef.current = true;   // so the member-list change reads as "I left", not "removed"
     await leaveStudyRoom(roomId);
     toast("You left the room");
     navigate({ to: "/groups" });
+  };
+
+  const blockAuthor = async (userId: string, name: string) => {
+    const err = await block(userId);
+    if (err) toast.error("Couldn't block", { description: err });
+    else toast(`You blocked ${name}`, { description: "You won't see their messages anymore." });
   };
 
   const copyCode = () => {
@@ -274,6 +334,14 @@ function StudyRoomView() {
   if (loading) {
     return <div className="sr"><div className="sr-wrap sr-empty"><Loader2 className="animate-spin" size={18} style={{ display: "inline" }} /> Entering room…</div></div>;
   }
+  if (removed) {
+    return (
+      <div className="sr"><div className="sr-wrap">
+        <button className="sr-back" onClick={() => navigate({ to: "/groups" })}><ArrowLeft size={13} /> Study Rooms</button>
+        <div className="sr-empty">You were removed from this room by the host. You'll need a fresh code from them to return.</div>
+      </div></div>
+    );
+  }
   if (denied || !room) {
     return (
       <div className="sr"><div className="sr-wrap">
@@ -282,6 +350,14 @@ function StudyRoomView() {
       </div></div>
     );
   }
+
+  const isHost = !!meRef.current.userId && meRef.current.userId === room.host_id;
+
+  // Blocking is account-level and personal: hide a blocked person's chat (system
+  // lines have no human author, so they're never hidden). Filtering at render
+  // means the block takes effect immediately, here and in any other room.
+  const visibleMessages = messages.filter((m) => !(m.kind === "chat" && isBlocked(m.user_id)));
+  const visiblePending = pending.filter((m) => !isBlocked(m.user_id));
 
   return (
     <div className="sr">
@@ -312,15 +388,22 @@ function StudyRoomView() {
             {members.map((m) => {
               const isMe = m.user_id === meRef.current.userId;
               const ec = m.ecliptar_slug ? getEcliptarBySlug(m.ecliptar_slug) : undefined;
+              const isMemberHost = m.user_id === room.host_id;
               return (
                 <div className="sr-member" key={m.user_id}>
                   <EcliptarAvatar slug={m.ecliptar_slug} className="sr-member-ava" />
-                  <div style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
                     <div className="sr-member-name">
                       {m.display_name || "Learner"} {isMe && <span className="sr-member-you">YOU</span>}
+                      {isMemberHost && <span className="sr-member-host" title="Room host">HOST</span>}
                     </div>
                     <div className="sr-member-ec">{ec?.name ?? "No Ecliptar"}</div>
                   </div>
+                  {/* Host-only remove — rendered only for the host, never shown
+                      disabled to others. Can't remove yourself. */}
+                  {isHost && !isMe && (
+                    <RemoveMemberButton roomId={roomId} userId={m.user_id} name={m.display_name || "this member"} />
+                  )}
                 </div>
               );
             })}
@@ -329,9 +412,13 @@ function StudyRoomView() {
               <div className="sr-code">
                 <h4><Lock size={11} style={{ display: "inline", marginRight: 5 }} />Invite code</h4>
                 <span className="sr-code-val" onClick={copyCode} title="Click to copy">{room.join_code}</span>
-                <button className="sr-btn" style={{ marginTop: 10, fontSize: 11, padding: "6px 12px" }} onClick={copyCode}>
-                  <Copy size={12} /> Copy code
-                </button>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <button className="sr-btn" style={{ marginTop: 10, fontSize: 11, padding: "6px 12px" }} onClick={copyCode}>
+                    <Copy size={12} /> Copy code
+                  </button>
+                  {/* Host-only: regenerate. Old code stops working for new joins. */}
+                  {isHost && <RegenerateCodeButton roomId={roomId} />}
+                </div>
               </div>
             )}
           </aside>
@@ -340,34 +427,46 @@ function StudyRoomView() {
             <SessionClock room={room} onPhaseFlip={onPhaseFlip} />
             <TeachBackBar room={room} members={members} />
             <div className="sr-chat-scroll" ref={scrollRef}>
-              {messages.length === 0 && stuck.length === 0 && rounds.length === 0 ? (
+              {visibleMessages.length === 0 && stuck.length === 0 && rounds.length === 0 ? (
                 <div className="sr-chat-empty">It's quiet in here. Say hello and get the session going. ☕</div>
               ) : (
                 // Merge chat messages, Stuck cards and Teach-Back rounds into one
                 // time-ordered stream.
                 [
-                  ...messages.map((m) => ({
+                  ...visibleMessages.map((m) => {
+                    const isMine = m.user_id === meRef.current.userId;
+                    return {
                     at: m.created_at,
                     node: m.kind === "system" ? (
                       <div className="sr-system" key={`m-${m.id}`}>
                         <span className="sr-system-text">{m.body}</span>
+                        <MessageMenu
+                          roomId={roomId} authorKind="system" reportedUserId={null}
+                          authorName="System" snapshot={m.body} canBlock={false} onBlock={() => {}}
+                        />
                       </div>
                     ) : (
                       <div className="sr-msg" key={`m-${m.id}`}>
                         <EcliptarAvatar slug={m.ecliptar_slug} className="sr-msg-ava" />
                         <div className="sr-msg-body">
                           <div className="sr-msg-meta">
-                            <span className={`sr-msg-author ${m.user_id === meRef.current.userId ? "sr-msg-author--me" : ""}`}>{m.author_name || "Learner"}</span>
+                            <span className={`sr-msg-author ${isMine ? "sr-msg-author--me" : ""}`}>{m.author_name || "Learner"}</span>
                             <span className="sr-msg-time">{clock(m.created_at)}</span>
+                            <MessageMenu
+                              roomId={roomId} authorKind="human" reportedUserId={m.user_id}
+                              authorName={m.author_name || "this person"} snapshot={m.body}
+                              canBlock={!isMine}
+                              onBlock={() => void blockAuthor(m.user_id, m.author_name || "this person")}
+                            />
                           </div>
                           <div className="sr-msg-text">{m.body}</div>
                         </div>
                       </div>
                     ),
-                  })),
+                  }; }),
                   ...stuck.map((s) => ({
                     at: s.created_at,
-                    node: <StuckCard key={`s-${s.id}`} stuck={s} meId={meRef.current.userId} />,
+                    node: <StuckCard key={`s-${s.id}`} stuck={s} meId={meRef.current.userId} roomId={roomId} />,
                   })),
                   ...rounds
                     .filter((r) => r.status !== "claiming" && r.explainer_id)
@@ -387,10 +486,10 @@ function StudyRoomView() {
                   .map((t) => t.node)
               )}
             </div>
-            {pending.length > 0 && (
+            {visiblePending.length > 0 && (
               <div className="sr-pending">
                 <button className="sr-pending-btn" onClick={revealPending}>
-                  {pending.length} new message{pending.length === 1 ? "" : "s"} — tap to show
+                  {visiblePending.length} new message{visiblePending.length === 1 ? "" : "s"} — tap to show
                 </button>
               </div>
             )}
