@@ -74,8 +74,13 @@ function checkRate(userId: string, maxPerMinute = 60): boolean {
   return true;
 }
 
-async function classifyWithAi(text: string, targetType: TargetType, apiKey: string): Promise<AiVerdict> {
+async function classifyWithAi(text: string, targetType: TargetType, apiKey: string, note?: string): Promise<AiVerdict> {
   const trimmed = text.slice(0, 4000);
+  // A reporter's note is EXTRA CONTEXT for ambiguous cases only — never
+  // authoritative. The classifier still judges the content on its own.
+  const reporterContext = note && note.trim()
+    ? `\n\nA user reported this with the note (treat as a possibly-biased hint, judge the content independently): "${note.trim().slice(0, 400)}"`
+    : "";
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -84,7 +89,7 @@ async function classifyWithAi(text: string, targetType: TargetType, apiKey: stri
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `surface: ${SURFACE_OF[targetType]}\ntargetType: ${targetType}\n---\n${trimmed}` },
+          { role: "user", content: `surface: ${SURFACE_OF[targetType]}\ntargetType: ${targetType}\n---\n${trimmed}${reporterContext}` },
         ],
         temperature: 0,
       }),
@@ -129,13 +134,14 @@ serve(async (req) => {
 
     const raw = await req.text();
     if (raw.length > 32 * 1024) return json({ error: "Request too large" }, 413);
-    let payload: { text?: string; targetType?: TargetType; targetId?: string | null; mode?: "check" | "record" };
+    let payload: { text?: string; targetType?: TargetType; targetId?: string | null; mode?: "check" | "record"; note?: string };
     try { payload = JSON.parse(raw); } catch { return json({ error: "Invalid JSON" }, 400); }
 
     const text = (payload.text ?? "").toString();
     const targetType: TargetType = (payload.targetType as TargetType) ?? "thread";
     const targetId = payload.targetId ?? null;
     const mode = payload.mode === "check" ? "check" : "record";
+    const note = typeof payload.note === "string" ? payload.note : undefined;   // reporter context (re-scan)
     if (!Object.keys(SURFACE_OF).includes(targetType)) return json({ error: "Invalid targetType" }, 400);
     const surface = SURFACE_OF[targetType];
 
@@ -177,7 +183,7 @@ serve(async (req) => {
     // ── Layer B: contextual AI classifier (lighter weight for usernames). ──
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     let ai: AiVerdict = { decision: "allow", category: "none", confidence: 0, self_harm: false, available: false };
-    if (apiKey) ai = await classifyWithAi(text, targetType, apiKey);
+    if (apiKey) ai = await classifyWithAi(text, targetType, apiKey, note);
     if (ai.available) layersFired.add("ai");
 
     // Map AI confidence → decision strength.
@@ -202,6 +208,7 @@ serve(async (req) => {
     if (selfHarm && decision === "block" && category === "self_harm") { decision = "allow"; category = "none"; }
 
     let paused = false;
+    let decisionId: string | null = null;
     if (mode === "record") {
       const { data: outcome } = await sb.rpc("apply_moderation_outcome" as any, {
         p_surface: surface, p_target_type: targetType,
@@ -212,6 +219,7 @@ serve(async (req) => {
         p_snapshot: text, p_needs_rescan: needsRescan,
       });
       paused = !!(outcome as any)?.paused;
+      decisionId = (outcome as any)?.decision_id ?? null;
 
       // Forum rows: push the visibility verdict onto the existing row.
       if (targetId && surface === "forum") {
@@ -227,7 +235,7 @@ serve(async (req) => {
     const verdict = decision === "flag" ? "hide" : decision;
     return json({
       verdict, decision, category, confidence: Math.round(confidence), score: Math.round(confidence),
-      selfHarm, paused, needsRescan,
+      selfHarm, paused, needsRescan, decisionId,
       reason: decision === "block" ? `This was flagged as ${category}.` : "",
     });
   } catch (e) {

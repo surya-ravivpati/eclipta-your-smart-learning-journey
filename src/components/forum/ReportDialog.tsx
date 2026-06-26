@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X, Flag, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { submitForumReport } from "@/lib/moderation";
+import { submitReport } from "@/lib/reporting";
 
 const REASONS = ["Spam", "Harassment", "Hate speech", "Sexual content", "Self-harm", "Off-topic", "Misinformation", "Other"];
 
@@ -25,17 +25,15 @@ export function ReportDialog({
     e.preventDefault();
     if (!user) return toast.error("Sign in to report");
     setSubmitting(true);
-    const fullReason = details.trim() ? `${reason} — ${details.trim().slice(0, 500)}` : reason;
-    const result = await submitForumReport(targetType, targetId, fullReason);
+    // Unified backend: persists + triggers a moderation re-scan. The pipeline's
+    // own verdict — not the report count — decides any action.
+    const err = await submitReport({
+      targetType, targetId, category: reason, note: details.trim().slice(0, 500) || null,
+    });
     setSubmitting(false);
-    if (!result.ok) return toast.error(result.error);
-    if (result.autoHidden) {
-      toast.success("Report submitted — content hidden pending review");
-    } else if (result.deduplicated) {
-      toast.message("Report updated");
-    } else {
-      toast.success("Report submitted — moderators will review");
-    }
+    if (err) return toast.error("Couldn't submit report", { description: err });
+    // Calm, generic acknowledgement — no case-status tracker, no specifics.
+    toast.success("Thanks — this has been sent for review.");
     setDetails("");
     onClose();
   };

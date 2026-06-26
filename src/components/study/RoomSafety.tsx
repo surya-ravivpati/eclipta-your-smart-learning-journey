@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { MoreHorizontal, Flag, Ban, RefreshCw, UserX, Loader2, X, Check } from "lucide-react";
 import { toast } from "sonner";
-import {
-  regenerateRoomCode, removeRoomMember, reportRoomMessage, type ReportAuthorKind,
-} from "@/lib/study-safety";
+import { regenerateRoomCode, removeRoomMember, type ReportAuthorKind } from "@/lib/study-safety";
+import { submitReport } from "@/lib/reporting";
 
 /* ── Host: regenerate the join code (private rooms). Host-only — rendered only
    for the host, never shown-disabled to others. ── */
@@ -56,8 +55,11 @@ export function RemoveMemberButton({ roomId, userId, name }: { roomId: string; u
 
 /* ── Per-message overflow menu: quiet Report + Block. Low-friction by design —
    it lives behind a small ⋯, not a prominent button. ── */
-export function MessageMenu({ roomId, authorKind, reportedUserId, authorName, snapshot, canBlock, onBlock }: {
+export function MessageMenu({ roomId, targetId = null, authorKind, reportedUserId, authorName, snapshot, canBlock, onBlock }: {
   roomId: string;
+  /** The study_room_messages row id, so the pipeline can re-scan it. Null for
+   *  AI/system content with no message row (report is logged, not re-scanned). */
+  targetId?: string | null;
   authorKind: ReportAuthorKind;
   reportedUserId: string | null;
   authorName: string;
@@ -98,7 +100,7 @@ export function MessageMenu({ roomId, authorKind, reportedUserId, authorName, sn
       )}
       {reporting && (
         <ReportDialog
-          roomId={roomId} authorKind={authorKind} reportedUserId={reportedUserId}
+          targetId={targetId} authorKind={authorKind}
           snapshot={snapshot} onClose={() => setReporting(false)}
         />
       )}
@@ -106,9 +108,10 @@ export function MessageMenu({ roomId, authorKind, reportedUserId, authorName, sn
   );
 }
 
-/* ── Report dialog: optional reason, silent submit. ── */
-function ReportDialog({ roomId, authorKind, reportedUserId, snapshot, onClose }: {
-  roomId: string; authorKind: ReportAuthorKind; reportedUserId: string | null;
+/* ── Report dialog: optional reason, silent submit through the unified backend.
+   The report triggers a moderation re-scan; the pipeline's verdict acts. ── */
+function ReportDialog({ targetId, authorKind, snapshot, onClose }: {
+  targetId: string | null; authorKind: ReportAuthorKind;
   snapshot: string; onClose: () => void;
 }) {
   const [reason, setReason] = useState("");
@@ -116,11 +119,13 @@ function ReportDialog({ roomId, authorKind, reportedUserId, snapshot, onClose }:
 
   const submit = async () => {
     setBusy(true);
-    const err = await reportRoomMessage({ roomId, reportedUserId, authorKind, snapshot, reason: reason.trim() });
+    const err = await submitReport({
+      targetType: "chat_message", targetId, category: authorKind, note: reason.trim() || null,
+    });
     setBusy(false);
     if (err) { toast.error("Couldn't submit report", { description: err }); return; }
     // Silent by design — confirm only to the reporter, never the reported user.
-    toast.success("Report sent to the team", { description: "Thanks — this is reviewed privately." });
+    toast.success("Thanks — this has been sent for review.");
     onClose();
   };
 

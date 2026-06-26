@@ -475,7 +475,7 @@ function StudyRoomView() {
                       <div className="sr-system" key={`m-${m.id}`}>
                         <span className="sr-system-text">{m.body}</span>
                         <MessageMenu
-                          roomId={roomId} authorKind="system" reportedUserId={null}
+                          roomId={roomId} targetId={m.id} authorKind="system" reportedUserId={null}
                           authorName="System" snapshot={m.body} canBlock={false} onBlock={() => {}}
                         />
                       </div>
@@ -487,7 +487,7 @@ function StudyRoomView() {
                             <span className={`sr-msg-author ${isMine ? "sr-msg-author--me" : ""}`}>{m.author_name || "Learner"}</span>
                             <span className="sr-msg-time">{clock(m.created_at)}</span>
                             <MessageMenu
-                              roomId={roomId} authorKind="human" reportedUserId={m.user_id}
+                              roomId={roomId} targetId={m.id} authorKind="human" reportedUserId={m.user_id}
                               authorName={m.author_name || "this person"} snapshot={m.body}
                               canBlock={!isMine}
                               onBlock={() => void blockAuthor(m.user_id, m.author_name || "this person")}
