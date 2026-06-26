@@ -963,6 +963,94 @@ export type Database = {
         }
         Relationships: []
       }
+      teach_back_reactions: {
+        Row: {
+          created_at: string
+          reaction: string
+          round_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          reaction: string
+          round_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          reaction?: string
+          round_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teach_back_reactions_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "teach_back_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teach_back_rounds: {
+        Row: {
+          answered_at: string | null
+          concept_source: string | null
+          concept_text: string | null
+          created_at: string
+          ended_at: string | null
+          explainer_id: string | null
+          explainer_name: string | null
+          id: string
+          kinda_count: number
+          lost_count: number
+          room_id: string
+          status: string
+          trigger_key: string
+          up_count: number
+        }
+        Insert: {
+          answered_at?: string | null
+          concept_source?: string | null
+          concept_text?: string | null
+          created_at?: string
+          ended_at?: string | null
+          explainer_id?: string | null
+          explainer_name?: string | null
+          id?: string
+          kinda_count?: number
+          lost_count?: number
+          room_id: string
+          status?: string
+          trigger_key: string
+          up_count?: number
+        }
+        Update: {
+          answered_at?: string | null
+          concept_source?: string | null
+          concept_text?: string | null
+          created_at?: string
+          ended_at?: string | null
+          explainer_id?: string | null
+          explainer_name?: string | null
+          id?: string
+          kinda_count?: number
+          lost_count?: number
+          room_id?: string
+          status?: string
+          trigger_key?: string
+          up_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teach_back_rounds_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "study_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_chest_claims: {
         Row: {
           bonus_xp: number
@@ -1487,15 +1575,14 @@ export type Database = {
       get_study_rooms: {
         Args: never
         Returns: {
+          am_member: boolean
           break_minutes: number
           created_at: string
           goal_text: string
           id: string
-          is_member: boolean
           is_public: boolean
           join_code: string
           last_activity_at: string
-          last_idle_nudge_at: string
           member_count: number
           name: string
           owner_id: string
@@ -1576,7 +1663,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      pass_teach_back: { Args: { p_round: string }; Returns: boolean }
       post_idle_nudge: { Args: { p_room: string }; Returns: boolean }
+      react_teach_back: {
+        Args: { p_reaction: string; p_round: string }
+        Returns: undefined
+      }
       record_battle_mastery: {
         Args: {
           p_archetype: string
@@ -1712,6 +1804,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_teach_back: {
+        Args: { p_on: boolean; p_room: string }
+        Returns: undefined
+      }
+      skip_teach_back: { Args: { p_round: string }; Returns: string }
       submit_pvp_turn_action: {
         Args: {
           p_action: string
@@ -1727,6 +1824,23 @@ export type Database = {
           p_turn_number: number
         }
         Returns: Json
+      }
+      tb_handoff: {
+        Args: {
+          p_concept: string
+          p_from: string
+          p_room: string
+          p_source: string
+          p_suffix: string
+        }
+        Returns: string
+      }
+      tb_open_round: {
+        Args: { p_room: string; p_trigger_key: string }
+        Returns: {
+          result: string
+          round_id: string
+        }[]
       }
       update_pvp_rating: {
         Args: { p_opponent_rating: number; p_won: boolean }
