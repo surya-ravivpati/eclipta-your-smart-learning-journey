@@ -6,6 +6,27 @@ Eclipta is a competitive learning platform where solving problems directly affec
 
 ---
 
+## What is Eclipta?
+
+Eclipta is a gamified, AI-assisted learning platform where answering academic
+questions powers real-time competitive **Knowledge Battles**, long-term
+progression (Trophy Road, Ecliptars, daily streaks), collaborative **Study
+Rooms**, a community forum and course system, and **Luna** — an AI tutor that
+coaches *how to think* rather than handing over answers. It runs on React +
+Supabase, with all AI behind serverless Edge Functions.
+
+📄 **For a full, grounded product overview — vision, user journeys, features,
+AI capabilities, educational philosophy, architecture, and current vs. planned
+state — see [`PRODUCT_OVERVIEW.md`](./PRODUCT_OVERVIEW.md).** It's written to
+onboard a new collaborator (or another LLM) on the project in a few minutes.
+
+> Note: some sections further down in this README are older and may be out of
+> date (for example, the repository now contains SQL migrations under
+> `supabase/migrations/` and Supabase Edge Functions under
+> `supabase/functions/`). `PRODUCT_OVERVIEW.md` reflects the current state.
+
+---
+
 # Overview
 
 Eclipta is built around a simple idea:
