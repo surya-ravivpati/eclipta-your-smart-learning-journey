@@ -1383,13 +1383,14 @@ export type Database = {
       get_study_rooms: {
         Args: never
         Returns: {
-          am_member: boolean
           break_minutes: number
           created_at: string
           id: string
+          is_member: boolean
           is_public: boolean
           join_code: string
           last_activity_at: string
+          last_idle_nudge_at: string
           member_count: number
           name: string
           owner_id: string
