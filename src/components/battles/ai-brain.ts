@@ -467,8 +467,8 @@ export function getPressureLogLine(
   // Clutch situation
   if (oppHpPct < 0.35 && personality.clutchFactor >= 0.08 && Math.random() < 0.72) {
     const msgs = [
-      `⚡ ${oppName} finds a second wind.`,
-      `⚡ ${oppName} digs deep — danger zone.`,
+      `${oppName} finds a second wind.`,
+      `${oppName} digs deep — danger zone.`,
     ];
     return msgs[Math.floor(Math.random() * msgs.length)];
   }
@@ -476,8 +476,8 @@ export function getPressureLogLine(
   // Pattern counter activated
   if (wasPatternCounter && memory.patternConfidence > 0.58 && Math.random() < 0.68) {
     const msgs = [
-      `🧠 ${oppName} has read your patterns.`,
-      `🧠 ${oppName} adapts — change your approach.`,
+      `${oppName} has read your patterns.`,
+      `${oppName} adapts — change your approach.`,
     ];
     return msgs[Math.floor(Math.random() * msgs.length)];
   }
@@ -485,8 +485,8 @@ export function getPressureLogLine(
   // Player on a bad miss streak
   if (memory.playerMissStreak >= 3 && Math.random() < 0.72) {
     const msgs = [
-      `🩸 ${oppName} senses weakness — pressing hard.`,
-      `🩸 ${oppName} smells blood.`,
+      `${oppName} senses weakness — pressing hard.`,
+      `${oppName} smells blood.`,
     ];
     return msgs[Math.floor(Math.random() * msgs.length)];
   }
@@ -494,8 +494,8 @@ export function getPressureLogLine(
   // AI on a long success streak
   if (memory.aiSuccessStreak >= 4 && Math.random() < 0.58) {
     const msgs = [
-      `🔥 ${oppName} is on fire — momentum shifting.`,
-      `🔥 ${oppName} builds unstoppable momentum.`,
+      `${oppName} is on fire — momentum shifting.`,
+      `${oppName} builds unstoppable momentum.`,
     ];
     return msgs[Math.floor(Math.random() * msgs.length)];
   }

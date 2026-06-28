@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { Lock, ArrowLeft, Zap } from "lucide-react";
+import { Lock, ArrowLeft, Zap, Swords, Heart } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ARCHETYPES } from "./archetypes";
+import { ARCHETYPES, ARCHETYPE_ABILITY_COPY } from "./archetypes";
 import type { ArchetypeId } from "./types";
 import { getUnlockedArchetypes, ROAD_NODES } from "@/lib/trophy-road-data";
 import { cn } from "@/lib/utils";
@@ -97,6 +97,23 @@ export function ClassSelectDialog({ onSelect }: { onSelect: (sel: ClassSelection
             <h3 className="text-xl font-bold font-display">{arch.name}</h3>
             <p className={cn("text-xs font-bold tracking-widest", arch.color)}>CHOOSE YOUR ECLIPTAR</p>
           </div>
+        </div>
+
+        {/* Ability identity — how this archetype wants to be played */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
+          {([["attack", Swords, "Attack"], ["heal", Heart, "Heal"], ["charge", Zap, "Charge"]] as const).map(
+            ([key, Icon, label]) => (
+              <div key={key} className="glass-panel rounded-md p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Icon className={cn("w-3.5 h-3.5", arch.color)} />
+                  <span className="text-[10px] font-bold tracking-widest text-foreground">{label}</span>
+                </div>
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  {ARCHETYPE_ABILITY_COPY[pickedArch][key]}
+                </p>
+              </div>
+            ),
+          )}
         </div>
 
         {ownedEcliptars.length === 0 ? (

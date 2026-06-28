@@ -101,10 +101,11 @@ function getActionDesc(action: Action, arch: Archetype, recordCount: number): st
   }
 }
 
-// ─── Chat / Emoji Reaction constants ────────────────────────────────
-// Issue 2: preset-only — no free-text chat.
-const CHAT_PHRASES = ["hey", "thanks", "lol", "good luck", "nice", "wow"] as const;
-const EMOJI_REACTIONS = ["👍", "👎", "😂", "😮", "🔥", "💀"] as const;
+// ─── Quick-chat constants ───────────────────────────────────────────
+// Preset-only, sportsmanship-first: a fixed set of positive/neutral worded
+// phrases. No free text (toxicity), no emoji (brand: docs/brand-system.md).
+// Insults are impossible by construction; communication stays warm, not loud.
+const CHAT_PHRASES = ["Good luck", "Nice!", "Close one", "Well played", "Tough question", "GG"] as const;
 
 interface ChatItem {
   id: number;
@@ -224,7 +225,7 @@ function FocusBar({ current, max, isPlayer = false, canCharge = false }: { curre
   // Charged means: enough focus, AND if we're showing this on the local player
   // side, the player can actually use Charge right now (phase allows it, no
   // action already locked for this turn, etc.). Without the second gate the
-  // pink "CHARGE READY ⚡" ticker would stay on screen forever after the first
+  // pink "CHARGE READY" ticker would stay on screen forever after the first
   // time focus crossed 25, regardless of whether spending it was possible.
   const isCharged = current >= chargeCost && (!isPlayer || canCharge);
   const isWarm    = current >= chargeCost - 10 && !isCharged;
@@ -273,7 +274,7 @@ function FocusBar({ current, max, isPlayer = false, canCharge = false }: { curre
               opacity: { repeat: Infinity, duration: 0.55, ease: "easeInOut" },
             }}
           >
-            CHARGE READY ⚡
+            CHARGE READY
           </motion.p>
         )}
       </AnimatePresence>
@@ -712,20 +713,6 @@ function BattleChat({
                 </button>
               ))}
 
-              <span className="w-px h-4 bg-border/40 shrink-0" />
-
-              {/* Emoji reactions */}
-              {EMOJI_REACTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => send(emoji)}
-                  disabled={onCooldown}
-                  className="px-1.5 py-1 border border-border/40 hover:border-neon-pink/40 text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {emoji}
-                </button>
-              ))}
-
               {onCooldown && (
                 <span className="text-[9px] font-mono text-muted-foreground ml-1 tabular-nums">
                   {cooldownSec}s
@@ -833,7 +820,7 @@ function GamblerRevealScreen({ stats, opponentName, onComplete }: {
   const avgQuality = qualityStats.reduce((s, d) => s + d.qualityScore(stats), 0) / qualityStats.length;
 
   const runLabel =
-    avgQuality >= 0.78 ? "GOD ROLL ⚡"
+    avgQuality >= 0.78 ? "GOD ROLL"
     : avgQuality >= 0.60 ? "BLESSED RUN"
     : avgQuality >= 0.42 ? "SOLID BUILD"
     : avgQuality >= 0.25 ? "BALANCED ODDS"
@@ -1329,7 +1316,7 @@ function BattleArena() {
         sfxStreak(nextMom);
         if (nextMom > 0 && nextMom % comboThreshold === 0) {
           const newMult = streakToMultiplier(nextMom, step);
-          addLog({ actor: "system", actionType: "combo", result: `🔥 COMBO x${Math.floor(nextMom / comboThreshold)} — ${newMult.toFixed(2)}× damage locked!` });
+          addLog({ actor: "system", actionType: "combo", result: `COMBO x${Math.floor(nextMom / comboThreshold)} — ${newMult.toFixed(2)}× damage locked!` });
           fireComboBurst(Math.floor(nextMom / comboThreshold), newMult);
           sfxCombo();
         }
@@ -1440,7 +1427,7 @@ function BattleArena() {
       // Announce combo activations in the log with the actual live multiplier
       if (newMom > 0 && newMom % comboThreshold === 0) {
         const newMult = streakToMultiplier(newMom, step);
-        addLog({ actor: "system", actionType: "combo", result: `🔥 COMBO x${Math.floor(newMom / comboThreshold)} — ${newMult.toFixed(2)}× damage!` });
+        addLog({ actor: "system", actionType: "combo", result: `COMBO x${Math.floor(newMom / comboThreshold)} — ${newMult.toFixed(2)}× damage!` });
         fireComboBurst(Math.floor(newMom / comboThreshold), newMult);
         sfxCombo();
       }
@@ -1838,7 +1825,7 @@ function BattleArena() {
       return;
     }
     const cost = ACTIONS[action].focusCost;
-    if (cost > 0 && player.focus < cost) { addLog({ actor: "system", actionType: "info", result: `⚠️ Need ${cost} Focus!` }); return; }
+    if (cost > 0 && player.focus < cost) { addLog({ actor: "system", actionType: "info", result: `Need ${cost} Focus!` }); return; }
     setCurrentAction(action);
     if (cost > 0) setPlayer(prev => ({ ...prev, focus: Math.max(0, prev.focus - cost) }));
     addLog({ actor: "player", actionType: "info", result: `You ${ACTIONS[action].label.toLowerCase()}…` });
@@ -1954,8 +1941,8 @@ function BattleArena() {
         setPhase("gamblerReveal");
       } else {
         setPhase("select");
-        const typeTag = match.type === "live" ? "⚡ LIVE" : match.type === "ghost" ? "👻 GHOST" : "🤖 BOT";
-        addLog({ actor: "system", actionType: "info", result: `⚔️ ${playerName} (${baseArch.name}) vs ${oppName} (${oppArch.name}) · ${typeTag}` });
+        const typeTag = match.type === "live" ? "LIVE" : match.type === "ghost" ? "GHOST" : "BOT";
+        addLog({ actor: "system", actionType: "info", result: `${playerName} (${baseArch.name}) vs ${oppName} (${oppArch.name}) · ${typeTag}` });
       }
     })();
   };
@@ -2035,7 +2022,7 @@ function BattleArena() {
       setPhase("select");
       addLog({
         actor: "system", actionType: "info",
-        result: `⚔️ Direct challenge — ${playerName} (${baseArch.name}) vs ${opts.opponentName} (${oppArch.name}) · ⚡ LIVE`,
+        result: `Direct challenge — ${playerName} (${baseArch.name}) vs ${opts.opponentName} (${oppArch.name}) · LIVE`,
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2163,7 +2150,7 @@ function BattleArena() {
         opponentName={opponent.name}
         onComplete={() => {
           setPhase("select");
-          addLog({ actor: "system", actionType: "info", result: `⚔️ ${player.name} (${baseArch.name}) vs ${opponent.name} (${ARCHETYPES[opponentArchetype].name})!` });
+          addLog({ actor: "system", actionType: "info", result: `${player.name} (${baseArch.name}) vs ${opponent.name} (${ARCHETYPES[opponentArchetype].name})!` });
         }}
       />
     );
@@ -2948,7 +2935,7 @@ function DailyChallengeCard() {
               : claimed
                 ? `Reward claimed. Come back tomorrow for a new challenge.`
                 : complete
-                  ? `Reward ready to claim — +100 XP 🎉`
+                  ? `Reward ready to claim — +100 XP`
                   : `${challenge.goal} → +100 XP`}
           </p>
         </div>

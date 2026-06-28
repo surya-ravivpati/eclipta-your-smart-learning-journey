@@ -82,12 +82,14 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     icon: Heart,
     color: "text-pink-400",
     borderColor: "border-pink-400/40",
-    description: "Sustain-focused with high HP restore, easy questions, and passive HP regen on incoming hits.",
+    description: "Sustain-focused with strong HP restore, easy questions, and passive HP regen on incoming hits.",
     passive: "High heal · HP regen on hit · Sustain",
     maxHp: 135,
     baseDamage: 10,
     multiplierStep: 0.20,
-    healAmount: 25,
+    // 25 → 20: bounds the sustain so Healer can't stall a match indefinitely
+    // (balance audit W; see docs/battle-redesign.md §7).
+    healAmount: 20,
     timeMultiplier: 1.25,
     diffMin: 2,
     diffMax: 6,
@@ -137,17 +139,71 @@ export const ARCHETYPES: Record<ArchetypeId, Archetype> = {
     icon: Crown,
     color: "text-tier-god",
     borderColor: "border-tier-god/40",
-    description: "Endgame archetype. Max stats across the board with the hardest questions.",
-    passive: "All maxed · Hard Qs · Ultimate form",
+    description: "Endgame archetype. Towering stats and the hardest questions — but no way to heal. Pure, high-risk offense.",
+    passive: "Max stats · Hard Qs · Cannot heal",
     maxHp: 200,
     baseDamage: 25,
     multiplierStep: 0.20,
-    healAmount: 15,
+    // Heal removed (15 → null): God's only real drawback used to be question
+    // difficulty, which skilled players simply out-answer — leaving it strictly
+    // best at the top. Removing sustain restores a genuine trade-off without raw
+    // power creep (balance audit W4; docs/battle-redesign.md §7).
+    healAmount: null,
     timeMultiplier: 1.5,
     diffMin: 8,
     diffMax: 10,
     focusPool: 130,
     startFocus: 20,
+  },
+};
+
+/**
+ * Role-identity copy for each archetype's three core abilities. Unlike the
+ * terse in-battle action tags, these full sentences teach playstyle on sight at
+ * class-select — a player should understand how an archetype wants to be played
+ * just by reading them (docs/battle-redesign.md §12). Kept truthful to the
+ * current mechanics (e.g. Tank and God genuinely cannot heal).
+ */
+export const ARCHETYPE_ABILITY_COPY: Record<ArchetypeId, { attack: string; heal: string; charge: string }> = {
+  speedster: {
+    attack: "Hit before they blink — the faster you answer, the deeper it cuts.",
+    heal: "A quick breath. Small, but you'll be long gone before they swing back.",
+    charge: "Spend your tempo to burst them down while you still hold the lead.",
+  },
+  tank: {
+    attack: "A measured blow. Low damage, but you can throw them all day.",
+    heal: "You can't heal — brace instead. Defending banks Focus for a heavier counter.",
+    charge: "A slow wind-up for a rare, heavy landing. You have the HP to set it up.",
+  },
+  chud: {
+    attack: "Everything, all at once — 30 damage. But you have no margin for error.",
+    heal: "A desperate patch on a glass frame. Spend it wisely, or not at all.",
+    charge: "All-in: the hardest question for the hardest hit. Live or die by it.",
+  },
+  gambler: {
+    attack: "Swing with whatever the dice handed you this match.",
+    heal: "However much the roll allows — chaos cuts both ways.",
+    charge: "Bet it all on the hardest question. Fortune favors the bold.",
+  },
+  healer: {
+    attack: "A soft jab. You win by outlasting, not by out-hitting.",
+    heal: "Pour it back in — and every hit they land still feeds your regen.",
+    charge: "A rare burst that still tops you up while it stings them.",
+  },
+  fulcrum: {
+    attack: "Clean, consistent damage — your combo climbs every two hits.",
+    heal: "Steady upkeep to keep the rhythm unbroken.",
+    charge: "Your highest multiplier turns a long combo into a finisher.",
+  },
+  accelerator: {
+    attack: "Starts small, ends decisive — every answer makes the next one hurt more.",
+    heal: "Buy time. Your most dangerous turns are still ahead of you.",
+    charge: "Late-game payoff — the longer the fight runs, the harder this lands.",
+  },
+  god: {
+    attack: "Precision incarnate — but only the hardest questions answer to you.",
+    heal: "No mending here. The God trades safety for raw, unanswerable force.",
+    charge: "The summit: the hardest question for a decisive, final blow.",
   },
 };
 
