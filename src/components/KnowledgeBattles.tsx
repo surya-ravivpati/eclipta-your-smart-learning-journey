@@ -1441,7 +1441,7 @@ function BattleArena() {
           addLog({ actor: "player", actionType: "heal", result: `Defend: +${heal} HP, +${gain} Focus.`, value: heal });
         } else {
           setPlayer(prev => ({ ...prev, focus: Math.min(prev.maxFocus, prev.focus + gain) }));
-          addLog({ actor: "player", actionType: "heal", result: `Defend: +${gain} Focus (Tank cannot heal).`, value: gain });
+          addLog({ actor: "player", actionType: "heal", result: `Defend: +${gain} Focus (this class cannot heal).`, value: gain });
         }
       } else if (currentAction === "wild") {
         // Three distinct event types — each with unique visual/audio identity
@@ -2544,7 +2544,9 @@ function BattleArena() {
                 <Icon className={`w-8 h-8 mx-auto mb-2 ${key === "charge" ? "text-neon-pink" : key === "defend" ? "text-neon-cyan" : key === "wild" ? "text-neon-purple" : "text-foreground/80"}`} />
                 <div className="btt-shout text-lg tracking-wider">{act.label.toUpperCase()}</div>
                 <div className="btt-mono-text text-[9px] text-muted-foreground mt-1 leading-tight">
-                  {cannotHeal ? "Tank · no heal" : getActionDesc(key, getArch(archetype), records.length)}
+                  {/* getActionDesc returns "Can't heal · builds Focus" for any no-heal
+                      class (Tank and now God), so this stays correct without hardcoding a name. */}
+                  {getActionDesc(key, getArch(archetype), records.length)}
                 </div>
                 {cost > 0 && (
                   <div className="absolute top-2 right-2 btt-mono-text text-[8px] font-bold text-neon-purple border border-neon-purple/30 px-1">−{cost}</div>
@@ -3076,7 +3078,7 @@ export function KnowledgeBattles() {
               <ul className="space-y-1.5 text-muted-foreground leading-relaxed list-disc pl-5">
                 <li>Each turn you answer a question, then pick an action. <span className="text-foreground font-bold">The action sets the question's difficulty</span> — Heal draws an easy one, Attack a medium one, Charge a hard one. Bigger payoff, harder question.</li>
                 <li><span className="text-foreground font-bold">Attack</span> — your class's base damage; builds <span className="text-neon-cyan">+15 Focus</span>. Your bread-and-butter.</li>
-                <li><span className="text-foreground font-bold">Heal</span> — restores HP; builds <span className="text-neon-cyan">+10 Focus</span>. <span className="text-foreground">A Tank can't Heal at all.</span></li>
+                <li><span className="text-foreground font-bold">Heal</span> — restores HP; builds <span className="text-neon-cyan">+10 Focus</span>. <span className="text-foreground">The Tank and the God can't Heal — they build Focus instead.</span></li>
                 <li><span className="text-foreground font-bold">Charge</span> — 1.8× your damage, but spends <span className="text-neon-purple">25 Focus</span>. Your finisher.</li>
                 <li><span className="text-foreground font-bold">Wild</span> — a chaotic effect for <span className="text-neon-purple">15 Focus</span>.</li>
                 <li><span className="text-foreground font-bold">Every number on the action buttons is YOUR archetype's</span> — a Speedster's Attack hits harder the faster you answer, an Accelerator's grows each turn, a Chud's is brutal but fragile. Read them before you commit.</li>
