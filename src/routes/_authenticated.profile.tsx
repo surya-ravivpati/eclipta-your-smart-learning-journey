@@ -177,7 +177,7 @@ function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card title="Enrolled Courses" icon={<BookOpen className="w-4 h-4 text-neon-cyan" />} count={enrollments.length}>
                   {enrollments.length === 0 ? (
-                    <EmptyState text="No courses enrolled." cta={<Link to="/certified" className="text-neon-cyan hover:underline">Browse certified →</Link>} />
+                    <EmptyState text="No courses enrolled." cta={<Link to="/courses" className="text-neon-cyan hover:underline">Browse courses →</Link>} />
                   ) : (
                     <ul className="space-y-2">
                       {enrollments.slice(0, 6).map((en) => (

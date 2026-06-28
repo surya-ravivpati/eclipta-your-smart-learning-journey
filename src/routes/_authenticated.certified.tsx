@@ -1,22 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CertifiedCourses } from "@/components/CertifiedCourses";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// The Certified / Community split was retired in favor of one unified Courses
+// hub (see docs/courses-redesign.md). This listing route now redirects there;
+// individual certified courses still live at /certified/$slug.
 export const Route = createFileRoute("/_authenticated/certified")({
-  head: () => ({
-    meta: [
-      { title: "Certified Courses – Eclipta" },
-      { name: "description", content: "Premium, verified courses crafted by Eclipta's team and trusted creators. Structured paths to recognized mastery." },
-      { property: "og:title", content: "Certified Courses – Eclipta" },
-      { property: "og:description", content: "Premium verified courses with clear outcomes and recognized qualifications." },
-    ],
-  }),
-  component: CertifiedPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/courses" });
+  },
 });
-
-function CertifiedPage() {
-  return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <CertifiedCourses />
-    </div>
-  );
-}

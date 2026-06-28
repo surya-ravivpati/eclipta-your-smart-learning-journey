@@ -6,8 +6,7 @@ const FOOTER_GROUPS = [
   {
     label: "LEARN",
     links: [
-      { to: "/certified", label: "Certified Courses" },
-      { to: "/courses", label: "Community Courses" },
+      { to: "/courses", label: "Courses" },
       { to: "/build-course", label: "Build a Course" },
       { to: "/luna", label: "Luna Tutor" },
     ],

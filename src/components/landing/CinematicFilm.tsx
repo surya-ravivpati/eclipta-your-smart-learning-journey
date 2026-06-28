@@ -543,7 +543,7 @@ export function CinematicFilm() {
         </Link>
         <nav className="cf-foot-links" aria-label="Footer">
           <Link to="/about">About</Link>
-          <Link to="/certified">Courses</Link>
+          <Link to="/courses">Courses</Link>
           <Link to="/forum">Forum</Link>
           <Link to="/battles">Battles</Link>
         </nav>

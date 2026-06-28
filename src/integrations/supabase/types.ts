@@ -303,6 +303,52 @@ export type Database = {
         }
         Relationships: []
       }
+      course_progress: {
+        Row: {
+          completed_at: string | null
+          course_slug: string
+          course_title: string | null
+          created_at: string
+          current_block_id: string | null
+          id: string
+          last_opened_at: string
+          lessons_done: number
+          lessons_total: number
+          percent: number
+          source: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_slug: string
+          course_title?: string | null
+          created_at?: string
+          current_block_id?: string | null
+          id?: string
+          last_opened_at?: string
+          lessons_done?: number
+          lessons_total?: number
+          source?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_slug?: string
+          course_title?: string | null
+          created_at?: string
+          current_block_id?: string | null
+          id?: string
+          last_opened_at?: string
+          lessons_done?: number
+          lessons_total?: number
+          source?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       enrollments: {
         Row: {
           course_slug: string

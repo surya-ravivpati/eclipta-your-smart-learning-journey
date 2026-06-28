@@ -231,8 +231,7 @@ export function ProgressDashboard() {
                     <span className="pg-add-card-icon"><BookOpen size={26} /></span>
                     <span className="pg-add-card-lbl">No courses yet</span>
                     <span className="pg-add-card-sub" style={{ display: "flex", gap: 16, marginTop: 6 }}>
-                      <Link to="/certified" className="pg-group-open">Browse Certified <ChevronRight size={12} /></Link>
-                      <Link to="/courses" className="pg-group-open">Community Courses <ChevronRight size={12} /></Link>
+                      <Link to="/courses" className="pg-group-open">Browse courses <ChevronRight size={12} /></Link>
                     </span>
                   </div>
                 ) : (

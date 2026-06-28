@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/certified/$slug")({
   },
   notFoundComponent: () => (
     <div className="min-h-screen flex items-center justify-center">
-      <Link to="/certified" className="text-neon-purple">← Back to courses</Link>
+      <Link to="/courses" className="text-neon-purple">← Back to courses</Link>
     </div>
   ),
   errorComponent: ({ error }) => (
@@ -66,8 +66,8 @@ function CourseDetail() {
     <>
       <div className="pt-24 pb-16 px-6 min-h-screen">
         <div className="max-w-4xl mx-auto">
-          <Link to="/certified" className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest text-muted-foreground hover:text-neon-purple mb-6">
-            <ArrowLeft className="w-3 h-3" /> ALL CERTIFIED COURSES
+          <Link to="/courses" className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest text-muted-foreground hover:text-neon-purple mb-6">
+            <ArrowLeft className="w-3 h-3" /> ALL COURSES
           </Link>
 
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
