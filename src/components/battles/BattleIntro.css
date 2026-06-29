@@ -1,0 +1,176 @@
+/* ─── Battle Intro — "The Eclipse Alignment" ──────────────────────────────
+   Cinematic loading sequence for the searching phase. Compositor-only motion
+   (transform / opacity / filter) for 60fps. Brand language: gold corona on
+   midnight navy, the eclipse that gives Eclipta its name. Scoped under .bi so
+   it's fully isolated and easy to revert (see backup/RESTORE.md). */
+
+.bi {
+  position: relative;
+  min-height: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 56px 24px;
+  overflow: hidden;
+  border: 1px solid var(--acrylic-border);
+  background:
+    radial-gradient(120% 90% at 50% 38%, oklch(0.20 0.03 258 / 0.55) 0%, transparent 60%),
+    linear-gradient(180deg, #0a0f1e 0%, #070b16 100%);
+}
+
+.bi-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(80% 70% at 50% 42%, transparent 40%, oklch(0 0 0 / 0.55) 100%);
+  z-index: 1;
+}
+
+/* The framed stage that holds the eclipse + fighters. A slow, breathing
+   camera push gives the scene weight without a jarring zoom. */
+.bi-stage {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: 240px;
+  z-index: 2;
+  animation: bi-push 6s ease-in-out infinite alternate;
+}
+
+/* ── Inward-falling motes (gravity reversed) ───────────────────────────── */
+.bi-particles { position: absolute; inset: 0; }
+.bi-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 9999px;
+  background: oklch(0.85 0.13 88);
+  box-shadow: 0 0 6px oklch(0.82 0.14 88 / 0.9);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: bi-drift var(--d, 3s) ease-in var(--delay, 0s) infinite;
+}
+@keyframes bi-drift {
+  0%   { transform: translate(var(--sx), var(--sy)) scale(1);   opacity: 0; }
+  18%  { opacity: 0.9; }
+  100% { transform: translate(0, 0) scale(0.2);                 opacity: 0; }
+}
+
+/* ── The eclipse: corona glow + bright ring + dark disc ─────────────────── */
+.bi-eclipse {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 132px; height: 132px;
+  transform: translate(-50%, -50%);
+}
+.bi-corona {
+  position: absolute; inset: -60%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, oklch(0.82 0.14 88 / 0.55) 0%, oklch(0.78 0.13 88 / 0.18) 38%, transparent 68%);
+  will-change: opacity, transform;
+  animation: bi-corona 3.4s ease-in-out infinite;
+}
+.bi-ring {
+  position: absolute; inset: 0;
+  border-radius: 9999px;
+  border: 1.5px solid oklch(0.88 0.12 88 / 0.85);
+  box-shadow: 0 0 18px oklch(0.82 0.14 88 / 0.5), inset 0 0 14px oklch(0.82 0.14 88 / 0.35);
+  will-change: transform, opacity;
+  animation: bi-ring 2.6s ease-in-out infinite;
+}
+/* The dark moon that occludes the corona — the eclipse silhouette. */
+.bi-disc {
+  position: absolute; inset: 5px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 42% 38%, #0c1124 0%, #070b16 70%);
+}
+@keyframes bi-corona {
+  0%, 100% { opacity: 0.55; transform: scale(0.96); }
+  50%      { opacity: 1;    transform: scale(1.06); }
+}
+@keyframes bi-ring {
+  0%, 100% { transform: scale(1);    opacity: 0.8; }
+  50%      { transform: scale(1.05); opacity: 1; }
+}
+@keyframes bi-push {
+  from { transform: scale(1); }
+  to   { transform: scale(1.045); }
+}
+
+/* ── The two fighters, rim-lit from the eclipse ────────────────────────── */
+.bi-fighter {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 2;
+}
+.bi-fighter--left  { left: 4%; }
+.bi-fighter--right { right: 4%; }
+.bi-fighter-icon {
+  width: 48px; height: 48px;
+  color: oklch(0.92 0.04 250);
+  filter: drop-shadow(0 0 10px oklch(0.82 0.14 88 / 0.65)) drop-shadow(0 0 2px oklch(0.82 0.14 88 / 0.9));
+}
+.bi-fighter-icon--mystery { color: var(--brand-fog); opacity: 0.8; }
+.bi-fighter-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--brand-dim);
+  white-space: nowrap;
+}
+
+/* ── Titles + matchmaking status ───────────────────────────────────────── */
+.bi-titles { position: relative; z-index: 2; text-align: center; }
+.bi-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.34em; text-transform: uppercase;
+  color: oklch(0.82 0.14 88 / 0.85);
+  margin-bottom: 8px;
+}
+.bi-title {
+  font-size: clamp(28px, 6vw, 44px);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.bi-tiers {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.bi-tier {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--brand-fog);
+  opacity: 0.4;
+  transition: color 0.3s, opacity 0.3s;
+}
+.bi-tier.is-passed { color: oklch(0.82 0.14 88 / 0.7); opacity: 0.7; }
+.bi-tier.is-active {
+  color: oklch(0.88 0.12 88);
+  opacity: 1;
+  animation: bi-tier-pulse 1.3s ease-in-out infinite;
+}
+@keyframes bi-tier-pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+.bi-status {
+  font-family: var(--font-mono);
+  font-size: 11px; color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Reduced motion: a calm, still tableau (no drift / push / pulse) ────── */
+@media (prefers-reduced-motion: reduce) {
+  .bi-stage,
+  .bi-particle,
+  .bi-corona,
+  .bi-ring,
+  .bi-tier.is-active { animation: none; }
+  .bi-particle { opacity: 0; }
+  .bi-corona { opacity: 0.7; }
+}
