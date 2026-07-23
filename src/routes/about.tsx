@@ -67,10 +67,10 @@ function ContactForm() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((data as any)?.moderation_status === "hidden") {
         toast.message("Message received, held for review", {
-          description: "I'll look at it shortly.",
+          description: "We'll look at it shortly.",
         });
       } else {
-        toast.success("Message sent. I usually reply within a couple of days.");
+        toast.success("Message sent. We usually reply within a couple of days.");
       }
       setSent(true);
       setName(""); setEmail(""); setSubject(""); setMessage("");
@@ -89,7 +89,7 @@ function ContactForm() {
         <CheckCircle2 className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--ab-accent)" }} />
         <h3 className="ab-serif" style={{ fontSize: 22, marginBottom: 8 }}>Message received</h3>
         <p style={{ fontSize: 14, color: "var(--ab-dim)", maxWidth: 360, margin: "0 auto 20px", lineHeight: 1.6 }}>
-          Thanks for reaching out. I read everything that lands in the inbox
+          Thanks for reaching out. We read everything that lands in the inbox
           and usually reply within a couple of days.
         </p>
         <button type="button" onClick={() => setSent(false)} className="ab-link" style={{ borderRadius: 6 }}>
@@ -111,8 +111,8 @@ function ContactForm() {
           <Mail className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="ab-serif" style={{ fontSize: 18, lineHeight: 1.1 }}>Send me a message</h3>
-          <p style={{ fontSize: 11, color: "var(--ab-fog)", marginTop: 2 }}>Goes straight to my inbox.</p>
+          <h3 className="ab-serif" style={{ fontSize: 18, lineHeight: 1.1 }}>Send us a message</h3>
+          <p style={{ fontSize: 11, color: "var(--ab-fog)", marginTop: 2 }}>Goes straight to our inbox.</p>
         </div>
       </div>
 
@@ -224,40 +224,43 @@ const reveal = {
 };
 
 /**
- * A snapshot frame. Drop a real photo at the given /public path and it shows;
- * until then it falls back to a tasteful placeholder instead of a broken
- * image. Swap in: public/about/brothers.jpg, public/about/desk.jpg, etc.
+ * A founder portrait + credit. Drop a real photo at the given /public path and
+ * it shows; until then it falls back to a tasteful placeholder instead of a
+ * broken image. The photo only swaps in once it actually loads, so a missing
+ * file never flashes a broken-image icon. Swap in: public/about/aarit.jpg and
+ * public/about/surya.jpg.
  */
-function Snapshot({ src, caption, tilt = 0 }: { src: string; caption: string; tilt?: number }) {
-  // Start on the placeholder and only swap in the real photo once it actually
-  // loads. A missing file simply never fires onLoad, so a broken-image icon or
-  // stray alt text can never flash — the frame just stays a tasteful stand-in.
+function FounderCard({ name, role, src, email, tilt = 0 }: {
+  name: string; role: string; src: string; email: string; tilt?: number;
+}) {
   const [loaded, setLoaded] = useState(false);
   return (
-    <figure className="ab-photo">
+    <div className="ab-person">
       <div className="ab-photo-inner" style={{ ["--tilt" as string]: `${tilt}deg` }}>
         {!loaded && (
           <div className="ab-photo-ph"><Camera className="w-5 h-5" /><span>photo</span></div>
         )}
         <img
           src={src}
-          alt={caption}
+          alt={name}
           onLoad={() => setLoaded(true)}
           style={{ display: loaded ? "block" : "none" }}
         />
       </div>
-      <figcaption>{caption}</figcaption>
-    </figure>
+      <h3 className="ab-person-name">{name}</h3>
+      <p className="ab-person-role">{role}</p>
+      <a href={`mailto:${email}`} className="ab-person-mail">{email}</a>
+    </div>
   );
 }
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About the Creator – Eclipta" },
-      { name: "description", content: "Why Eclipta exists, told by the person who built it. A short, honest letter about failing at a project, learning to actually understand the code, and building the course he wished he'd had." },
-      { property: "og:title", content: "About the Creator – Eclipta" },
-      { property: "og:description", content: "The honest story behind Eclipta: one builder, one abandoned game, and the course that came out of it." },
+      { title: "About Eclipta – Why we built it" },
+      { name: "description", content: "Eclipta is an AI-powered learning platform built on one idea: AI should help you learn, not learn for you. The honest story from the two friends building it." },
+      { property: "og:title", content: "About Eclipta – Why we built it" },
+      { property: "og:description", content: "AI should help you learn, not learn for you. The story behind Eclipta, from the two friends building it." },
     ],
   }),
   component: AboutPage,
@@ -278,14 +281,16 @@ function AboutPage() {
         <header className="ab-hero">
           <div>
             <img src="/eclipta-logo.png" alt="Eclipta" className="ab-hero-logo" width={124} height={124} draggable={false} />
-            <p className="ab-kicker">About · The Creator</p>
+            <p className="ab-kicker">About · Eclipta</p>
             <h1 className="ab-title">
-              Hi, I'm <em>Aarit.</em>
+              Hi, we're <em>Eclipta.</em>
             </h1>
             <p className="ab-lead">
-              I wanted to build a game where you can box an AI with your webcam.
-              Somehow that turned into this. Here's the honest version of how.
+              We wanted to build a place where learning could actually feel like learning again.
+              Somewhere you could ask a question, get help from AI, make mistakes, try again, and
+              slowly become the person who doesn't need the answer handed to you anymore.
             </p>
+            <p className="ab-lead-2">Somehow, that turned into Eclipta. Here's the honest version of how.</p>
           </div>
           <div className="ab-scrollhint" aria-hidden="true">
             <span />
@@ -299,73 +304,99 @@ function AboutPage() {
 
           <div className="ab-letter">
             <motion.p {...reveal}>
-              I built this because I wanted to make a game where you can box an AI with your webcam.
+              We started Eclipta because we kept noticing the same thing happening everywhere.
+            </motion.p>
+
+            <motion.p {...reveal}>AI was getting really good at doing things for us.</motion.p>
+
+            <motion.p className="ab-verse" {...reveal}>
+              Writing the essay.<br />
+              Solving the equation.<br />
+              Explaining the concept.<br />
+              Writing the code.
+            </motion.p>
+
+            <motion.p {...reveal}>And, honestly, it was amazing.</motion.p>
+
+            <motion.p {...reveal}>But there was a problem.</motion.p>
+
+            <motion.p {...reveal}>
+              It was getting really easy to finish something without actually understanding it.
             </motion.p>
 
             <motion.p {...reveal}>
-              I tried building it once already. I mostly leaned on AI to write the code. It worked for a
-              while, then the whole project turned into a pile of code I didn't understand. Every change
-              broke something else. After a few weeks, I gave up.
+              We found ourselves asking AI questions and getting answers that worked, but we didn't always
+              know why they worked. We could copy the code, but couldn't always explain it. We could get
+              the answer to a problem, but couldn't always solve the next one on our own.
+            </motion.p>
+
+            <motion.p {...reveal}>And we realized we probably weren't the only ones.</motion.p>
+
+            <motion.blockquote className="ab-pull" {...reveal}>
+              AI shouldn't replace learning. It should make learning better.
+            </motion.blockquote>
+
+            <motion.p {...reveal}>That idea became Eclipta.</motion.p>
+
+            <motion.p {...reveal}>
+              We wanted to build something that could give you the help of AI without taking away the part
+              that actually matters: understanding.
+            </motion.p>
+
+            <motion.p {...reveal}>
+              Instead of just giving you the answer, Eclipta is designed to help you figure out how to
+              get there. To meet you where you are. To explain something differently when you don't get it
+              the first time. To challenge you when you're ready for more. And to make learning feel a
+              little less like memorizing information and a little more like actually discovering something.
+            </motion.p>
+
+            <motion.p {...reveal}>
+              Because we don't think the goal of education should be to know everything.
             </motion.p>
 
             <motion.blockquote className="ab-pull" {...reveal}>
-              That bugged me more than the game itself.
+              The goal should be to become someone who can figure things out.
             </motion.blockquote>
 
-            <motion.div className="ab-photos" {...reveal}>
-              <Snapshot src="/about/me.jpg" caption="Me, mid-project, pretending it was fine." tilt={-3} />
-              <Snapshot src="/about/brothers.jpg" caption="My brother (the handsome guy on the left) and me." tilt={2.5} />
-            </motion.div>
+            <motion.p {...reveal}>That's what we want Eclipta to help people become.</motion.p>
 
             <motion.p {...reveal}>
-              My brother (the handsome guy on the left in the second picture) builds stuff with AI too,
-              but his projects don't fall apart like mine. I kept asking myself why.
+              We also wanted learning to feel more personal. Everyone learns differently. Some people need
+              a visual explanation. Some need to try something themselves. Some need to hear an idea
+              explained five different ways before it finally clicks. So why should everyone learn the exact
+              same way?
             </motion.p>
 
             <motion.p {...reveal}>
-              Then I went on vacation with him, and I figured it out. He knows what's going on under the
-              hood. I don't. If AI writes something weird, he can spot it. I usually can't.
+              Eclipta is our attempt to build something that adapts to the person using it, instead of
+              asking the person to adapt to it.
+            </motion.p>
+
+            <motion.p {...reveal}>
+              It's still a work in progress. There are a lot of things we want to build. A lot of ideas we
+              want to try. And probably a lot of things we'll get wrong along the way. But that's kind of
+              the point.
             </motion.p>
 
             <motion.blockquote className="ab-pull" {...reveal}>
-              I was using AI to replace understanding instead of helping it along.
+              We're building Eclipta while learning how to build Eclipta.
             </motion.blockquote>
 
-            <motion.p {...reveal}>
-              That was enough to change my plan.
-            </motion.p>
+            <motion.p {...reveal}>And we think that's a pretty good place to start.</motion.p>
 
             <motion.p {...reveal}>
-              Instead of trying to build the game again, I decided to build the course I wish I had the
-              first time. If I can explain each piece well enough for someone else to learn it, I'll
-              probably understand it well enough to build the game without creating another mess. And if
-              this course helps other people make their own games, that's even better.
-            </motion.p>
-
-            <motion.p {...reveal}>
-              My goal is still the same as it was on day one. I still want to step in front of my webcam
-              and box an AI. I'm just taking the longer road to get there because I think it'll end up
-              being the shorter one.
-            </motion.p>
-
-            <motion.p {...reveal}>
-              Hope this isn't the last thing I build. (Besides, I already have a list of projects I want
-              to make after this one.)
+              We hope Eclipta becomes more than just another place to find answers. We hope it becomes a
+              place where people learn how to find their own.
             </motion.p>
 
             <motion.div className="ab-signoff" {...reveal}>
-              <p className="ab-sign">Aarit</p>
-              <a href="mailto:perswalaarit@gmail.com" className="ab-sign-mail">perswalaarit@gmail.com</a>
+              <p className="ab-sign">The Eclipta Team</p>
             </motion.div>
 
             <motion.div className="ab-ps" {...reveal}>
               <p>
                 <span className="ab-ps-tag">PS</span>
-                Yes, I took all those background pictures myself cuz im tuff like that.
-              </p>
-              <p>
-                <span className="ab-ps-tag">PSS</span>
-                Thanks for reading all this. In fact, I have a present for you. But I need you to click the
+                Thanks for reading all this. We have a present for you. Click the
                 {" "}
                 <span className="ab-hint-logo" aria-hidden="true">
                   <img src="/eclipta-logo.png" alt="" width={18} height={18} draggable={false} />
@@ -377,32 +408,66 @@ function AboutPage() {
           </div>
         </section>
 
+        {/* ── The two of us ────────────────────────────────────── */}
+        <section className="ab-section">
+          <motion.div className="ab-section-head is-center" {...reveal}>
+            <p className="ab-actlabel">Who's building it</p>
+            <h2 className="ab-h2">The <em>two of us.</em></h2>
+          </motion.div>
+          <motion.p className="ab-people-intro" {...reveal}>
+            Two friends building every part of Eclipta together.
+          </motion.p>
+          <motion.div className="ab-people" {...reveal}>
+            <FounderCard
+              name="Aarit Perswal"
+              role="Co-founder · builds all of it"
+              src="/about/aarit.jpg"
+              email="perswalaarit@gmail.com"
+              tilt={-2}
+            />
+            <FounderCard
+              name="Surya Ravipati"
+              role="Co-founder · builds all of it"
+              src="/about/surya.jpg"
+              email="suryarvpt@gmail.com"
+              tilt={2}
+            />
+          </motion.div>
+        </section>
+
         {/* ── What this is ─────────────────────────────────────── */}
         <section className="ab-section">
           <motion.div className="ab-section-head" {...reveal}>
             <p className="ab-actlabel">What this is</p>
           </motion.div>
           <motion.p className="ab-brief" {...reveal}>
-            <strong>Eclipta is that course.</strong> A place to actually learn the thing you keep asking AI
-            to do for you, one piece at a time, until you can read what it writes and know when it's
-            {" "}<em>wrong.</em>
+            Eclipta is an AI-powered learning platform built around a simple idea:
+            {" "}<strong>AI should help you learn, not learn for you.</strong>
           </motion.p>
+          <motion.div className="ab-what-body" {...reveal}>
+            <p>
+              It's a place to explore concepts, ask questions, practice skills, make mistakes, and keep
+              going until things finally click.
+            </p>
+            <p>
+              Whether you're learning something completely new or trying to understand something you've
+              been stuck on for weeks, Eclipta is here to help you take the next step.
+            </p>
+            <p className="ab-what-coda">
+              One concept at a time. One question at a time. Until you don't need the answer anymore.
+            </p>
+          </motion.div>
         </section>
 
-        {/* ── Reach me ─────────────────────────────────────────── */}
+        {/* ── Reach us ─────────────────────────────────────────── */}
         <section className="ab-section" id="contact" style={{ scrollMarginTop: 96 }}>
           <motion.div className="ab-section-head is-center" {...reveal}>
             <p className="ab-actlabel">Say hello</p>
-            <h2 className="ab-h2">Reach <em>me.</em></h2>
+            <h2 className="ab-h2">Reach <em>us.</em></h2>
           </motion.div>
           <motion.div className="ab-contact-grid" {...reveal}>
             <ContactForm />
             <div className="ab-channels">
-              <a href="mailto:perswalaarit@gmail.com" className="ab-channel">
-                <Mail className="w-5 h-5" />
-                <h3>Email me directly</h3>
-                <p style={{ wordBreak: "break-all" }}>perswalaarit@gmail.com</p>
-              </a>
               <Link to="/forum" className="ab-channel">
                 <MessageSquare className="w-5 h-5" />
                 <h3>Community Forum</h3>
@@ -421,9 +486,9 @@ function AboutPage() {
         <section className="ab-finale">
           <motion.div {...reveal}>
             <p className="ab-actlabel" style={{ justifyContent: "center" }}>Your turn</p>
-            <h2>Start the <em>course.</em></h2>
+            <h2>Start <em>learning.</em></h2>
             <p className="ab-finale-sub">
-              Learn the thing you keep leaning on AI for. Free to start, no pretending you already get it.
+              Learn with AI that helps you understand, instead of doing it for you. Free to start.
             </p>
             <div className="ab-cta-row">
               <Link to="/courses" className="ab-btn ab-btn--accent">

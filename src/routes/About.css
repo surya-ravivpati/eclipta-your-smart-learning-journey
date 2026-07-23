@@ -405,7 +405,7 @@
   box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.8);
 }
 .ab-photo:hover .ab-photo-inner { transform: rotate(0deg) translateY(-4px); }
-.ab-photo img, .ab-photo-ph {
+.ab-photo-inner img, .ab-photo-ph {
   width: 100%; aspect-ratio: 4 / 5; object-fit: cover;
   display: block; border-radius: 2px;
   background: rgba(255, 255, 255, 0.02);
@@ -470,7 +470,21 @@
   50%      { transform: scale(1.18); filter: drop-shadow(0 0 8px oklch(0.80 0.13 88 / 0.6)); }
 }
 
-/* "What this is" — the one bridge from the story to the product. */
+/* Secondary hero line, quieter than the lead. */
+.ab-lead-2 {
+  font-size: clamp(14px, 1.4vw, 16px);
+  line-height: 1.6; color: var(--ab-fog);
+  max-width: 46ch; margin: 18px auto 0;
+  animation: ab-soft-in 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) 0.5s both;
+}
+
+/* A short stanza inside the letter (the "Writing the essay." beat). */
+.ab-verse {
+  color: var(--ab-ink) !important;
+  padding-left: 2px;
+}
+
+/* "What this is" — the bridge from the story to the product. */
 .ab-brief {
   font-family: var(--ab-display); font-weight: 200;
   font-size: clamp(21px, 2.6vw, 34px); line-height: 1.42;
@@ -479,6 +493,48 @@
 }
 .ab-brief strong { color: var(--ab-ink); font-weight: 300; }
 .ab-brief em { font-family: var(--ab-serif); font-style: italic; color: var(--ab-ink); }
+.ab-what-body { max-width: 58ch; margin: 32px 0 0; }
+.ab-what-body p {
+  font-size: clamp(15px, 1.7vw, 17px); line-height: 1.7;
+  color: var(--ab-dim); margin: 0 0 1.1em;
+}
+.ab-what-coda {
+  font-family: var(--ab-serif); font-style: italic;
+  font-size: clamp(17px, 2vw, 21px) !important; line-height: 1.5;
+  color: var(--ab-ink) !important; margin-bottom: 0 !important;
+}
+
+/* ─── The two of us (founders) ──────────────────────────────── */
+.ab-people-intro {
+  text-align: center;
+  font-family: var(--ab-serif); font-style: italic;
+  font-size: clamp(16px, 1.9vw, 20px); color: var(--ab-dim);
+  margin: 0 auto 40px; max-width: 40ch;
+}
+.ab-people {
+  display: flex; gap: 40px; flex-wrap: wrap;
+  justify-content: center; align-items: flex-start;
+}
+.ab-person { width: min(240px, 74vw); text-align: center; }
+.ab-person .ab-photo-inner { margin-bottom: 18px; }
+.ab-person:hover .ab-photo-inner { transform: rotate(0deg) translateY(-4px); }
+.ab-person-name {
+  font-family: var(--ab-display); font-weight: 400;
+  font-size: 19px; letter-spacing: -0.01em;
+  color: var(--ab-ink); margin: 0;
+}
+.ab-person-role {
+  font-family: var(--ab-mono); font-size: 9.5px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ab-accent); margin: 8px 0 10px;
+}
+.ab-person-mail {
+  font-family: var(--ab-mono); font-size: 11.5px;
+  color: var(--ab-dim); text-decoration: none;
+  border-bottom: 1px solid transparent; transition: border-color 0.25s ease, color 0.25s ease;
+  word-break: break-all;
+}
+.ab-person-mail:hover { color: var(--ab-ink); border-color: var(--ab-line-2); }
 
 /* ─── Reduced motion ───────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

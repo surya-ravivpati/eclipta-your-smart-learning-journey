@@ -130,18 +130,18 @@ function BrandPresent({ open, onClose }: { open: boolean; onClose: () => void })
             <h2 id="bp-title" className="bp-title">You clicked it. <em>Respect.</em></h2>
 
             <p className="bp-body">
-              There's no catch. You clicked a logo five times because a stranger on the internet asked you
+              There's no catch. You clicked a logo five times because two people on the internet asked you
               to, and that exact kind of curiosity is the whole point of this thing.
             </p>
             <p className="bp-body">
               So go build something you don't fully understand yet, then stick around long enough to
-              actually understand it. And if you box an AI with your webcam before I do, email me. I'll
-              want to see it.
+              actually understand it. That's the entire idea behind Eclipta.
             </p>
 
             <div className="bp-signoff">
-              <span className="bp-sign">Aarit</span>
+              <span className="bp-sign">Aarit &amp; Surya</span>
               <a href="mailto:perswalaarit@gmail.com" className="bp-mail">perswalaarit@gmail.com</a>
+              <a href="mailto:suryarvpt@gmail.com" className="bp-mail">suryarvpt@gmail.com</a>
             </div>
 
             <p className="bp-fine">(the real present was the bugs we fixed along the way)</p>
