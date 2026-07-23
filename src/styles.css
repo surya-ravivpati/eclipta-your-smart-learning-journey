@@ -372,6 +372,21 @@
   max-width: 100%;
 }
 
+/* ─── Legible label floor (mobile) ───────────────────────────
+   The UI leans on very small mono eyebrow/label text (8–11px). That reads
+   as crisp editorial detail on a desktop monitor but gets hard to read on a
+   phone. Below the `sm` breakpoint, lift the smallest tiers to a ~10px floor
+   so labels stay legible, while leaving every size intact on larger screens.
+   Deltas are ≤2px, so layouts don't reflow. Un-layered rules here win over
+   Tailwind's `@layer utilities`, so no !important is needed. */
+@media (max-width: 639.98px) {
+  .text-\[8px\],
+  .text-\[8\.5px\],
+  .text-\[9px\]  { font-size: 10px; }
+  .text-\[10px\] { font-size: 11px; }
+  .text-\[11px\] { font-size: 12px; }
+}
+
 /* Milestone celebration toast */
 .milestone-toast {
   border: 1px solid oklch(0.78 0.13 88 / 42%) !important;
