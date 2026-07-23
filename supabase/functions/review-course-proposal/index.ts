@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -119,7 +120,7 @@ If approving, the 'reason' is ONE sentence on what makes it work.
 
 'feedback' is 2-4 sentences with the deeper rationale either way.`;
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const res = await fetch(`${AI_GATEWAY_URL}/chat/completions`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -175,7 +176,6 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
     const PUBLISHABLE_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Verify caller via their JWT (so reviewer = proposal author)
@@ -240,7 +240,7 @@ serve(async (req) => {
     // 2. AI grading
     let verdict: Verdict;
     try {
-      verdict = await aiGrade(proposal as Proposal, LOVABLE_API_KEY);
+      verdict = await aiGrade(proposal as Proposal, AI_GATEWAY_API_KEY);
     } catch (e) {
       console.error("AI grading failed:", e);
       // On AI failure: be permissive but mark for human review with a note.

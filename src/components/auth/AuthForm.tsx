@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -42,24 +41,25 @@ export function AuthForm({ mode }: AuthFormProps) {
         toast.success("Welcome back! 🌙");
         navigate({ to: "/" });
       }
-    } catch (err: any) {
-      toast.error(err.message || "Authentication failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Authentication failed");
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogle = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    // Supabase's native Google OAuth. This redirects the browser to Google and
+    // back to `redirectTo`, where supabase-js exchanges the code and stores the
+    // session (AuthProvider's onAuthStateChange then picks it up). Requires the
+    // Google provider to be enabled in the Supabase dashboard.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/` },
     });
-    if (result.error) {
-      toast.error("Google sign-in failed");
-      return;
+    if (error) {
+      toast.error(error.message || "Google sign-in failed");
     }
-    if (result.redirected) return;
-    toast.success("Welcome! 🌙");
-    navigate({ to: "/" });
   };
 
   return (

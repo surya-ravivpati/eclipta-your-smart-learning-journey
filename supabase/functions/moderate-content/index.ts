@@ -26,6 +26,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,7 +83,7 @@ async function classifyWithAi(text: string, targetType: TargetType, apiKey: stri
     ? `\n\nA user reported this with the note (treat as a possibly-biased hint, judge the content independently): "${note.trim().slice(0, 400)}"`
     : "";
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(`${AI_GATEWAY_URL}/chat/completions`, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -181,7 +182,7 @@ serve(async (req) => {
     }
 
     // ── Layer B: contextual AI classifier (lighter weight for usernames). ──
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    const apiKey = AI_GATEWAY_API_KEY;
     let ai: AiVerdict = { decision: "allow", category: "none", confidence: 0, self_harm: false, available: false };
     if (apiKey) ai = await classifyWithAi(text, targetType, apiKey, note);
     if (ai.available) layersFired.add("ai");

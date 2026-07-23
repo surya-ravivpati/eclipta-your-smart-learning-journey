@@ -19,6 +19,10 @@ function createSupabaseClient() {
       storage: typeof window !== 'undefined' ? localStorage : undefined,
       persistSession: true,
       autoRefreshToken: true,
+      // Native OAuth (Google) redirects back with a ?code=; exchange it for a
+      // session automatically using the PKCE flow.
+      detectSessionInUrl: true,
+      flowType: 'pkce',
     }
   });
 }

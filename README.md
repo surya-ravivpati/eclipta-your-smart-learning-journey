@@ -307,12 +307,43 @@ http://localhost:5173
 
 # Environment Variables
 
-| Variable                 | Description                       | Required | Example                      |
-| ------------------------ | --------------------------------- | -------- | ---------------------------- |
-| `VITE_SUPABASE_URL`      | Supabase project URL              | Yes      | `https://abcxyz.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Supabase public anonymous API key | Yes      | `eyJhbGciOi...`              |
+**App (Vite / build-time, in `.env` and in the Vercel project):**
 
-> Additional variables may exist depending on deployment configuration or future integrations.
+| Variable                        | Description                        | Required | Example                      |
+| ------------------------------- | --------------------------------- | -------- | ---------------------------- |
+| `VITE_SUPABASE_URL`             | Supabase project URL              | Yes      | `https://abcxyz.supabase.co` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable/anon API key | Yes      | `eyJhbGciOi...`              |
+
+**Supabase Edge Function secrets** (set with `supabase secrets set …`, not in `.env`):
+
+| Variable             | Description                                                     | Required |
+| -------------------- | -------------------------------------------------------------- | -------- |
+| `AI_GATEWAY_URL`     | OpenAI-compatible chat gateway base URL (e.g. OpenRouter)      | Yes\*    |
+| `AI_GATEWAY_API_KEY` | API key for that gateway                                       | Yes      |
+| `AI_AUDIO_URL`       | Base URL for TTS/STT (e.g. `https://api.openai.com/v1`)        | No       |
+| `AI_AUDIO_API_KEY`   | API key for the audio provider (defaults to the gateway key)   | No       |
+
+> \*Until `AI_GATEWAY_URL` / `AI_GATEWAY_API_KEY` are set, the edge functions fall
+> back to the legacy `LOVABLE_API_KEY` gateway so nothing breaks mid-migration.
+
+---
+
+# Deployment (Vercel)
+
+The app builds to the Vercel Build Output API via nitro (no Lovable/Cloudflare
+config). `npm run build` produces `.vercel/output/`.
+
+1. Import the repo into Vercel. Framework preset: **Other** (the build output is
+   auto-detected); build command `npm run build`.
+2. Add the app env vars above to the Vercel project.
+3. **Google sign-in** uses Supabase's native OAuth. In the Supabase dashboard →
+   Authentication → Providers → Google, enable it and add your Google OAuth
+   client ID/secret, then add your site + `…/auth/v1/callback` URLs to the
+   allowed redirects (and to the Google Cloud console).
+4. **Luna / moderation AI**: set the edge-function secrets above to your own
+   provider, then redeploy the functions (`supabase functions deploy`). Some
+   model ids may need adjusting per provider (e.g. OpenAI wants
+   `gpt-4o-mini-tts`, not `openai/gpt-4o-mini-tts`).
 
 ---
 

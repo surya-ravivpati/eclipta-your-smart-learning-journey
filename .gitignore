@@ -16,8 +16,8 @@ dist-ssr
 .nitro
 *.local
 
-# Wrangler / Cloudflare
-.wrangler/
+# Vercel / nitro build output
+.vercel
 .dev.vars
 
 # Editor directories and files

@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI_GATEWAY_URL, AI_GATEWAY_API_KEY } from "../_shared/ai.ts";
 
 /**
- * luna-room — Study Room modes for Luna, reusing the same Lovable AI gateway as
+ * luna-room — Study Room modes for Luna, reusing the same AI gateway as
  * luna-chat (NOT a separate provider). Two modes:
  *   stuck  — server-side, race-free AI fallback: atomically CLAIM an open Stuck
  *            card (open→resolving), and only the first claimer calls the model
@@ -16,7 +17,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GATEWAY = `${AI_GATEWAY_URL}/chat/completions`;
 const MODEL = "google/gemini-2.5-flash";
 
 async function callLuna(system: string, user: string, key: string): Promise<string> {
@@ -47,8 +48,7 @@ serve(async (req) => {
     const user = userData?.user;
     if (!user) return json({ error: "Unauthorized" }, 401);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!AI_GATEWAY_API_KEY) throw new Error("AI gateway is not configured (set AI_GATEWAY_API_KEY)");
 
     const body = await req.json().catch(() => ({}));
     const mode = body?.mode;
@@ -81,7 +81,7 @@ serve(async (req) => {
         const q = claimed.note
           ? `The learner is stuck on: "${claimed.note}". Help them.`
           : `The learner said they're stuck but didn't say on what. Give them a useful way to get unstuck and ask what specifically is blocking them.`;
-        const answer = await callLuna(sys, q, LOVABLE_API_KEY);
+        const answer = await callLuna(sys, q, AI_GATEWAY_API_KEY);
         await sb.from("stuck_requests").update({
           status: "resolved", resolved_by: "ai", resolver_name: "Luna",
           resolution_summary: answer || "Luna couldn't generate a hint — try rephrasing your question.",
@@ -107,7 +107,7 @@ serve(async (req) => {
         `Session goal (context only, not an event): ${goal || "(none set)"}\n\n` +
         `Structured events (${events.length}${capped.length < events.length ? `, showing latest ${capped.length}` : ""}):\n` +
         capped.map((e) => `- [${e.type}] ${e.text}`).join("\n");
-      const text = await callLuna(sys, userContent, LOVABLE_API_KEY);
+      const text = await callLuna(sys, userContent, AI_GATEWAY_API_KEY);
       return json({ text });
     }
 

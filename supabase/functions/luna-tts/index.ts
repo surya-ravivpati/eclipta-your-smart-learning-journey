@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI_AUDIO_URL, AI_AUDIO_API_KEY } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,8 +26,7 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!AI_AUDIO_API_KEY) throw new Error("Audio AI is not configured (set AI_AUDIO_API_KEY)");
 
     const body = await req.json().catch(() => ({}));
     const text = typeof body?.text === "string" ? body.text.trim().slice(0, 2000) : "";
@@ -39,10 +39,10 @@ serve(async (req) => {
     const voice = typeof body?.voice === "string" ? body.voice : "sage";
     const instructions = "You are Luna, a warm, encouraging AI tutor. Read in a natural, conversational voice — like a thoughtful friend explaining something one-on-one. Use light, human intonation, gentle pacing with brief pauses at commas and periods, and a calm, upbeat tone. Never sound robotic, flat, or read-out-loud. Skip any formatting characters, brackets, hashtags, or stage directions.";
 
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
+    const upstream = await fetch(`${AI_AUDIO_URL}/audio/speech`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_AUDIO_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

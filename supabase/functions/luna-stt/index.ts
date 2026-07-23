@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI_AUDIO_URL, AI_AUDIO_API_KEY } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,8 +26,7 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!AI_AUDIO_API_KEY) throw new Error("Audio AI is not configured (set AI_AUDIO_API_KEY)");
 
     const ct = req.headers.get("content-type") || "";
     if (!ct.includes("multipart/form-data")) {
@@ -52,9 +52,9 @@ serve(async (req) => {
     outForm.append("model", "openai/gpt-4o-mini-transcribe");
     outForm.append("file", file, file.name || "recording.webm");
 
-    const upstream = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
+    const upstream = await fetch(`${AI_AUDIO_URL}/audio/transcriptions`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}` },
+      headers: { Authorization: `Bearer ${AI_AUDIO_API_KEY}` },
       body: outForm,
     });
 
