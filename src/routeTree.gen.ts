@@ -9,66 +9,46 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as CoursesRouteImport } from './routes/courses'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as UUsernameRouteImport } from './routes/u.$username'
-import { Route as TagsTagRouteImport } from './routes/tags.$tag'
-import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
-import { Route as AuthenticatedStreakRouteImport } from './routes/_authenticated.streak'
-import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated.progress'
-import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated.notifications'
-import { Route as AuthenticatedLunaRouteImport } from './routes/_authenticated.luna'
-import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated.groups'
-import { Route as AuthenticatedForumRouteImport } from './routes/_authenticated.forum'
-import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated.collection'
-import { Route as AuthenticatedCertifiedRouteImport } from './routes/_authenticated.certified'
-import { Route as AuthenticatedCalibrationRouteImport } from './routes/_authenticated.calibration'
-import { Route as AuthenticatedBuildCourseRouteImport } from './routes/_authenticated.build-course'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as CoursesRouteImport } from './routes/courses'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedBattlesRouteImport } from './routes/_authenticated.battles'
-import { Route as AuthenticatedGroupsRoomIdRouteImport } from './routes/_authenticated.groups_.$roomId'
-import { Route as AuthenticatedForumThreadIdRouteImport } from './routes/_authenticated.forum_.$threadId'
-import { Route as AuthenticatedCertifiedSlugRouteImport } from './routes/_authenticated.certified.$slug'
+import { Route as AuthenticatedBuildCourseRouteImport } from './routes/_authenticated.build-course'
+import { Route as AuthenticatedCalibrationRouteImport } from './routes/_authenticated.calibration'
+import { Route as AuthenticatedCertifiedRouteImport } from './routes/_authenticated.certified'
+import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated.collection'
+import { Route as AuthenticatedForumRouteImport } from './routes/_authenticated.forum'
+import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated.groups'
+import { Route as AuthenticatedLunaRouteImport } from './routes/_authenticated.luna'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated.notifications'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
+import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated.progress'
+import { Route as AuthenticatedStreakRouteImport } from './routes/_authenticated.streak'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
+import { Route as TagsTagRouteImport } from './routes/tags.$tag'
+import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as AuthenticatedAdminForumRouteImport } from './routes/_authenticated.admin.forum'
-import { Route as AuthenticatedCoursesCourseIdEditRouteImport } from './routes/_authenticated.courses.$courseId.edit'
-import { Route as AuthenticatedCertifiedSlugLearnRouteImport } from './routes/_authenticated.certified.$slug.learn'
+import { Route as AuthenticatedCertifiedSlugRouteImport } from './routes/_authenticated.certified.$slug'
+import { Route as AuthenticatedForumThreadIdRouteImport } from './routes/_authenticated.forum_.$threadId'
+import { Route as AuthenticatedGroupsRoomIdRouteImport } from './routes/_authenticated.groups_.$roomId'
 import { Route as AuthenticatedCertifiedSlugForumRouteImport } from './routes/_authenticated.certified.$slug.forum'
+import { Route as AuthenticatedCertifiedSlugLearnRouteImport } from './routes/_authenticated.certified.$slug.learn'
+import { Route as AuthenticatedCoursesCourseIdEditRouteImport } from './routes/_authenticated.courses.$courseId.edit'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CoursesRoute = CoursesRouteImport.update({
-  id: '/courses',
-  path: '/courses',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -76,43 +56,76 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UUsernameRoute = UUsernameRouteImport.update({
-  id: '/u/$username',
-  path: '/u/$username',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TagsTagRoute = TagsTagRouteImport.update({
-  id: '/tags/$tag',
-  path: '/tags/$tag',
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CoursesSlugRoute = CoursesSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CoursesRoute,
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedStreakRoute = AuthenticatedStreakRouteImport.update({
-  id: '/streak',
-  path: '/streak',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBattlesRoute = AuthenticatedBattlesRouteImport.update({
+  id: '/battles',
+  path: '/battles',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedProgressRoute = AuthenticatedProgressRouteImport.update({
-  id: '/progress',
-  path: '/progress',
+const AuthenticatedBuildCourseRoute =
+  AuthenticatedBuildCourseRouteImport.update({
+    id: '/build-course',
+    path: '/build-course',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCalibrationRoute =
+  AuthenticatedCalibrationRouteImport.update({
+    id: '/calibration',
+    path: '/calibration',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCertifiedRoute = AuthenticatedCertifiedRouteImport.update({
+  id: '/certified',
+  path: '/certified',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
+const AuthenticatedCollectionRoute = AuthenticatedCollectionRouteImport.update({
+  id: '/collection',
+  path: '/collection',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedForumRoute = AuthenticatedForumRouteImport.update({
+  id: '/forum',
+  path: '/forum',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLunaRoute = AuthenticatedLunaRouteImport.update({
+  id: '/luna',
+  path: '/luna',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -121,53 +134,51 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedLunaRoute = AuthenticatedLunaRouteImport.update({
-  id: '/luna',
-  path: '/luna',
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
-  id: '/groups',
-  path: '/groups',
+const AuthenticatedProgressRoute = AuthenticatedProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedForumRoute = AuthenticatedForumRouteImport.update({
-  id: '/forum',
-  path: '/forum',
+const AuthenticatedStreakRoute = AuthenticatedStreakRouteImport.update({
+  id: '/streak',
+  path: '/streak',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedCollectionRoute = AuthenticatedCollectionRouteImport.update({
-  id: '/collection',
-  path: '/collection',
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesSlugRoute = CoursesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => CoursesRoute,
+} as any)
+const TagsTagRoute = TagsTagRouteImport.update({
+  id: '/tags/$tag',
+  path: '/tags/$tag',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UUsernameRoute = UUsernameRouteImport.update({
+  id: '/u/$username',
+  path: '/u/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminForumRoute = AuthenticatedAdminForumRouteImport.update({
+  id: '/admin/forum',
+  path: '/admin/forum',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedCertifiedRoute = AuthenticatedCertifiedRouteImport.update({
-  id: '/certified',
-  path: '/certified',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCalibrationRoute =
-  AuthenticatedCalibrationRouteImport.update({
-    id: '/calibration',
-    path: '/calibration',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedBuildCourseRoute =
-  AuthenticatedBuildCourseRouteImport.update({
-    id: '/build-course',
-    path: '/build-course',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedBattlesRoute = AuthenticatedBattlesRouteImport.update({
-  id: '/battles',
-  path: '/battles',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedGroupsRoomIdRoute =
-  AuthenticatedGroupsRoomIdRouteImport.update({
-    id: '/groups_/$roomId',
-    path: '/groups/$roomId',
-    getParentRoute: () => AuthenticatedRoute,
+const AuthenticatedCertifiedSlugRoute =
+  AuthenticatedCertifiedSlugRouteImport.update({
+    id: '/$slug',
+    path: '/$slug',
+    getParentRoute: () => AuthenticatedCertifiedRoute,
   } as any)
 const AuthenticatedForumThreadIdRoute =
   AuthenticatedForumThreadIdRouteImport.update({
@@ -175,22 +186,17 @@ const AuthenticatedForumThreadIdRoute =
     path: '/forum/$threadId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCertifiedSlugRoute =
-  AuthenticatedCertifiedSlugRouteImport.update({
-    id: '/$slug',
-    path: '/$slug',
-    getParentRoute: () => AuthenticatedCertifiedRoute,
-  } as any)
-const AuthenticatedAdminForumRoute = AuthenticatedAdminForumRouteImport.update({
-  id: '/admin/forum',
-  path: '/admin/forum',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedCoursesCourseIdEditRoute =
-  AuthenticatedCoursesCourseIdEditRouteImport.update({
-    id: '/courses/$courseId/edit',
-    path: '/courses/$courseId/edit',
+const AuthenticatedGroupsRoomIdRoute =
+  AuthenticatedGroupsRoomIdRouteImport.update({
+    id: '/groups_/$roomId',
+    path: '/groups/$roomId',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCertifiedSlugForumRoute =
+  AuthenticatedCertifiedSlugForumRouteImport.update({
+    id: '/forum',
+    path: '/forum',
+    getParentRoute: () => AuthenticatedCertifiedSlugRoute,
   } as any)
 const AuthenticatedCertifiedSlugLearnRoute =
   AuthenticatedCertifiedSlugLearnRouteImport.update({
@@ -198,11 +204,11 @@ const AuthenticatedCertifiedSlugLearnRoute =
     path: '/learn',
     getParentRoute: () => AuthenticatedCertifiedSlugRoute,
   } as any)
-const AuthenticatedCertifiedSlugForumRoute =
-  AuthenticatedCertifiedSlugForumRouteImport.update({
-    id: '/forum',
-    path: '/forum',
-    getParentRoute: () => AuthenticatedCertifiedSlugRoute,
+const AuthenticatedCoursesCourseIdEditRoute =
+  AuthenticatedCoursesCourseIdEditRouteImport.update({
+    id: '/courses/$courseId/edit',
+    path: '/courses/$courseId/edit',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/streak': typeof AuthenticatedStreakRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/tags/$tag': typeof TagsTagRoute
   '/u/$username': typeof UUsernameRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/streak': typeof AuthenticatedStreakRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/tags/$tag': typeof TagsTagRoute
   '/u/$username': typeof UUsernameRoute
@@ -292,6 +300,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/_authenticated/streak': typeof AuthenticatedStreakRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/tags/$tag': typeof TagsTagRoute
   '/u/$username': typeof UUsernameRoute
@@ -326,6 +335,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/streak'
+    | '/auth/callback'
     | '/courses/$slug'
     | '/tags/$tag'
     | '/u/$username'
@@ -358,6 +368,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/streak'
+    | '/auth/callback'
     | '/courses/$slug'
     | '/tags/$tag'
     | '/u/$username'
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/progress'
     | '/_authenticated/streak'
+    | '/auth/callback'
     | '/courses/$slug'
     | '/tags/$tag'
     | '/u/$username'
@@ -413,59 +425,18 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   TagsTagRoute: typeof TagsTagRoute
   UUsernameRoute: typeof UUsernameRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/courses': {
-      id: '/courses'
-      path: '/courses'
-      fullPath: '/courses'
-      preLoaderRoute: typeof CoursesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -475,102 +446,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/u/$username': {
-      id: '/u/$username'
-      path: '/u/$username'
-      fullPath: '/u/$username'
-      preLoaderRoute: typeof UUsernameRouteImport
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tags/$tag': {
-      id: '/tags/$tag'
-      path: '/tags/$tag'
-      fullPath: '/tags/$tag'
-      preLoaderRoute: typeof TagsTagRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/courses/$slug': {
-      id: '/courses/$slug'
-      path: '/$slug'
-      fullPath: '/courses/$slug'
-      preLoaderRoute: typeof CoursesSlugRouteImport
-      parentRoute: typeof CoursesRoute
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/streak': {
-      id: '/_authenticated/streak'
-      path: '/streak'
-      fullPath: '/streak'
-      preLoaderRoute: typeof AuthenticatedStreakRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/progress': {
-      id: '/_authenticated/progress'
-      path: '/progress'
-      fullPath: '/progress'
-      preLoaderRoute: typeof AuthenticatedProgressRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/profile': {
-      id: '/_authenticated/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedProfileRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/luna': {
-      id: '/_authenticated/luna'
-      path: '/luna'
-      fullPath: '/luna'
-      preLoaderRoute: typeof AuthenticatedLunaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/groups': {
-      id: '/_authenticated/groups'
-      path: '/groups'
-      fullPath: '/groups'
-      preLoaderRoute: typeof AuthenticatedGroupsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/forum': {
-      id: '/_authenticated/forum'
-      path: '/forum'
-      fullPath: '/forum'
-      preLoaderRoute: typeof AuthenticatedForumRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/collection': {
-      id: '/_authenticated/collection'
-      path: '/collection'
-      fullPath: '/collection'
-      preLoaderRoute: typeof AuthenticatedCollectionRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/certified': {
-      id: '/_authenticated/certified'
-      path: '/certified'
-      fullPath: '/certified'
-      preLoaderRoute: typeof AuthenticatedCertifiedRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/calibration': {
-      id: '/_authenticated/calibration'
-      path: '/calibration'
-      fullPath: '/calibration'
-      preLoaderRoute: typeof AuthenticatedCalibrationRouteImport
+    '/_authenticated/battles': {
+      id: '/_authenticated/battles'
+      path: '/battles'
+      fullPath: '/battles'
+      preLoaderRoute: typeof AuthenticatedBattlesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/build-course': {
@@ -580,25 +509,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuildCourseRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/battles': {
-      id: '/_authenticated/battles'
-      path: '/battles'
-      fullPath: '/battles'
-      preLoaderRoute: typeof AuthenticatedBattlesRouteImport
+    '/_authenticated/calibration': {
+      id: '/_authenticated/calibration'
+      path: '/calibration'
+      fullPath: '/calibration'
+      preLoaderRoute: typeof AuthenticatedCalibrationRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/groups_/$roomId': {
-      id: '/_authenticated/groups_/$roomId'
-      path: '/groups/$roomId'
-      fullPath: '/groups/$roomId'
-      preLoaderRoute: typeof AuthenticatedGroupsRoomIdRouteImport
+    '/_authenticated/certified': {
+      id: '/_authenticated/certified'
+      path: '/certified'
+      fullPath: '/certified'
+      preLoaderRoute: typeof AuthenticatedCertifiedRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/forum_/$threadId': {
-      id: '/_authenticated/forum_/$threadId'
-      path: '/forum/$threadId'
-      fullPath: '/forum/$threadId'
-      preLoaderRoute: typeof AuthenticatedForumThreadIdRouteImport
+    '/_authenticated/collection': {
+      id: '/_authenticated/collection'
+      path: '/collection'
+      fullPath: '/collection'
+      preLoaderRoute: typeof AuthenticatedCollectionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/forum': {
+      id: '/_authenticated/forum'
+      path: '/forum'
+      fullPath: '/forum'
+      preLoaderRoute: typeof AuthenticatedForumRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/groups': {
+      id: '/_authenticated/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof AuthenticatedGroupsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/luna': {
+      id: '/_authenticated/luna'
+      path: '/luna'
+      fullPath: '/luna'
+      preLoaderRoute: typeof AuthenticatedLunaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/progress': {
+      id: '/_authenticated/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AuthenticatedProgressRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/streak': {
+      id: '/_authenticated/streak'
+      path: '/streak'
+      fullPath: '/streak'
+      preLoaderRoute: typeof AuthenticatedStreakRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses/$slug': {
+      id: '/courses/$slug'
+      path: '/$slug'
+      fullPath: '/courses/$slug'
+      preLoaderRoute: typeof CoursesSlugRouteImport
+      parentRoute: typeof CoursesRoute
+    }
+    '/tags/$tag': {
+      id: '/tags/$tag'
+      path: '/tags/$tag'
+      fullPath: '/tags/$tag'
+      preLoaderRoute: typeof TagsTagRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$username': {
+      id: '/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof UUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/forum': {
+      id: '/_authenticated/admin/forum'
+      path: '/admin/forum'
+      fullPath: '/admin/forum'
+      preLoaderRoute: typeof AuthenticatedAdminForumRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/certified/$slug': {
@@ -608,19 +621,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCertifiedSlugRouteImport
       parentRoute: typeof AuthenticatedCertifiedRoute
     }
-    '/_authenticated/admin/forum': {
-      id: '/_authenticated/admin/forum'
-      path: '/admin/forum'
-      fullPath: '/admin/forum'
-      preLoaderRoute: typeof AuthenticatedAdminForumRouteImport
+    '/_authenticated/forum_/$threadId': {
+      id: '/_authenticated/forum_/$threadId'
+      path: '/forum/$threadId'
+      fullPath: '/forum/$threadId'
+      preLoaderRoute: typeof AuthenticatedForumThreadIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/courses/$courseId/edit': {
-      id: '/_authenticated/courses/$courseId/edit'
-      path: '/courses/$courseId/edit'
-      fullPath: '/courses/$courseId/edit'
-      preLoaderRoute: typeof AuthenticatedCoursesCourseIdEditRouteImport
+    '/_authenticated/groups_/$roomId': {
+      id: '/_authenticated/groups_/$roomId'
+      path: '/groups/$roomId'
+      fullPath: '/groups/$roomId'
+      preLoaderRoute: typeof AuthenticatedGroupsRoomIdRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/certified/$slug/forum': {
+      id: '/_authenticated/certified/$slug/forum'
+      path: '/forum'
+      fullPath: '/certified/$slug/forum'
+      preLoaderRoute: typeof AuthenticatedCertifiedSlugForumRouteImport
+      parentRoute: typeof AuthenticatedCertifiedSlugRoute
     }
     '/_authenticated/certified/$slug/learn': {
       id: '/_authenticated/certified/$slug/learn'
@@ -629,12 +649,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCertifiedSlugLearnRouteImport
       parentRoute: typeof AuthenticatedCertifiedSlugRoute
     }
-    '/_authenticated/certified/$slug/forum': {
-      id: '/_authenticated/certified/$slug/forum'
-      path: '/forum'
-      fullPath: '/certified/$slug/forum'
-      preLoaderRoute: typeof AuthenticatedCertifiedSlugForumRouteImport
-      parentRoute: typeof AuthenticatedCertifiedSlugRoute
+    '/_authenticated/courses/$courseId/edit': {
+      id: '/_authenticated/courses/$courseId/edit'
+      path: '/courses/$courseId/edit'
+      fullPath: '/courses/$courseId/edit'
+      preLoaderRoute: typeof AuthenticatedCoursesCourseIdEditRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
@@ -733,9 +753,19 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   TagsTagRoute: TagsTagRoute,
   UUsernameRoute: UUsernameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

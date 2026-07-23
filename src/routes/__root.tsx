@@ -8,9 +8,9 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 
-const HIDE_LUNA_ON   = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna", "/"];
-const HIDE_FOOTER_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/luna"];
-const HIDE_NAVBAR_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/onboarding"];
+const HIDE_LUNA_ON   = ["/login", "/signup", "/forgot-password", "/reset-password", "/auth/callback", "/luna", "/"];
+const HIDE_FOOTER_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/auth/callback", "/luna"];
+const HIDE_NAVBAR_ON = ["/login", "/signup", "/forgot-password", "/reset-password", "/auth/callback", "/onboarding"];
 
 // The landing page (/) manages its own footer, so exclude it
 const isLanding = (p: string) => p === "/";
